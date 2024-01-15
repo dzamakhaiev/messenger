@@ -7,10 +7,10 @@ class DatabaseHandler:
         self.conn = sqlite3.connect('database.sqlite')
         self.cursor = self.conn.cursor()
 
-    def create_user_table(self):
+    def create_users_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users
-            (id INTEGER PRIMARY KEY,
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
             phone TEXT NOT NULL)
             ''')
@@ -18,7 +18,7 @@ class DatabaseHandler:
     def create_messages_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS messages
-            (id INTEGER PRIMARY KEY,
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_sender_id INTEGER NOT NULL,
             user_receiver_id INTEGER NOT NULL,
             message TEXT NOT NULL)
@@ -34,14 +34,28 @@ class DatabaseHandler:
 
     def insert_user(self, username, phone_number):
         result = self.cursor.execute('SELECT username FROM users WHERE username = ?', (username,))
-        if result:
+        if result.fetchall():
             return
 
         result = self.cursor.execute('SELECT phone FROM users WHERE username = ?', (phone_number,))
-        if result:
+        if result.fetchall():
             return
 
-        self.cursor.execute('INSERT INTO users VALUES (?, ?)', (username, phone_number))
+        self.cursor.execute('INSERT INTO users ("username", "phone") '
+                            'VALUES (?, ?)', (username, phone_number))
+        self.conn.commit()
+
+    def insert_message(self, sender_id, receiver_id, message):
+        result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (sender_id,))
+        if result.fetchall():
+            return
+
+        result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (receiver_id,))
+        if result.fetchall():
+            return
+
+        self.cursor.execute('INSERT INTO messages VALUES (?, ?, ?)', (sender_id, receiver_id, message))
+        self.conn.commit()
 
     def __del__(self):
         self.cursor.close()
@@ -50,7 +64,7 @@ class DatabaseHandler:
 
 if __name__ == '__main__':
     handler = DatabaseHandler()
-    handler.create_user_table()
+    handler.create_users_table()
     handler.create_messages_table()
     handler.create_user_address_table()
 
