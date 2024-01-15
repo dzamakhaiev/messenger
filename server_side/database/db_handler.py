@@ -17,10 +17,19 @@ class DatabaseHandler:
 
     def create_messages_table(self):
         self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users
+            CREATE TABLE IF NOT EXISTS messages
             (id INTEGER PRIMARY KEY,
-            username TEXT NOT NULL,
-            phone TEXT NOT NULL)
+            user_sender_id INTEGER NOT NULL,
+            user_sender_id INTEGER NOT NULL,
+            message TEXT NOT NULL)
+            ''')
+
+    def create_user_address_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_address
+            (id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            known_address TEXT NOT NULL)
             ''')
 
     def __del__(self):
@@ -32,3 +41,4 @@ if __name__ == '__main__':
     handler = DatabaseHandler()
     handler.create_user_table()
     handler.create_messages_table()
+    handler.create_user_address_table()
