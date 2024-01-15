@@ -5,19 +5,20 @@ from flask_restful import Api, Resource, reqparse
 class Messenger(Resource):
 
     def get(self):
-        pass
+        return 'Test GET method', 200
 
     def put(self):
-        pass
+        return 'Test PUT method', 201
 
     def post(self):
-        pass
+        return 'Test POST method', 201
 
     def delete(self):
-        pass
+        return 'Test DELETE method', 200
 
 
 if __name__ == '__main__':
     app = Flask(__name__)
     api = Api(app)
+    api.add_resource(Messenger, "/")
     app.run(debug=True)
