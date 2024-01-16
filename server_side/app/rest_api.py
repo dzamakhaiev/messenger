@@ -1,6 +1,6 @@
-from queue import Queue
 from flask import Flask
 from flask_restful import Api, Resource, reqparse
+import settings
 
 
 class User(Resource):
@@ -38,4 +38,4 @@ if __name__ == '__main__':
     api = Api(app)
     api.add_resource(Messages, "/messages")
     api.add_resource(User, "/user")
-    app.run(debug=True)
+    app.run(host=settings.LOCAL_HOST, port=settings.REST_API_PORT, debug=True)
