@@ -33,29 +33,46 @@ class DatabaseHandler:
             ''')
 
     def insert_user(self, username, phone_number):
-        result = self.cursor.execute('SELECT username FROM users WHERE username = ?', (username,))
-        if result.fetchall():
+        if self.is_user_exists(username=username):
             return
 
-        result = self.cursor.execute('SELECT phone FROM users WHERE username = ?', (phone_number,))
-        if result.fetchall():
+        if self.is_phone_exists(phone_number):
             return
 
-        self.cursor.execute('INSERT INTO users ("username", "phone") '
-                            'VALUES (?, ?)', (username, phone_number))
+        self.cursor.execute('INSERT INTO users ("username", "phone") VALUES (?, ?)',
+                            (username, phone_number))
         self.conn.commit()
 
     def insert_message(self, sender_id, receiver_id, message):
-        result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (sender_id,))
-        if result.fetchall():
+        if not self.is_user_exists(user_id=sender_id):
             return
 
-        result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (receiver_id,))
-        if result.fetchall():
+        if not self.is_user_exists(user_id=receiver_id):
             return
 
         self.cursor.execute('INSERT INTO messages VALUES (?, ?, ?)', (sender_id, receiver_id, message))
         self.conn.commit()
+
+    def is_user_exists(self, user_id=None, username=None):
+        if user_id:
+            result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
+            if result.fetchall():
+                return True
+
+        elif username:
+            result = self.cursor.execute('SELECT username FROM users WHERE username = ?', (username,))
+            if result.fetchall():
+                return True
+
+        else:
+            return False
+
+    def is_phone_exists(self, phone_number):
+        result = self.cursor.execute('SELECT phone FROM users WHERE username = ?', (phone_number,))
+        if result.fetchall():
+            return True
+        else:
+            return False
 
     def __del__(self):
         self.cursor.close()
