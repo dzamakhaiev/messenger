@@ -13,7 +13,7 @@ class SmokeTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.endpoints = ['/user', '/messages']
+        cls.endpoints = ['/user', '/message']
 
     def test_get_method(self):
         for endpoint in self.endpoints:
@@ -58,6 +58,14 @@ class SmokeTest(TestCase):
     def test_task_post_method(self):
         try:
             response = requests.post(TASK_URL + '/task')
+            self.assertEqual(response.status_code, 201)
+        except requests.exceptions.ConnectionError:
+            self.fail('No connection to the server')
+
+    def test_message_post_method(self):
+        try:
+            json_dict = {'message': 'test message', 'sender_id': 1, 'receiver_id': 2}
+            response = requests.post(REST_API_URL + '/message', json=json_dict)
             self.assertEqual(response.status_code, 201)
         except requests.exceptions.ConnectionError:
             self.fail('No connection to the server')
