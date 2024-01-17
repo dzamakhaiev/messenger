@@ -1,14 +1,23 @@
-import settings
+from client_side.gui import settings
+from queue import Queue
 from tkinter import Tk, ttk, Frame, Text
-from tkinter import LEFT, TOP, BOTTOM, CENTER, BOTH
+from tkinter import LEFT, TOP, BOTTOM, BOTH
+
+from client_side.backend.listener import run_listener
+from client_side.backend.sender import ClientSender
 
 main_window = Tk()
 side_menu = Frame(main_window, bg='grey')
 conversation_widget = Text(master=main_window, height=10, bg='blue')
 type_widget = Text(master=main_window, height=10, bg='green')
 
+sender = ClientSender()
+
 
 if __name__ == "__main__":
+    # Start http listener
+    queue = Queue()
+    run_listener(queue)
 
     # Main window
     main_window.title(settings.WINDOW_TITLE)
