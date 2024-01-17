@@ -64,7 +64,8 @@ class SmokeTest(TestCase):
 
     def test_message_post_method(self):
         try:
-            json_dict = {'message': 'test message', 'sender_id': 1, 'receiver_id': 2}
+            json_dict = {'message': 'test message', 'sender_id': 1, 'receiver_id': 2,
+                         'sender_address': 'http://127.0.0.1:6666'}
             response = requests.post(REST_API_URL + '/message', json=json_dict)
             self.assertEqual(response.status_code, 201)
         except requests.exceptions.ConnectionError:
