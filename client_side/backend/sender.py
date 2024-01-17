@@ -1,5 +1,5 @@
 import requests
-import settings
+from client_side.backend import settings
 
 
 class ClientSender:

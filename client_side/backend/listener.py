@@ -1,4 +1,4 @@
-import settings
+from client_side.backend import settings
 from threading import Thread
 from queue import Queue
 from flask import Flask, request
