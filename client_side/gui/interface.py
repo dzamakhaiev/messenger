@@ -1,9 +1,9 @@
 from client_side.gui import settings
 from queue import Queue
 from tkinter import Tk, ttk, Frame, Text
-from tkinter import LEFT, TOP, BOTTOM, BOTH
+from tkinter import LEFT, TOP, BOTTOM, BOTH, END
 
-from client_side.backend.listener import run_listener
+from client_side.backend.listener import run_listener, get_listener_address
 from client_side.backend.sender import ClientSender
 
 main_window = Tk()
@@ -12,11 +12,18 @@ conversation_widget = Text(master=main_window, height=10, bg='blue')
 type_widget = Text(master=main_window, height=10, bg='green')
 
 sender = ClientSender()
+queue = Queue()
+
+
+def send_message():
+    text = type_widget.get('1.0', END).strip()
+    type_widget.delete('1.0', END)
+    json_dict = {'message': text, 'sender_id': 2, 'receiver_id': 1, 'sender_address': get_listener_address()}
+    sender.send_request('/message', json_dict)
 
 
 if __name__ == "__main__":
     # Start http listener
-    queue = Queue()
     run_listener(queue)
 
     # Main window
@@ -36,7 +43,7 @@ if __name__ == "__main__":
     conversation_widget.pack(side=TOP, fill=BOTH, expand=True)
 
     # Send button
-    button_quit = ttk.Button(main_window, text='Send')
+    button_quit = ttk.Button(main_window, text='Send', command=send_message)
     button_quit.pack(side=BOTTOM, padx=5, pady=10)
 
     # Type text field

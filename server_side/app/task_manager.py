@@ -81,11 +81,17 @@ class TaskManager:
 
         # Try to send message to each active address
         if active_address_list:
+
+            result = False
             for receiver_address in active_address_list:
                 # TODO add db data parser
                 result = self.try_send_message(receiver_address, message, sender_id)
                 if not result:
                     self.db.deactivate_user_address(user_id=receiver_id, user_address=receiver_address)
+
+            # Save not sent message in db
+            if not result:
+                self.db.insert_message(sender_id, receiver_id, message, 'not sent')
 
         else:
             pass
@@ -104,6 +110,7 @@ class TaskManager:
                     if task_type == 'message':
                         self.process_message_task(json_dict)
                         self.reset_interval()
+                        print('Task is completed.')
 
             except KeyboardInterrupt:
                 break

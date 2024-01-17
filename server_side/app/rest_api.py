@@ -48,13 +48,9 @@ class Message(Resource):
             # TODO: add response code
             if user_in_db(json_dict['sender_id']) and user_in_db(json_dict['receiver_id']):
 
-                sender_address = f"http://{request.environ['REMOTE_ADDR']}:{request.environ['REMOTE_PORT']}"
-                new_json_dict = dict(**json_dict)
-                new_json_dict['sender_address'] = sender_address
-
                 try:
                     send_task = Thread(
-                        target=lambda: requests.post(TASK_MANAGER_URL, json=new_json_dict), daemon=True)
+                        target=lambda: requests.post(TASK_MANAGER_URL, json=json_dict), daemon=True)
                     send_task.start()
                 except requests.exceptions.ConnectionError:
                     # TODO: add response code

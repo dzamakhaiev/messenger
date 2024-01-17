@@ -12,8 +12,13 @@ class Task(Resource):
     def post(self):
         json_dict = request.json
         if self.queue:
+            print(json_dict)
             self.queue.put(json_dict)
         return 'Test POST method', 201
+
+
+def get_listener_address():
+    return f'http://{settings.LISTENER_HOST}:{settings.LISTENER_PORT}{settings.LISTENER_RESOURCE}'
 
 
 def run_listener(task_queue, daemon=True):
