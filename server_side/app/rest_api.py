@@ -8,7 +8,7 @@ from flask_restful import Api, Resource, reqparse
 from server_side.database.db_handler import DatabaseHandler
 
 
-TASK_MANAGER_URL = f'http://{settings.LOCAL_HOST}:{settings.TASK_API_PORT}{settings.TASK_RESOURCE}'
+TASK_MANAGER_URL = f'http://{settings.REST_API_HOST}:{settings.TASK_API_PORT}{settings.TASK_RESOURCE}'
 db = DatabaseHandler()
 
 
@@ -71,4 +71,4 @@ if __name__ == '__main__':
     api = Api(app)
     api.add_resource(Message, settings.MESSAGE_RESOURCE)
     api.add_resource(User, settings.USER_RESOURCE)
-    app.run(host=settings.LOCAL_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False, threaded=False)
+    app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False, threaded=False)

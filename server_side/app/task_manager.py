@@ -115,7 +115,7 @@ if __name__ == '__main__':
     api.add_resource(Task, settings.TASK_RESOURCE)
 
     task_thread = Thread(daemon=True,
-                         target=lambda: app.run(host=settings.LOCAL_HOST,
+                         target=lambda: app.run(host=settings.REST_API_HOST,
                                                 port=settings.TASK_API_PORT,
                                                 debug=False,
                                                 threaded=True,
