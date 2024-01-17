@@ -94,7 +94,7 @@ class TaskManager:
                 self.db.insert_message(sender_id, receiver_id, message, 'not sent')
 
         else:
-            pass
+            self.db.insert_message(sender_id, receiver_id, message, 'not sent')
 
     def main_loop(self):
 

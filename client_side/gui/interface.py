@@ -15,11 +15,33 @@ sender = ClientSender()
 queue = Queue()
 
 
+def check_received_messages():
+    # If queue has message, check again after 0.1 sec
+    if not queue.empty():
+        json_dict = queue.get()
+        conversation_widget.after(100, check_received_messages)
+
+        if 'message' in json_dict.keys():
+            put_message(json_dict)
+
+    # or check again after 1 sec
+    else:
+        conversation_widget.after(1000, check_received_messages)
+
+
 def send_message():
     text = type_widget.get('1.0', END).strip()
     type_widget.delete('1.0', END)
     json_dict = {'message': text, 'sender_id': 2, 'receiver_id': 1, 'sender_address': get_listener_address()}
     sender.send_request('/message', json_dict)
+    put_message({'sender_id': 2, 'message': text})
+
+
+def put_message(json_dict):
+    message = json_dict.get('message')
+    sender_id = json_dict.get('sender_id')
+    string = f'{sender_id}: {message}\n'
+    conversation_widget.insert(index=END, chars=string)
 
 
 if __name__ == "__main__":
@@ -41,6 +63,7 @@ if __name__ == "__main__":
 
     # Conversation text field
     conversation_widget.pack(side=TOP, fill=BOTH, expand=True)
+    conversation_widget.after(1000, check_received_messages)
 
     # Send button
     button_quit = ttk.Button(main_window, text='Send', command=send_message)

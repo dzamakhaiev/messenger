@@ -75,7 +75,7 @@ class DatabaseHandler:
                                      (user_id, user_address))
 
         if result.fetchall():
-            self.cursor.execute('UPDATE user_url SET status = "Active"'
+            self.cursor.execute('UPDATE user_address SET status = "Active"'
                                 'WHERE user_id = ? and user_url = ?',
                                 (user_id, user_address))
         else:
