@@ -9,6 +9,11 @@ class RAMDatabaseHandler:
         self.conn = sqlite3.connect(":memory:")
         self.cursor = self.conn.cursor()
 
+    def create_all_tables(self):
+        self.create_sessions_table()
+        self.create_messages_table()
+        self.create_user_address_table()
+
     def create_messages_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS messages
@@ -18,6 +23,14 @@ class RAMDatabaseHandler:
             message TEXT NOT NULL,
             status TEXT NOT NULL,
             receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
+            ''')
+
+    def create_sessions_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sessions
+            (user_id INTEGER NOT NULL,
+            session_id TEXT NOT NULL,
+            expiration_date DATETIME "+30 days")
             ''')
 
     def create_user_address_table(self):
@@ -34,6 +47,11 @@ class RAMDatabaseHandler:
         self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "message", "status") '
                             'VALUES (?, ?, ?, ?)',
                             (sender_id, receiver_id, message, status))
+        self.conn.commit()
+
+    def insert_session_id(self, user_id, session_id):
+        self.cursor.execute('INSERT INTO sessions ("user_id", "session_id") VALUES (?, ?)',
+                            (user_id, session_id))
         self.conn.commit()
 
     def get_user_messages(self, receiver_id):
@@ -198,21 +216,22 @@ class DatabaseHandler:
 
 
 if __name__ == '__main__':
-    handler = DatabaseHandler()
-    handler.create_users_table()
-    handler.create_messages_table()
-    handler.create_user_address_table()
-
-    # Add test users
-    handler.insert_user('user_1', '123456789')
-    handler.insert_user('user_2', '987654321')
-    handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
-    handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
-    handler.insert_message(1, 2, 'test', 'not sent')
+    # handler = DatabaseHandler()
+    # handler.create_users_table()
+    # handler.create_messages_table()
+    # handler.create_user_address_table()
+    #
+    # # Add test users
+    # handler.insert_user('user_1', '123456789')
+    # handler.insert_user('user_2', '987654321')
+    # handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
+    # handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
+    # handler.insert_message(1, 2, 'test', 'not sent')
 
     ram_handler = RAMDatabaseHandler()
     ram_handler.create_messages_table()
     ram_handler.create_user_address_table()
+    ram_handler.create_sessions_table()
 
     ram_handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
     ram_handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
