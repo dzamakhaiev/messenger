@@ -81,7 +81,8 @@ class DatabaseHandler:
             CREATE TABLE IF NOT EXISTS users
             (id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
-            phone TEXT NOT NULL)
+            phone TEXT NOT NULL,
+            password TEXT NOT NULL)
             ''')
 
     def create_messages_table(self):
@@ -105,15 +106,15 @@ class DatabaseHandler:
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
-    def insert_user(self, username, phone_number):
+    def insert_user(self, username, phone_number, password='qwerty'):
         if self.is_user_exists(username=username):
             return
 
         if self.is_phone_exists(phone_number):
             return
 
-        self.cursor.execute('INSERT INTO users ("username", "phone") VALUES (?, ?)',
-                            (username, phone_number))
+        self.cursor.execute('INSERT INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
+                            (username, phone_number, password))
         self.conn.commit()
 
     def insert_message(self, sender_id, receiver_id, message, status):
@@ -192,17 +193,17 @@ class DatabaseHandler:
 
 
 if __name__ == '__main__':
-    # handler = DatabaseHandler()
-    # handler.create_users_table()
-    # handler.create_messages_table()
-    # handler.create_user_address_table()
-    #
-    # # Add test users
-    # handler.insert_user('user_1', '123456789')
-    # handler.insert_user('user_2', '987654321')
-    # handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
-    # handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
-    # handler.insert_message(1, 2, 'test', 'not sent')
+    handler = DatabaseHandler()
+    handler.create_users_table()
+    handler.create_messages_table()
+    handler.create_user_address_table()
+
+    # Add test users
+    handler.insert_user('user_1', '123456789')
+    handler.insert_user('user_2', '987654321')
+    handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
+    handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
+    handler.insert_message(1, 2, 'test', 'not sent')
 
     ram_handler = RAMDatabaseHandler()
     ram_handler.create_messages_table()
