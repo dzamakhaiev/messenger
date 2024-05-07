@@ -59,6 +59,13 @@ class RAMDatabaseHandler:
                                      (receiver_id,))
         return result.fetchall()
 
+    def get_user_session(self, user_id):
+        result = self.cursor.execute('SELECT session_id FROM sessions WHERE user_id = ?',
+                                     (user_id,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+
     def insert_or_update_user_address(self, user_id, user_address):
         result = self.cursor.execute('SELECT user_url FROM user_address '
                                      'WHERE user_id = ? and user_url = ? and status = "Active"',
@@ -177,7 +184,9 @@ class DatabaseHandler:
     def get_user_password(self, username):
         result = self.cursor.execute('SELECT password FROM users WHERE username = ?',
                                      (username,))
-        return result.fetchone()
+        result = result.fetchone()
+        if result:
+            return result[0]
 
     def get_user_address(self, user_id):
         result = self.cursor.execute('SELECT user_url, status FROM user_address WHERE user_id = ?',
@@ -187,7 +196,9 @@ class DatabaseHandler:
     def get_user_id_by_username(self, username):
         result = self.cursor.execute('SELECT id FROM users WHERE username = ?',
                                      (username,))
-        return result.fetchone()
+        result = result.fetchone()
+        if result:
+            return result[0]
 
     def is_user_exists(self, user_id=None, username=None):
         if user_id:
@@ -240,5 +251,8 @@ if __name__ == '__main__':
     ram_handler.insert_message(1, 2, 'test1', 'not sent')
     ram_handler.insert_message(1, 2, 'test2', 'not sent')
 
-    messages = ram_handler.get_user_messages(2)
-    print(messages)
+    ram_handler.insert_session_id(1, '123')
+
+    print(ram_handler.get_user_messages(2))
+    print(ram_handler.get_user_session(1))
+
