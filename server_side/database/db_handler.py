@@ -156,6 +156,11 @@ class DatabaseHandler:
                             (user_id, user_address))
         self.conn.commit()
 
+    def get_user_password(self, username):
+        result = self.cursor.execute('SELECT password FROM users WHERE username = ?',
+                                     (username,))
+        return result.fetchone()
+
     def get_user_address(self, user_id):
         result = self.cursor.execute('SELECT user_url, status FROM user_address WHERE user_id = ?',
                                      (user_id,))
