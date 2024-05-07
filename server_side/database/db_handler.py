@@ -160,6 +160,11 @@ class DatabaseHandler:
                                      (user_id,))
         return result.fetchall()
 
+    def get_user_id_by_username(self, username):
+        result = self.cursor.execute('SELECT id FROM users WHERE username = ?',
+                                     (username,))
+        return result.fetchone()
+
     def is_user_exists(self, user_id=None, username=None):
         if user_id:
             result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
