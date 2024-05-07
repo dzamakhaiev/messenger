@@ -30,7 +30,7 @@ class RAMDatabaseHandler:
             CREATE TABLE IF NOT EXISTS sessions
             (user_id INTEGER NOT NULL,
             session_id TEXT NOT NULL,
-            expiration_date DATETIME "+30 days")
+            expiration_date DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
     def create_user_address_table(self):
