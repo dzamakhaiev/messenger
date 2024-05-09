@@ -5,13 +5,11 @@ import sqlite3
 class RAMDatabaseHandler:
 
     def __init__(self):
-
-        self.conn = sqlite3.connect(":memory:")
+        self.conn = sqlite3.connect(':memory:', check_same_thread=False)
         self.cursor = self.conn.cursor()
 
     def create_all_tables(self):
         self.create_sessions_table()
-        self.create_messages_table()
         self.create_user_address_table()
 
     def create_messages_table(self):
@@ -20,8 +18,8 @@ class RAMDatabaseHandler:
             (id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_sender_id INTEGER NOT NULL,
             user_receiver_id INTEGER NOT NULL,
+            sender_username TEXT NOT NULL,
             message TEXT NOT NULL,
-            status TEXT NOT NULL,
             receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
@@ -43,10 +41,10 @@ class RAMDatabaseHandler:
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
-    def insert_message(self, sender_id, receiver_id, message, status):
-        self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "message", "status") '
+    def insert_message(self, sender_id, receiver_id, sender_username, message):
+        self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "sender_username", "message") '
                             'VALUES (?, ?, ?, ?)',
-                            (sender_id, receiver_id, message, status))
+                            (sender_id, receiver_id, sender_username, message))
         self.conn.commit()
 
     def insert_session_id(self, user_id, session_id):
@@ -55,14 +53,22 @@ class RAMDatabaseHandler:
         self.conn.commit()
 
     def get_user_messages(self, receiver_id):
-        result = self.cursor.execute('SELECT message FROM messages WHERE user_receiver_id = ?',
+        result = self.cursor.execute('SELECT * FROM messages WHERE user_receiver_id = ?',
                                      (receiver_id,))
         return result.fetchall()
+
+    def delete_user_messages(self, receiver_id):
+        self.cursor.execute('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
+        self.conn.commit()
+
+    def delete_messages(self, message_ids):
+        self.cursor.execute('DELETE FROM messages WHERE id IN (?)', (message_ids,))
+        self.conn.commit()
 
     def get_user_address(self, user_id):
         result = self.cursor.execute('SELECT user_address FROM user_address WHERE user_id = ?',
                                      (user_id,))
-        return result.fetchall()
+        return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def get_user_session(self, user_id):
         result = self.cursor.execute('SELECT session_id FROM sessions WHERE user_id = ?',
@@ -104,17 +110,6 @@ class DatabaseHandler:
             password TEXT NOT NULL)
             ''')
 
-    def create_messages_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS messages
-            (id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_sender_id INTEGER NOT NULL,
-            user_receiver_id INTEGER NOT NULL,
-            message TEXT NOT NULL,
-            status TEXT NOT NULL,
-            receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
-
     def create_user_address_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_address
@@ -134,18 +129,6 @@ class DatabaseHandler:
 
         self.cursor.execute('INSERT INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
                             (username, phone_number, password))
-        self.conn.commit()
-
-    def insert_message(self, sender_id, receiver_id, message, status):
-        if not self.is_user_exists(user_id=sender_id):
-            return
-
-        if not self.is_user_exists(user_id=receiver_id):
-            return
-
-        self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "message", "status") '
-                            'VALUES (?, ?, ?, ?)',
-                            (sender_id, receiver_id, message, status))
         self.conn.commit()
 
     def insert_or_update_user_address(self, user_id, user_address):
@@ -223,7 +206,6 @@ class DatabaseHandler:
 if __name__ == '__main__':
     # handler = DatabaseHandler()
     # handler.create_users_table()
-    # handler.create_messages_table()
     # handler.create_user_address_table()
     #
     # # Add test users
@@ -231,7 +213,6 @@ if __name__ == '__main__':
     # handler.insert_user('user_2', '987654321')
     # handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
     # handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
-    # handler.insert_message(1, 2, 'test', 'not sent')
 
     ram_handler = RAMDatabaseHandler()
     ram_handler.create_messages_table()
@@ -241,9 +222,9 @@ if __name__ == '__main__':
     ram_handler.insert_user_address(1, 'http://127.0.0.1:6666')
     ram_handler.insert_user_address(2, 'http://127.0.0.1:7777')
 
-    ram_handler.insert_message(1, 2, 'test', 'not sent')
-    ram_handler.insert_message(1, 2, 'test1', 'not sent')
-    ram_handler.insert_message(1, 2, 'test2', 'not sent')
+    ram_handler.insert_message(1, 2, 'user_1', 'test')
+    ram_handler.insert_message(1, 2, 'user_1', 'test1')
+    ram_handler.insert_message(1, 2, 'user_1', 'test2')
 
     ram_handler.insert_session_id(1, '123')
 

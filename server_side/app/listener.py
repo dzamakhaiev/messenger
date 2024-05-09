@@ -41,6 +41,10 @@ def login():
 
             user_address = request.json['user_address']
             ram_db_handler.insert_user_address(user_id, user_address)
+            address_list = ram_db_handler.get_user_address(user_id)
+            payload = (user_id, address_list)
+
+            queue.put(('user', payload))
             return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
         else:
@@ -70,13 +74,14 @@ def receive_msg():
     if request.json.get('session_id') == session_id:
         receiver_id = request.json.get('receiver_id')
         address_list = ram_db_handler.get_user_address(receiver_id)
-        address_list = [user_address[0] for user_address in address_list]  # convert tuple to string
 
     else:
         return f'Not authorized.', 400
 
+    payload = (address_list, request.json)
+    queue.put(('message', payload))
+
     if address_list:
-        queue.put((address_list, request.json))
         return f'Message sent.', 200
     else:
         return f'Message not sent.', 200
