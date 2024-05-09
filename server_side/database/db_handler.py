@@ -91,6 +91,10 @@ class DatabaseHandler:
         self.conn = sqlite3.connect(db_path)
         self.cursor = self.conn.cursor()
 
+    def create_all_tables(self):
+        self.create_users_table()
+        self.create_user_address_table()
+
     def create_users_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users

@@ -19,6 +19,7 @@ from server_side.app.msg_manager import MessagesManager
 app = Flask(__name__)
 queue = Queue()
 db_handler = DatabaseHandler()
+db_handler.create_all_tables()
 ram_db_handler = RAMDatabaseHandler()
 ram_db_handler.create_all_tables()
 
