@@ -4,7 +4,7 @@ from queue import Queue
 from tkinter import Tk, ttk, Frame, Text
 from tkinter import LEFT, TOP, BOTTOM, BOTH, END
 
-# I hate python imports. Fix for run via cmd
+# I hate python imports. Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
 current_dir = os.path.dirname(current_file)
 repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
@@ -69,8 +69,8 @@ def send_message():
     type_widget.delete('1.0', END)
 
     if text:
-        json_dict = {'message': text, 'sender_id': MY_USER_ID, 'receiver_id': COMPANION_USER_ID,
-                     'sender_address': LISTENER_URL, 'session_id': MY_SESSION_ID}
+        json_dict = {'message': text, 'sender_id': MY_USER_ID, 'sender_username': MY_USERNAME,
+                     'receiver_id': COMPANION_USER_ID, 'sender_address': LISTENER_URL, 'session_id': MY_SESSION_ID}
 
         response = sender.message_request(json_dict)
         if response and response.status_code == 200:
@@ -78,9 +78,9 @@ def send_message():
 
 
 def put_message(json_dict):
+    username = json_dict.get('username') if json_dict.get('username') else json_dict.get('sender_username')
     message = json_dict.get('message')
-    sender_id = json_dict.get('username')
-    string = f'{sender_id}: {message}\n'
+    string = f'{username}: {message}\n'
     conversation_widget.insert(index=END, chars=string)
 
 

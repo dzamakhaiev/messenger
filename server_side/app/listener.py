@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify
 from queue import Queue
 from threading import Thread, Event
 
-# I hate python imports. Fix for run via cmd
+# I hate python imports. Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
 current_dir = os.path.dirname(current_file)
 repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
@@ -69,11 +69,13 @@ def receive_msg():
     if request.json.get('session_id') == session_id:
         receiver_id = request.json.get('receiver_id')
         address_list = ram_db_handler.get_user_address(receiver_id)
+        address_list = [user_address[0] for user_address in address_list]  # convert tuple to string
 
     else:
         return f'Not authorized.', 400
 
     if address_list:
+        queue.put((address_list, request.json))
         return f'Message sent.', 200
     else:
         return f'Message not sent.', 200
