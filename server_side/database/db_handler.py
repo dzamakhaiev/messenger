@@ -50,7 +50,7 @@ class RAMDatabaseHandler:
         self.conn.commit()
 
     def insert_session_id(self, user_id, session_id):
-        self.cursor.execute('INSERT INTO sessions ("user_id", "session_id") VALUES (?, ?)',
+        self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
                             (user_id, session_id))
         self.conn.commit()
 

@@ -63,7 +63,7 @@ def receive_msg():
     if address_list:
         pass
     else:
-        return f'Message not sent.', 200
+        return f'Message sent.', 200
 
 
 if __name__ == '__main__':
