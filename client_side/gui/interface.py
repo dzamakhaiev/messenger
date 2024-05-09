@@ -1,7 +1,14 @@
+import os
 import sys
 from queue import Queue
 from tkinter import Tk, ttk, Frame, Text
 from tkinter import LEFT, TOP, BOTTOM, BOTH, END
+
+# I hate python imports. Fix for run via cmd
+current_file = os.path.realpath(__file__)
+current_dir = os.path.dirname(current_file)
+repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+sys.path.insert(0, repo_dir)
 
 from client_side.gui import settings
 from client_side.backend.settings import LISTENER_URL
@@ -82,7 +89,7 @@ if __name__ == "__main__":
     run_listener(queue)
 
     # Main window
-    main_window.title(settings.WINDOW_TITLE)
+    main_window.title(f'{settings.WINDOW_TITLE}: {MY_USERNAME}')
     main_window.geometry(f'{settings.WINDOW_RESOLUTION}+{settings.WINDOW_POSITION_SHIFT}')
     main_window.configure(bg=settings.WINDOW_BACKGROUND)
 

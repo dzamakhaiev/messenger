@@ -1,10 +1,23 @@
-from flask import Flask, request, jsonify
+import os
+import sys
 import uuid
 import routes
 import settings
+from flask import Flask, request, jsonify
+from queue import Queue
+from threading import Thread, Event
+
+# I hate python imports. Fix for run via cmd
+current_file = os.path.realpath(__file__)
+current_dir = os.path.dirname(current_file)
+repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+sys.path.insert(0, repo_dir)
+
 from server_side.database.db_handler import DatabaseHandler, RAMDatabaseHandler
+from server_side.app.msg_manager import MessagesManager
 
 app = Flask(__name__)
+queue = Queue()
 db_handler = DatabaseHandler()
 ram_db_handler = RAMDatabaseHandler()
 ram_db_handler.create_all_tables()
@@ -61,10 +74,17 @@ def receive_msg():
         return f'Not authorized.', 400
 
     if address_list:
-        pass
-    else:
         return f'Message sent.', 200
+    else:
+        return f'Message not sent.', 200
 
 
 if __name__ == '__main__':
+    msg_manager = MessagesManager(queue)
+    stop_event = Event()
+    t = Thread(target=msg_manager.run_inf_loop, args=(stop_event, ))
+    t.start()
+
     app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False, threaded=False)
+    stop_event.set()
+    t.join()
