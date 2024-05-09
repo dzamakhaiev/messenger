@@ -2,30 +2,18 @@ from client_side.backend import settings
 from threading import Thread
 from queue import Queue
 from flask import Flask, request
-from flask_restful import Api, Resource
 
 
-class Task(Resource):
-
-    queue = None
-
-    def post(self):
-        json_dict = request.json
-        if self.queue:
-            print(json_dict)
-            self.queue.put(json_dict)
-        return 'Test POST method', 201
+app = Flask(__name__)
 
 
-def get_listener_address():
-    return f'http://{settings.LISTENER_HOST}:{settings.LISTENER_PORT}{settings.LISTENER_RESOURCE}'
+def run_listener(queue: Queue, daemon=True):
 
-
-def run_listener(task_queue, daemon=True):
-    app = Flask(__name__)
-    api = Api(app)
-    Task.queue = task_queue
-    api.add_resource(Task, settings.LISTENER_RESOURCE)
+    @app.route('/', methods=['POST'])
+    def receive_msg():
+        if request.json.get('message'):
+            queue.put(request.json)
+            return 'Message received.', 200
 
     task_thread = Thread(daemon=daemon,
                          target=lambda: app.run(host=settings.LISTENER_HOST,
