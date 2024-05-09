@@ -21,7 +21,8 @@ def login():
         if exp_password and exp_password == password:
 
             user_id = db_handler.get_user_id_by_username(username)
-            session_id = str(uuid.uuid4())
+            exists_session = ram_db_handler.get_user_session(user_id)
+            session_id = exists_session if exists_session else str(uuid.uuid4())
             ram_db_handler.insert_session_id(user_id, session_id)
 
             return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
@@ -42,7 +43,25 @@ def get_user_id(username):
 
 @app.route(routes.MESSAGES, methods=['POST'])
 def receive_msg():
-    pass
+
+    if request.json.get('sender_id'):
+        sender_id = request.json.get('sender_id')
+        session_id = ram_db_handler.get_user_session(sender_id)
+
+    else:
+        return f'Invalid request.', 400
+
+    if request.json.get('session_id') == session_id:
+        receiver_id = request.json.get('receiver_id')
+        address_list = ram_db_handler.get_user_address(receiver_id)
+
+    else:
+        return f'Not authorized.', 400
+
+    if address_list:
+        pass
+    else:
+        return f'Message not sent.', 200
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ class RAMDatabaseHandler:
     def create_sessions_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS sessions
-            (user_id INTEGER NOT NULL,
+            (user_id INTEGER NOT NULL UNIQUE,
             session_id TEXT NOT NULL,
             expiration_date DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
@@ -38,7 +38,7 @@ class RAMDatabaseHandler:
             CREATE TABLE IF NOT EXISTS user_address
             (id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
-            user_url TEXT NOT NULL,
+            user_address TEXT NOT NULL,
             status TEXT DEFAULT "Active",
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
@@ -57,6 +57,11 @@ class RAMDatabaseHandler:
     def get_user_messages(self, receiver_id):
         result = self.cursor.execute('SELECT message FROM messages WHERE user_receiver_id = ?',
                                      (receiver_id,))
+        return result.fetchall()
+
+    def get_user_address(self, user_id):
+        result = self.cursor.execute('SELECT user_address FROM user_address WHERE user_id = ?',
+                                     (user_id,))
         return result.fetchall()
 
     def get_user_session(self, user_id):
