@@ -38,7 +38,7 @@ class RAMDatabaseHandler:
             CREATE TABLE IF NOT EXISTS user_address
             (id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
-            user_address TEXT NOT NULL,
+            user_address TEXT NOT NULL UNIQUE,
             status TEXT DEFAULT "Active",
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
@@ -71,25 +71,10 @@ class RAMDatabaseHandler:
         if result:
             return result[0]
 
-    def insert_or_update_user_address(self, user_id, user_address):
-        result = self.cursor.execute('SELECT user_url FROM user_address '
-                                     'WHERE user_id = ? and user_url = ? and status = "Active"',
-                                     (user_id, user_address))
-        if result.fetchall():
-            return
-
-        result = self.cursor.execute('SELECT user_url FROM user_address '
-                                     'WHERE user_id = ? and user_url = ? and status = "Not available"',
-                                     (user_id, user_address))
-
-        if result.fetchall():
-            self.cursor.execute('UPDATE user_address SET status = "Active"'
-                                'WHERE user_id = ? and user_url = ?',
-                                (user_id, user_address))
-        else:
-            self.cursor.execute('INSERT INTO user_address ("user_id", "user_url") '
-                                'VALUES (?, ?)',
-                                (user_id, user_address))
+    def insert_user_address(self, user_id, user_address):
+        self.cursor.execute('INSERT OR IGNORE INTO user_address ("user_id", "user_address") '
+                            'VALUES (?, ?)',
+                            (user_id, user_address))
         self.conn.commit()
 
     def __del__(self):
@@ -249,8 +234,8 @@ if __name__ == '__main__':
     ram_handler.create_user_address_table()
     ram_handler.create_sessions_table()
 
-    ram_handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
-    ram_handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
+    ram_handler.insert_user_address(1, 'http://127.0.0.1:6666')
+    ram_handler.insert_user_address(2, 'http://127.0.0.1:7777')
 
     ram_handler.insert_message(1, 2, 'test', 'not sent')
     ram_handler.insert_message(1, 2, 'test1', 'not sent')

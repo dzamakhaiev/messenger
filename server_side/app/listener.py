@@ -25,6 +25,8 @@ def login():
             session_id = exists_session if exists_session else str(uuid.uuid4())
             ram_db_handler.insert_session_id(user_id, session_id)
 
+            user_address = request.json['user_address']
+            ram_db_handler.insert_user_address(user_id, user_address)
             return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
         else:

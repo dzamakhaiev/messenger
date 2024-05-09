@@ -9,9 +9,6 @@ SERVER_URL = f'http://{REST_API_HOST}:{REST_API_PORT}'
 
 class ClientSender:
 
-    def __init__(self):
-        self.listener_url = f'http://{settings.LISTENER_HOST}:{settings.LISTENER_PORT}:{settings.LISTENER_RESOURCE}'
-
     @staticmethod
     def post_request(url, json_dict=None):
         try:
@@ -28,7 +25,8 @@ class ClientSender:
         except requests.exceptions.ConnectionError:
             pass
 
-    def login_request(self, json_dict, url=SERVER_URL + LOGIN):
+    def login_request(self, json_dict, url=SERVER_URL + LOGIN, listener_url=settings.LISTENER_URL):
+        json_dict.update({'user_address': listener_url})
         response = self.post_request(url, json_dict)
         return response
 
