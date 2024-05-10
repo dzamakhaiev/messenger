@@ -3,9 +3,10 @@ import sys
 import uuid
 import routes
 import settings
-from flask import Flask, request, jsonify
 from queue import Queue
 from threading import Thread, Event
+from pydantic import ValidationError
+from flask import Flask, request, jsonify
 
 # I hate python imports. Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
@@ -15,6 +16,7 @@ sys.path.insert(0, repo_dir)
 
 from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 from server_side.app.msg_manager import MessagesManager
+from server_side.app.models import UserLogin, Message
 
 app = Flask(__name__)
 queue = Queue()
@@ -72,24 +74,23 @@ def create_task_send_msg(user_id, request_json):
 
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
+    try:
+        user = UserLogin(**request.json)
+    except ValidationError as e:
+        return f'Validation error: {e}', 400
 
-    if request.json.get('username') and request.json.get('password'):
-        username = request.json['username']
-        password = request.json['password']
-        user_address = request.json['user_address']
-        exp_password = hdd_db_handler.get_user_password(username)
+    exp_password = hdd_db_handler.get_user_password(user.username)
+    if exp_password and exp_password == user.password:
 
-        if exp_password and exp_password == password:
+        user_id = hdd_db_handler.get_user_id_by_username(user.username)
+        session_id = get_or_create_user_session(user_id)
+        store_user_address_and_session(user_id, session_id, user.user_address)
+        create_task_user_online(user_id)
 
-            user_id = hdd_db_handler.get_user_id_by_username(username)
-            session_id = get_or_create_user_session(user_id)
-            store_user_address_and_session(user_id, session_id, user_address)
-            create_task_user_online(user_id)
+        return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
-            return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
-
-        else:
-            return f'Incorrect username or password.', 401
+    else:
+        return f'Incorrect username or password.', 401
 
 
 @app.route(f'{routes.USERS}<username>', methods=['GET'])
@@ -104,21 +105,18 @@ def get_user_id(username):
 
 @app.route(routes.MESSAGES, methods=['POST'])
 def receive_msg():
+    try:
+        msg = Message(**request.json)
+    except ValidationError as e:
+        return f'Validation error: {e}', 400
 
-    if request.json.get('sender_id'):
-        sender_id = request.json.get('sender_id')
-        session_id = get_session_id(sender_id)
-
-    else:
-        return f'Invalid request.', 400
-
-    if request.json.get('session_id') == session_id:
-        receiver_id = request.json.get('receiver_id')
-        create_task_send_msg(receiver_id, request.json)
+    session_id = get_session_id(msg.sender_id)
+    if msg.session_id == session_id:
+        create_task_send_msg(msg.receiver_id, request.json)
         return f'Message sent.', 200
 
     else:
-        return f'Not authorized.', 400
+        return f'Not authorized.', 401
 
 
 if __name__ == '__main__':

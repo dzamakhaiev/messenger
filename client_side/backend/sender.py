@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime
 from client_side.backend import settings
 from server_side.app.routes import LOGIN, USERS, MESSAGES
 from server_side.app.settings import REST_API_HOST, REST_API_PORT
@@ -31,6 +32,7 @@ class ClientSender:
         return response
 
     def message_request(self, json_dict, url=SERVER_URL + MESSAGES):
+        json_dict['send_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         response = self.post_request(url, json_dict)
         return response
 

@@ -9,6 +9,12 @@ class User(BaseModel):
     password: str
 
 
+class UserLogin(BaseModel):
+    username: str
+    password: str
+    user_address: str
+
+
 class Session(BaseModel):
     id: int
     session_id: int
@@ -23,9 +29,9 @@ class UserAddress(BaseModel):
 
 
 class Message(BaseModel):
-    id: int
-    user_sender_id: int
-    user_receiver_id: int
+    sender_id: int
+    receiver_id: int
+    session_id: str
     sender_username: str
     message: str
-    receive_date: datetime
+    send_date: datetime
