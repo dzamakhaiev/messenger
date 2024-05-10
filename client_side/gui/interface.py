@@ -42,8 +42,7 @@ if response and response.status_code == 200:
 else:
     quit('Cannot login.')
 
-
-response = sender.user_request(MY_COMPANION)
+response = sender.user_request({'username': MY_COMPANION})
 if response and response.status_code == 200:
     COMPANION_USER_ID = response.json().get('user_id')
 else:

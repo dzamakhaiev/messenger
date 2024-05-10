@@ -93,8 +93,9 @@ def login():
         return f'Incorrect username or password.', 401
 
 
-@app.route(f'{routes.USERS}<username>', methods=['GET'])
-def get_user_id(username):
+@app.route(f'{routes.USERS}', methods=['POST'])
+def get_user_id():
+    username = request.json.get('username')
     user_id = hdd_db_handler.get_user_id_by_username(username)
 
     if user_id:

@@ -18,14 +18,6 @@ class ClientSender:
         except requests.exceptions.ConnectionError:
             pass
 
-    @staticmethod
-    def get_request(url):
-        try:
-            response = requests.get(url)
-            return response
-        except requests.exceptions.ConnectionError:
-            pass
-
     def login_request(self, json_dict, url=SERVER_URL + LOGIN, listener_url=settings.LISTENER_URL):
         json_dict.update({'user_address': listener_url})
         response = self.post_request(url, json_dict)
@@ -36,9 +28,8 @@ class ClientSender:
         response = self.post_request(url, json_dict)
         return response
 
-    def user_request(self, username, url=SERVER_URL + USERS):
-        url += username
-        response = self.get_request(url)
+    def user_request(self, json_dict, url=SERVER_URL + USERS):
+        response = self.post_request(url, json_dict)
         return response
 
 
