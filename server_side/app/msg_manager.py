@@ -1,4 +1,5 @@
 import requests
+from time import sleep
 from queue import Queue
 from threading import Thread, Event
 from server_side.database.db_handler import RAMDatabaseHandler
@@ -64,6 +65,8 @@ class MessagesManager:
     def run_inf_loop(self, stop_event: Event):
         while True:
             try:
+                sleep(0.1)  # reduce cpu load from infinite loop
+
                 if stop_event.is_set():
                     break
 
