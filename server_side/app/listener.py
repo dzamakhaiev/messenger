@@ -77,7 +77,7 @@ def login():
     try:
         user = UserLogin(**request.json)
     except ValidationError as e:
-        return f'Validation error: {e}', 400
+        return f'Validation error.', 400
 
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
