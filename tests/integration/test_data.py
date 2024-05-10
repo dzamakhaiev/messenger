@@ -6,3 +6,4 @@ USERS = '/users/'
 MESSAGES = '/messages/'
 USERNAME = 'user_1'
 PASSWORD = 'qwerty'
+USER_ID = 1
