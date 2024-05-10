@@ -18,10 +18,56 @@ from server_side.app.msg_manager import MessagesManager
 
 app = Flask(__name__)
 queue = Queue()
-db_handler = HDDDatabaseHandler()
-db_handler.create_all_tables()
+
+hdd_db_handler = HDDDatabaseHandler()
 ram_db_handler = RAMDatabaseHandler()
+hdd_db_handler.create_all_tables()
 ram_db_handler.create_all_tables()
+
+
+def store_user_address_and_session(user_id, session_id, user_address):
+    # Store user data in both DBs for back up
+    ram_db_handler.insert_session_id(user_id, session_id)
+    hdd_db_handler.insert_session_id(user_id, session_id)
+    ram_db_handler.insert_user_address(user_id, user_address)
+    hdd_db_handler.insert_user_address(user_id, user_address)
+
+
+def get_or_create_user_session(user_id):
+    session_id = get_session_id(user_id)
+
+    if session_id:
+        return session_id
+    else:
+        return str(uuid.uuid4())
+
+
+def get_session_id(user_id):
+    session_id = ram_db_handler.get_user_session(user_id)
+    if session_id:
+        return session_id
+    else:
+        return hdd_db_handler.get_user_session(user_id)
+
+
+def get_user_address(user_id):
+    address_list = ram_db_handler.get_user_address(user_id)
+    if not address_list:
+        address_list = hdd_db_handler.get_user_address(user_id)
+
+    return address_list
+
+
+def create_task_user_online(user_id):
+    address_list = get_user_address(user_id)
+    payload = (user_id, address_list)
+    queue.put(('user', payload))
+
+
+def create_task_send_msg(user_id, request_json):
+    address_list = get_user_address(user_id)
+    payload = (address_list, request_json)
+    queue.put(('message', payload))
 
 
 @app.route(routes.LOGIN, methods=['POST'])
@@ -30,21 +76,16 @@ def login():
     if request.json.get('username') and request.json.get('password'):
         username = request.json['username']
         password = request.json['password']
-        exp_password = db_handler.get_user_password(username)
+        user_address = request.json['user_address']
+        exp_password = hdd_db_handler.get_user_password(username)
 
         if exp_password and exp_password == password:
 
-            user_id = db_handler.get_user_id_by_username(username)
-            exists_session = ram_db_handler.get_user_session(user_id)
-            session_id = exists_session if exists_session else str(uuid.uuid4())
-            ram_db_handler.insert_session_id(user_id, session_id)
+            user_id = hdd_db_handler.get_user_id_by_username(username)
+            session_id = get_or_create_user_session(user_id)
+            store_user_address_and_session(user_id, session_id, user_address)
+            create_task_user_online(user_id)
 
-            user_address = request.json['user_address']
-            ram_db_handler.insert_user_address(user_id, user_address)
-            address_list = ram_db_handler.get_user_address(user_id)
-            payload = (user_id, address_list)
-
-            queue.put(('user', payload))
             return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
         else:
@@ -53,7 +94,7 @@ def login():
 
 @app.route(f'{routes.USERS}<username>', methods=['GET'])
 def get_user_id(username):
-    user_id = db_handler.get_user_id_by_username(username)
+    user_id = hdd_db_handler.get_user_id_by_username(username)
 
     if user_id:
         return jsonify({'user_id': user_id})
@@ -66,25 +107,18 @@ def receive_msg():
 
     if request.json.get('sender_id'):
         sender_id = request.json.get('sender_id')
-        session_id = ram_db_handler.get_user_session(sender_id)
+        session_id = get_session_id(sender_id)
 
     else:
         return f'Invalid request.', 400
 
     if request.json.get('session_id') == session_id:
         receiver_id = request.json.get('receiver_id')
-        address_list = ram_db_handler.get_user_address(receiver_id)
+        create_task_send_msg(receiver_id, request.json)
+        return f'Message sent.', 200
 
     else:
         return f'Not authorized.', 400
-
-    payload = (address_list, request.json)
-    queue.put(('message', payload))
-
-    if address_list:
-        return f'Message sent.', 200
-    else:
-        return f'Message not sent.', 200
 
 
 if __name__ == '__main__':

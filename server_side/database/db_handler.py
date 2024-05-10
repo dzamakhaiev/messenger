@@ -145,6 +145,7 @@ class RAMDatabaseHandler(DatabaseHandler):
 
     def create_all_tables(self):
         self.create_sessions_table()
+        self.create_messages_table()
         self.create_user_address_table()
 
 
@@ -157,6 +158,7 @@ class HDDDatabaseHandler(DatabaseHandler):
 
     def create_all_tables(self):
         self.create_users_table()
+        self.create_sessions_table()
         self.create_user_address_table()
 
 
