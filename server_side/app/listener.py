@@ -13,12 +13,12 @@ current_dir = os.path.dirname(current_file)
 repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.insert(0, repo_dir)
 
-from server_side.database.db_handler import DatabaseHandler, RAMDatabaseHandler
+from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 from server_side.app.msg_manager import MessagesManager
 
 app = Flask(__name__)
 queue = Queue()
-db_handler = DatabaseHandler()
+db_handler = HDDDatabaseHandler()
 db_handler.create_all_tables()
 ram_db_handler = RAMDatabaseHandler()
 ram_db_handler.create_all_tables()

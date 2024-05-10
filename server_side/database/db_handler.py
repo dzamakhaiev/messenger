@@ -2,15 +2,20 @@ import os
 import sqlite3
 
 
-class RAMDatabaseHandler:
+class DatabaseHandler:
 
-    def __init__(self):
-        self.conn = sqlite3.connect(':memory:', check_same_thread=False)
+    def __init__(self, database):
+        self.conn = sqlite3.connect(database, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
-    def create_all_tables(self):
-        self.create_sessions_table()
-        self.create_user_address_table()
+    def create_users_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            phone TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL)
+            ''')
 
     def create_messages_table(self):
         self.cursor.execute('''
@@ -37,7 +42,6 @@ class RAMDatabaseHandler:
             (id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
             user_address TEXT NOT NULL UNIQUE,
-            status TEXT DEFAULT "Active",
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
@@ -83,43 +87,6 @@ class RAMDatabaseHandler:
                             (user_id, user_address))
         self.conn.commit()
 
-    def __del__(self):
-        self.cursor.close()
-        self.conn.close()
-
-
-class DatabaseHandler:
-
-    def __init__(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        db_path = os.path.join(current_dir, 'database.sqlite')
-
-        self.conn = sqlite3.connect(db_path)
-        self.cursor = self.conn.cursor()
-
-    def create_all_tables(self):
-        self.create_users_table()
-        self.create_user_address_table()
-
-    def create_users_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users
-            (id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            phone TEXT NOT NULL,
-            password TEXT NOT NULL)
-            ''')
-
-    def create_user_address_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_address
-            (id INTEGER PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            user_url TEXT NOT NULL,
-            status TEXT DEFAULT "Active",
-            last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
-
     def insert_user(self, username, phone_number, password='qwerty'):
         if self.is_user_exists(username=username):
             return
@@ -131,44 +98,12 @@ class DatabaseHandler:
                             (username, phone_number, password))
         self.conn.commit()
 
-    def insert_or_update_user_address(self, user_id, user_address):
-        result = self.cursor.execute('SELECT user_url FROM user_address '
-                                     'WHERE user_id = ? and user_url = ? and status = "Active"',
-                                     (user_id, user_address))
-        if result.fetchall():
-            return
-
-        result = self.cursor.execute('SELECT user_url FROM user_address '
-                                     'WHERE user_id = ? and user_url = ? and status = "Not available"',
-                                     (user_id, user_address))
-
-        if result.fetchall():
-            self.cursor.execute('UPDATE user_address SET status = "Active"'
-                                'WHERE user_id = ? and user_url = ?',
-                                (user_id, user_address))
-        else:
-            self.cursor.execute('INSERT INTO user_address ("user_id", "user_url") '
-                                'VALUES (?, ?)',
-                                (user_id, user_address))
-        self.conn.commit()
-
-    def deactivate_user_address(self, user_id, user_address):
-        self.cursor.execute('UPDATE user_address SET status = "Not available"'
-                            'WHERE user_id = ? and user_url = ?',
-                            (user_id, user_address))
-        self.conn.commit()
-
     def get_user_password(self, username):
         result = self.cursor.execute('SELECT password FROM users WHERE username = ?',
                                      (username,))
         result = result.fetchone()
         if result:
             return result[0]
-
-    def get_user_address(self, user_id):
-        result = self.cursor.execute('SELECT user_url, status FROM user_address WHERE user_id = ?',
-                                     (user_id,))
-        return result.fetchall()
 
     def get_user_id_by_username(self, username):
         result = self.cursor.execute('SELECT id FROM users WHERE username = ?',
@@ -203,16 +138,36 @@ class DatabaseHandler:
         self.conn.close()
 
 
+class RAMDatabaseHandler(DatabaseHandler):
+
+    def __init__(self):
+        super().__init__(':memory:')
+
+    def create_all_tables(self):
+        self.create_sessions_table()
+        self.create_user_address_table()
+
+
+class HDDDatabaseHandler(DatabaseHandler):
+
+    def __init__(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        db_path = os.path.join(current_dir, 'database.sqlite')
+        super().__init__(db_path)
+
+    def create_all_tables(self):
+        self.create_users_table()
+        self.create_user_address_table()
+
+
 if __name__ == '__main__':
-    # handler = DatabaseHandler()
-    # handler.create_users_table()
-    # handler.create_user_address_table()
-    #
-    # # Add test users
-    # handler.insert_user('user_1', '123456789')
-    # handler.insert_user('user_2', '987654321')
-    # handler.insert_or_update_user_address(1, 'http://127.0.0.1:6666')
-    # handler.insert_or_update_user_address(2, 'http://127.0.0.1:7777')
+    handler = HDDDatabaseHandler()
+    handler.create_users_table()
+    handler.create_user_address_table()
+
+    # Add test users
+    handler.insert_user('user_1', '123456789')
+    handler.insert_user('user_2', '987654321')
 
     ram_handler = RAMDatabaseHandler()
     ram_handler.create_messages_table()
