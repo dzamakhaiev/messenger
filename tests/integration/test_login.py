@@ -1,4 +1,3 @@
-import copy
 import unittest
 import requests
 import test_data

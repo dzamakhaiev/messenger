@@ -45,29 +45,26 @@ class DatabaseHandler:
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
-    def insert_message(self, sender_id, receiver_id, sender_username, message):
-        self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "sender_username", "message") '
-                            'VALUES (?, ?, ?, ?)',
-                            (sender_id, receiver_id, sender_username, message))
-        self.conn.commit()
 
-    def insert_session_id(self, user_id, session_id):
-        self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
-                            (user_id, session_id))
-        self.conn.commit()
 
     def get_user_messages(self, receiver_id):
         result = self.cursor.execute('SELECT * FROM messages WHERE user_receiver_id = ?',
                                      (receiver_id,))
         return result.fetchall()
 
-    def delete_user_messages(self, receiver_id):
-        self.cursor.execute('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
-        self.conn.commit()
+    def get_user_password(self, username):
+        result = self.cursor.execute('SELECT password FROM users WHERE username = ?',
+                                     (username,))
+        result = result.fetchone()
+        if result:
+            return result[0]
 
-    def delete_messages(self, message_ids):
-        self.cursor.execute('DELETE FROM messages WHERE id IN (?)', (message_ids,))
-        self.conn.commit()
+    def get_user_id_by_username(self, username):
+        result = self.cursor.execute('SELECT id FROM users WHERE username = ?',
+                                     (username,))
+        result = result.fetchone()
+        if result:
+            return result[0]
 
     def get_user_address(self, user_id):
         result = self.cursor.execute('SELECT user_address FROM user_address WHERE user_id = ?',
@@ -80,6 +77,8 @@ class DatabaseHandler:
         result = result.fetchone()
         if result:
             return result[0]
+
+
 
     def insert_user_address(self, user_id, user_address):
         self.cursor.execute('INSERT OR IGNORE INTO user_address ("user_id", "user_address") '
@@ -98,19 +97,16 @@ class DatabaseHandler:
                             (username, phone_number, password))
         self.conn.commit()
 
-    def get_user_password(self, username):
-        result = self.cursor.execute('SELECT password FROM users WHERE username = ?',
-                                     (username,))
-        result = result.fetchone()
-        if result:
-            return result[0]
+    def insert_message(self, sender_id, receiver_id, sender_username, message):
+        self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "sender_username", "message") '
+                            'VALUES (?, ?, ?, ?)',
+                            (sender_id, receiver_id, sender_username, message))
+        self.conn.commit()
 
-    def get_user_id_by_username(self, username):
-        result = self.cursor.execute('SELECT id FROM users WHERE username = ?',
-                                     (username,))
-        result = result.fetchone()
-        if result:
-            return result[0]
+    def insert_session_id(self, user_id, session_id):
+        self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
+                            (user_id, session_id))
+        self.conn.commit()
 
     def is_user_exists(self, user_id=None, username=None):
         if user_id:
@@ -132,6 +128,21 @@ class DatabaseHandler:
             return True
         else:
             return False
+
+    def is_session_exists(self, session_id):
+        result = self.cursor.execute('SELECT session_id FROM sessions WHERE session_id = ?',
+                                     (session_id,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+
+    def delete_user_messages(self, receiver_id):
+        self.cursor.execute('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
+        self.conn.commit()
+
+    def delete_messages(self, message_ids):
+        self.cursor.execute('DELETE FROM messages WHERE id IN (?)', (message_ids,))
+        self.conn.commit()
 
     def __del__(self):
         self.cursor.close()

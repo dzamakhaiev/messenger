@@ -72,12 +72,23 @@ def create_task_send_msg(user_id, request_json):
     queue.put(('message', payload))
 
 
+def check_session_exists(session_id):
+    session_id = ram_db_handler.is_session_exists(session_id)
+    if not session_id:
+        session_id = hdd_db_handler.is_session_exists(session_id)
+
+    if session_id:
+        return True
+    else:
+        return False
+
+
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
     try:
         user = UserLogin(**request.json)
     except ValidationError as e:
-        return f'Validation error.', 400
+        return settings.VALIDATION_ERROR, 400
 
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
@@ -95,8 +106,14 @@ def login():
 
 @app.route(f'{routes.USERS}', methods=['POST'])
 def get_user_id():
-    username = request.json.get('username')
-    user_id = hdd_db_handler.get_user_id_by_username(username)
+    session_id = request.json.get('session_id')
+    if not check_session_exists(session_id):
+        return settings.NOT_AUTHORIZED, 401
+
+    if username := request.json.get('username'):
+        user_id = hdd_db_handler.get_user_id_by_username(username)
+    else:
+        return settings.VALIDATION_ERROR, 400
 
     if user_id:
         return jsonify({'user_id': user_id})
@@ -109,15 +126,15 @@ def receive_msg():
     try:
         msg = Message(**request.json)
     except ValidationError as e:
-        return f'Validation error: {e}', 400
+        return settings.VALIDATION_ERROR, 400
 
     session_id = get_session_id(msg.sender_id)
     if msg.session_id == session_id:
         create_task_send_msg(msg.receiver_id, request.json)
-        return f'Message sent.', 200
+        return settings.SUCCESSFUL, 200
 
     else:
-        return f'Not authorized.', 401
+        return settings.NOT_AUTHORIZED, 401
 
 
 if __name__ == '__main__':
