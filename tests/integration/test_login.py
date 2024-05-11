@@ -43,7 +43,7 @@ class LoginTest(unittest.TestCase):
                     self.assertEqual(401, response.status_code, msg=response.text)
                     self.assertEqual('Incorrect username or password.', response.text)
 
-    def test_incorrect_validation(self):
+    def test_validation_error(self):
         correct_json = {'username': test_data.USERNAME, 'password': test_data.PASSWORD, 'user_address': 'some_ip'}
 
         for field in ('username', 'password', 'user_address', 'username and password and user_address'):

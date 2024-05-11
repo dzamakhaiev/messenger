@@ -37,7 +37,7 @@ class UsersTest(unittest.TestCase):
         else:
             self.assertEqual(404, response.status_code, msg=response.text)
 
-    def test_get_user_id_negative(self):
+    def test_validation_error(self):
         incorrect_json = {'session_id': self.session_id}
         response = post_request(self.users_url, incorrect_json)
 

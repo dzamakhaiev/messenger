@@ -69,7 +69,7 @@ def send_message():
 
     if text:
         json_dict = {'message': text, 'sender_id': MY_USER_ID, 'sender_username': MY_USERNAME,
-                     'receiver_id': COMPANION_USER_ID, 'sender_address': LISTENER_URL, 'session_id': MY_SESSION_ID}
+                     'receiver_id': COMPANION_USER_ID, 'session_id': MY_SESSION_ID}
 
         response = sender.message_request(json_dict)
         if response and response.status_code == 200:
