@@ -24,7 +24,7 @@ class ClientSender:
         return response
 
     def message_request(self, json_dict, url=SERVER_URL + MESSAGES):
-        json_dict['send_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        json_dict['send_date'] = datetime.now().strftime(settings.DATETIME_FORMAT)
         response = self.post_request(url, json_dict)
         return response
 
