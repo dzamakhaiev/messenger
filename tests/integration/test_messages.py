@@ -42,7 +42,7 @@ class MessagesTest(unittest.TestCase):
     def test_validation_error(self):
         for field in ['message', 'sender_id', 'sender_username', 'receiver_id', 'session_id', 'send_date']:
 
-            with self.subTest(f'Login with no {field}'):
+            with self.subTest(f'Send message with no {field} field'):
                 incorrect_json = remove_json_field(self.correct_json, field)
                 response = post_request(self.messages_url, incorrect_json)
 
