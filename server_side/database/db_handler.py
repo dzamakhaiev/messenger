@@ -41,7 +41,7 @@ class DatabaseHandler:
             CREATE TABLE IF NOT EXISTS user_address
             (id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
-            user_address TEXT NOT NULL UNIQUE,
+            user_address TEXT NOT NULL,
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 

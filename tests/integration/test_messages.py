@@ -1,6 +1,7 @@
 import unittest
 import requests
 import test_data
+from copy import copy
 from time import sleep
 from queue import Queue
 from datetime import datetime
@@ -9,6 +10,7 @@ from helpers.network import post_request
 from helpers.data import corrupt_json_field, remove_json_field
 from client_side.backend.listener import run_listener
 from client_side.backend.settings import LISTENER_URL
+from server_side.database.db_handler import HDDDatabaseHandler
 
 
 class MessagesTest(unittest.TestCase):
@@ -18,6 +20,8 @@ class MessagesTest(unittest.TestCase):
         cls.login_url = url + test_data.LOGIN
         cls.users_url = url + test_data.USERS
         cls.messages_url = url + test_data.MESSAGES
+        cls.db_handler = HDDDatabaseHandler()
+        cls.new_username = 'new_user'
 
     def setUp(self):
         correct_json = {'username': test_data.USERNAME, 'password': test_data.PASSWORD, 'user_address': 'some_ip'}
@@ -36,10 +40,18 @@ class MessagesTest(unittest.TestCase):
                              'send_date': datetime.now().strftime(test_data.DATETIME_FORMAT)}
 
     def log_in_as_another_user(self, url=LISTENER_URL):
-        # Store listener address in DB
-        correct_json = {'username': test_data.ANOTHER_USER, 'password': test_data.PASSWORD, 'user_address': url}
+        # Create new user
+        self.db_handler.insert_user(username=self.new_username, phone_number='11112222')
+
+        # Store listener address in DB during login operation
+        correct_json = {'username': self.new_username, 'password': test_data.PASSWORD, 'user_address': url}
         response = post_request(self.login_url, correct_json)
-        pass
+
+        # Copy json template for new user
+        if response:
+            self.new_user_id = response.json()['user_id']
+            self.msg_json = copy(self.correct_json)
+            self.msg_json['receiver_id'] = self.new_user_id
 
     def test_send_message_to_offline_user(self):
         response = post_request(self.messages_url, self.correct_json)
@@ -57,8 +69,8 @@ class MessagesTest(unittest.TestCase):
         self.log_in_as_another_user()
 
         # Send message to another user
-        response = post_request(self.messages_url, self.correct_json)
-        sleep(0.2)
+        sleep(1)
+        response = post_request(self.messages_url, self.msg_json)
 
         if isinstance(response, requests.ConnectionError):
             self.fail(response)
@@ -92,6 +104,9 @@ class MessagesTest(unittest.TestCase):
 
                 else:
                     self.assertEqual(code, response.status_code, msg=response.text)
+
+    def tearDown(self):
+        self.db_handler.delete_user(username=self.new_username)
 
 
 if __name__ == '__main__':

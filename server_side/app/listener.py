@@ -15,7 +15,7 @@ repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.insert(0, repo_dir)
 
 from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
-from server_side.app.msg_manager import MessagesManager
+from server_side.app.msg_manager import MessagesManager, send_message, send_message_by_list
 from server_side.app.models import UserLogin, Message
 
 app = Flask(__name__)
@@ -128,7 +128,7 @@ def login():
         session_id = get_or_create_user_session(user_id)
         store_user_address_and_session(user_id, session_id, user.user_address)
 
-        create_task_user_online(user_id)
+        # create_task_user_online(user_id)
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
     else:
@@ -166,7 +166,9 @@ def receive_msg():
     session_id = get_session_id(msg.sender_id)
 
     if msg.session_id == session_id and msg.sender_username == username:
-        create_task_send_msg(msg.receiver_id, request.json)
+        # create_task_send_msg(msg.receiver_id, request.json)
+        address_list = get_user_address(msg.receiver_id)
+        send_message_by_list(address_list, request.json)
         return settings.SUCCESSFUL, 200
 
     else:
@@ -174,11 +176,11 @@ def receive_msg():
 
 
 if __name__ == '__main__':
-    msg_manager = MessagesManager(queue)
-    stop_event = Event()
-    t = Thread(target=msg_manager.run_inf_loop, args=(stop_event, ))
-    t.start()
+    # msg_manager = MessagesManager(queue)
+    # stop_event = Event()
+    # t = Thread(target=msg_manager.run_inf_loop, args=(stop_event, ))
+    # t.start()
 
     app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False, threaded=False)
-    stop_event.set()
-    t.join()
+    # stop_event.set()
+    # t.join()
