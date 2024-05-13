@@ -141,6 +141,13 @@ class DatabaseHandler:
         self.cursor.execute('DELETE FROM messages WHERE id IN (?)', (message_ids,))
         self.conn.commit()
 
+    def delete_user(self, user_id=None, username=None):
+        if user_id:
+            self.cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
+        elif username:
+            self.cursor.execute('DELETE FROM users WHERE username = ?', (username,))
+        self.conn.commit()
+
     def __del__(self):
         self.cursor.close()
         self.conn.close()
