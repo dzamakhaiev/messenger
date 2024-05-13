@@ -65,7 +65,7 @@ class MessagesTest(unittest.TestCase):
 
         else:
             self.assertEqual(200, response.status_code, msg=response.text)
-            self.assertEqual(receiver_q.qsize(), 1)
+            self.assertEqual(receiver_q.qsize(), 1, 'No message in queue.')
 
     def test_validation_error(self):
         for field in ['message', 'sender_id', 'sender_username', 'receiver_id', 'session_id', 'send_date']:
