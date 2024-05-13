@@ -45,8 +45,6 @@ class DatabaseHandler:
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
-
-
     def get_user_messages(self, receiver_id):
         result = self.cursor.execute('SELECT * FROM messages WHERE user_receiver_id = ?',
                                      (receiver_id,))
@@ -59,12 +57,21 @@ class DatabaseHandler:
         if result:
             return result[0]
 
-    def get_user_id_by_username(self, username):
-        result = self.cursor.execute('SELECT id FROM users WHERE username = ?',
-                                     (username,))
+    def get_username(self, user_id):
+        result = self.cursor.execute('SELECT username FROM users WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
+        else:
+            return ''
+
+    def get_user_id(self, username):
+        result = self.cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+        else:
+            return None
 
     def get_user_address(self, user_id):
         result = self.cursor.execute('SELECT user_address FROM user_address WHERE user_id = ?',
@@ -78,8 +85,6 @@ class DatabaseHandler:
         if result:
             return result[0]
 
-
-
     def insert_user_address(self, user_id, user_address):
         self.cursor.execute('INSERT OR IGNORE INTO user_address ("user_id", "user_address") '
                             'VALUES (?, ?)',
@@ -87,13 +92,7 @@ class DatabaseHandler:
         self.conn.commit()
 
     def insert_user(self, username, phone_number, password='qwerty'):
-        if self.is_user_exists(username=username):
-            return
-
-        if self.is_phone_exists(phone_number):
-            return
-
-        self.cursor.execute('INSERT INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
+        self.cursor.execute('INSERT OR IGNORE INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
                             (username, phone_number, password))
         self.conn.commit()
 
@@ -108,19 +107,17 @@ class DatabaseHandler:
                             (user_id, session_id))
         self.conn.commit()
 
-    def is_user_exists(self, user_id=None, username=None):
+    def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor.execute('SELECT id FROM users WHERE id = ?', (user_id,))
-            if result.fetchall():
-                return True
-
+            result = self.cursor.execute('SELECT id, username FROM users WHERE id = ?', (user_id,))
         elif username:
-            result = self.cursor.execute('SELECT username FROM users WHERE username = ?', (username,))
-            if result.fetchall():
-                return True
-
+            result = self.cursor.execute('SELECT id, username FROM users WHERE username = ?', (username,))
         else:
-            return False
+            return
+
+        result = result.fetchone()
+        if result:
+            return result
 
     def is_phone_exists(self, phone_number):
         result = self.cursor.execute('SELECT phone FROM users WHERE username = ?', (phone_number,))
@@ -157,7 +154,48 @@ class RAMDatabaseHandler(DatabaseHandler):
     def create_all_tables(self):
         self.create_sessions_table()
         self.create_messages_table()
+        self.create_usernames_table()
         self.create_user_address_table()
+
+    def create_usernames_table(self):
+        self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS usernames
+                    (user_id INTEGER UNIQUE,
+                    username TEXT NOT NULL UNIQUE)
+                    ''')
+
+    def insert_username(self, user_id, username):
+        self.cursor.execute('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
+                            (user_id, username))
+        self.conn.commit()
+
+    def get_user(self, user_id=None, username=None):
+        if user_id:
+            result = self.cursor.execute('SELECT * FROM usernames WHERE user_id = ?', (user_id,))
+        elif username:
+            result = self.cursor.execute('SELECT * FROM usernames WHERE username = ?', (username,))
+        else:
+            return
+
+        result = result.fetchone()
+        if result:
+            return result
+
+    def get_username(self, user_id):
+        result = self.cursor.execute('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+        else:
+            return ''
+
+    def get_user_id(self, username):
+        result = self.cursor.execute('SELECT user_id FROM usernames WHERE username = ?', (username,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+        else:
+            return
 
 
 class HDDDatabaseHandler(DatabaseHandler):

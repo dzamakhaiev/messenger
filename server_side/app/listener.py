@@ -52,6 +52,25 @@ def get_session_id(user_id):
         return hdd_db_handler.get_user_session(user_id)
 
 
+def get_user_id_by_username(username):
+    user_id = ram_db_handler.get_user_id(username)
+    if not user_id:
+        user_id = hdd_db_handler.get_user_id(username)
+
+    return user_id
+
+
+def get_username_by_user_id(user_id):
+    username = ram_db_handler.get_username(user_id)
+    if not username:
+        username = hdd_db_handler.get_username(user_id)
+
+    if username:
+        return username
+    else:
+        return ''
+
+
 def get_user_address(user_id):
     address_list = ram_db_handler.get_user_address(user_id)
     if not address_list:
@@ -83,6 +102,17 @@ def check_session_exists(session_id):
         return False
 
 
+def check_user_id(user_id):
+    result = ram_db_handler.get_user(user_id=user_id)
+    if not result:
+        result = hdd_db_handler.get_user(user_id=user_id)
+
+    if result:
+        return True
+    else:
+        return False
+
+
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
     try:
@@ -93,11 +123,12 @@ def login():
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
 
-        user_id = hdd_db_handler.get_user_id_by_username(user.username)
+        user_id = hdd_db_handler.get_user_id(user.username)
+        ram_db_handler.insert_username(user_id, user.username)  # store it in ram for further checks
         session_id = get_or_create_user_session(user_id)
         store_user_address_and_session(user_id, session_id, user.user_address)
-        create_task_user_online(user_id)
 
+        create_task_user_online(user_id)
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
     else:
@@ -111,7 +142,7 @@ def get_user_id():
         return settings.NOT_AUTHORIZED, 401
 
     if username := request.json.get('username'):
-        user_id = hdd_db_handler.get_user_id_by_username(username)
+        user_id = get_user_id_by_username(username)
     else:
         return settings.VALIDATION_ERROR, 400
 
@@ -128,8 +159,13 @@ def receive_msg():
     except ValidationError as e:
         return settings.VALIDATION_ERROR, 400
 
+    if not check_user_id(msg.receiver_id):
+        return settings.VALIDATION_ERROR, 400
+
+    username = get_username_by_user_id(msg.sender_id)
     session_id = get_session_id(msg.sender_id)
-    if msg.session_id == session_id:
+
+    if msg.session_id == session_id and msg.sender_username == username:
         create_task_send_msg(msg.receiver_id, request.json)
         return settings.SUCCESSFUL, 200
 

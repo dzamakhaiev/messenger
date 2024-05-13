@@ -52,6 +52,19 @@ class MessagesTest(unittest.TestCase):
                 else:
                     self.assertEqual(400, response.status_code, msg=response.text)
 
+    def test_data_error(self):
+        for field, code in [('sender_id', 400), ('sender_username', 401), ('receiver_id', 400), ('session_id', 401)]:
+
+            with self.subTest(f'Send message with incorrect {field} field'):
+                incorrect_json = corrupt_json_field(self.correct_json, field)
+                response = post_request(self.messages_url, incorrect_json)
+
+                if isinstance(response, requests.ConnectionError):
+                    self.fail(response)
+
+                else:
+                    self.assertEqual(code, response.status_code, msg=response.text)
+
 
 if __name__ == '__main__':
     unittest.main()
