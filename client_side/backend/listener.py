@@ -7,7 +7,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 
-def run_listener(queue: Queue, daemon=True):
+def run_listener(queue: Queue, daemon=True, port=settings.LISTENER_PORT):
 
     @app.route('/', methods=['POST'])
     def receive_msg():
@@ -17,7 +17,7 @@ def run_listener(queue: Queue, daemon=True):
 
     task_thread = Thread(daemon=daemon,
                          target=lambda: app.run(host=settings.LISTENER_HOST,
-                                                port=settings.LISTENER_PORT,
+                                                port=port,
                                                 debug=False,
                                                 threaded=True,
                                                 use_reloader=False))
