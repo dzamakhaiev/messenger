@@ -4,10 +4,8 @@ from queue import Queue
 from flask import Flask, request
 
 
-app = Flask(__name__)
-
-
 def run_listener(queue: Queue, daemon=True, port=settings.LISTENER_PORT):
+    app = Flask(__name__)
 
     @app.route('/', methods=['POST'])
     def receive_msg():
@@ -15,12 +13,7 @@ def run_listener(queue: Queue, daemon=True, port=settings.LISTENER_PORT):
             queue.put(request.json)
             return 'Message received.', 200
 
-    task_thread = Thread(daemon=daemon,
-                         target=lambda: app.run(host=settings.LISTENER_HOST,
-                                                port=port,
-                                                debug=False,
-                                                threaded=True,
-                                                use_reloader=False))
+    task_thread = Thread(daemon=daemon, target=lambda: app.run(host=settings.LISTENER_HOST, port=port, debug=False))
     task_thread.start()
 
 
