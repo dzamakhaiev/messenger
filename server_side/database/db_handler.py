@@ -45,6 +45,18 @@ class DatabaseHandler:
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
+    def get_user(self, user_id=None, username=None):
+        if user_id:
+            result = self.cursor.execute('SELECT id, username FROM users WHERE id = ?', (user_id,))
+        elif username:
+            result = self.cursor.execute('SELECT id, username FROM users WHERE username = ?', (username,))
+        else:
+            return
+
+        result = result.fetchone()
+        if result:
+            return result
+
     def get_user_messages(self, receiver_id):
         result = self.cursor.execute('SELECT * FROM messages WHERE user_receiver_id = ?',
                                      (receiver_id,))
@@ -106,18 +118,6 @@ class DatabaseHandler:
         self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
                             (user_id, session_id))
         self.conn.commit()
-
-    def get_user(self, user_id=None, username=None):
-        if user_id:
-            result = self.cursor.execute('SELECT id, username FROM users WHERE id = ?', (user_id,))
-        elif username:
-            result = self.cursor.execute('SELECT id, username FROM users WHERE username = ?', (username,))
-        else:
-            return
-
-        result = result.fetchone()
-        if result:
-            return result
 
     def is_phone_exists(self, phone_number):
         result = self.cursor.execute('SELECT phone FROM users WHERE username = ?', (phone_number,))

@@ -99,6 +99,10 @@ class Service:
 
         return address_list
 
+    def get_messages(self, user_id):
+        messages = self.ram_db_handler.get_user_messages(user_id)
+        return messages
+
     def check_session_exists(self, session_id):
         session_id = self.ram_db_handler.is_session_exists(session_id)
         if not session_id:

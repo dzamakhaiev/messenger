@@ -33,12 +33,17 @@ def login():
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
 
-        user_id = hdd_db_handler.get_user_id(user.username)
+        user_id = service.get_user_id_by_username(user.username)
         ram_db_handler.insert_username(user_id, user.username)  # store it in ram for further checks
         session_id = service.get_or_create_user_session(user_id)
         service.store_user_address_and_session(user_id, session_id, user.user_address)
 
-        # create_task_user_online(user_id)
+        # Check not received messages for current user
+        messages = service.get_messages(user_id)
+        if messages:
+            address_list = service.get_user_address(user_id)
+            service.send_messages_by_list(address_list, messages)
+
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
     else:
