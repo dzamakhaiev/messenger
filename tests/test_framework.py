@@ -43,9 +43,9 @@ class TestFramework(unittest.TestCase):
         self.db_handler.insert_user(username=self.new_username, phone_number=self.new_phone_number)
         self.new_user_id = self.db_handler.get_user_id(self.new_username)
 
-    def run_client_listener(self):
+    def run_client_listener(self, port):
         self.new_queue = Queue()
-        run_listener(self.new_queue, port=find_free_port())
+        run_listener(self.new_queue, port=port)
 
     def tearDown(self):
         if self.new_user_id:

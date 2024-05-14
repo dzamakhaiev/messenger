@@ -6,7 +6,7 @@ from tests.test_framework import TestFramework
 class UsersTest(TestFramework):
 
     def setUp(self):
-        json_login = {'username': test_data.USERNAME, 'password': test_data.PASSWORD, 'user_address': 'some_ip'}
+        login_json = {'username': test_data.USERNAME, 'password': test_data.PASSWORD, 'user_address': 'some_ip'}
         response = self.log_in(json_login)
         self.session_id = response.json()['session_id']
         self.correct_json = {'username': test_data.USERNAME, 'session_id': self.session_id}

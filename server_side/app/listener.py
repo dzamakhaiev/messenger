@@ -47,8 +47,8 @@ def login():
         messages = service.get_messages(user_id)
         if messages:
             address_list = service.get_user_address(user_id)
+            app.logger.info(f'Send messages to "{user_id}" user id after log in.')
             service.send_messages_by_list(address_list, messages)
-            app.logger.info(f'Messages sent to "{user_id}" user id after log in.')
 
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
@@ -88,8 +88,8 @@ def receive_msg():
 
     if msg.session_id == session_id and msg.sender_username == username:
         address_list = service.get_user_address(msg.receiver_id)
+        app.logger.info(f'Send message to "{msg.receiver_id}" user id.')
         service.send_message_by_list(address_list, request.json)
-        app.logger.info(f'Message sent to "{msg.receiver_id}" user id.')
         return settings.SUCCESSFUL, 200
 
     else:
