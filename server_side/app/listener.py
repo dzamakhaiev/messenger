@@ -37,8 +37,9 @@ def login():
 
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
-
         user_id = service.get_user_id_by_username(user.username)
+        app.logger.info(f'User "{user.username}" with user id "{user_id}" logged in.')
+
         ram_db_handler.insert_username(user_id, user.username)  # store it in ram for further checks
         session_id = service.get_or_create_user_session(user_id)
         service.store_user_address_and_session(user_id, session_id, user.user_address)
@@ -89,8 +90,10 @@ def receive_msg():
     if msg.session_id == session_id and msg.sender_username == username:
         address_list = service.get_user_address(msg.receiver_id)
         app.logger.info(f'Send message to "{msg.receiver_id}" user id.')
-        service.send_message_by_list(address_list, request.json)
-        return settings.SUCCESSFUL, 200
+
+        msg_state = service.send_message_by_list(address_list, request.json)
+        state = 'received' if msg_state else 'sent'
+        return settings.MESSAGE_STATE.format(state), 200
 
     else:
         return settings.NOT_AUTHORIZED, 401

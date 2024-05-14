@@ -2,6 +2,7 @@ import unittest
 import requests
 from time import sleep
 from queue import Queue
+from random import randint
 
 from helpers.network import post_request, find_free_port
 from client_side.backend.listener import run_listener
@@ -17,7 +18,7 @@ class TestFramework(unittest.TestCase):
         cls.messages_url = settings.SERVER_URL + settings.MESSAGES
         cls.db_handler = HDDDatabaseHandler()
         cls.new_user_id = None
-        cls.new_username = 'new_user'
+        cls.new_username = 'new_user_{}'
         cls.new_phone_number = '11112222'
         cls.new_queue = None
 
@@ -25,6 +26,7 @@ class TestFramework(unittest.TestCase):
         response = post_request(url, json_dict)
         if isinstance(response, requests.ConnectionError):
             self.fail('Request failed.')
+        sleep(0.1)
         return response
 
     def log_in(self, json_dict):
@@ -40,6 +42,7 @@ class TestFramework(unittest.TestCase):
         return response
 
     def create_new_user(self):
+        self.new_username = self.new_username.format(randint(0, 10**6))
         self.db_handler.insert_user(username=self.new_username, phone_number=self.new_phone_number)
         self.new_user_id = self.db_handler.get_user_id(self.new_username)
 

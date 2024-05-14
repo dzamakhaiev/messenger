@@ -1,14 +1,11 @@
 import unittest
 import test_data
 from copy import copy
-from time import sleep
-from queue import Queue
 from datetime import datetime
 
 from tests.test_framework import TestFramework
 from helpers.network import find_free_port
 from helpers.data import corrupt_json_field, remove_json_field
-from client_side.backend.listener import run_listener
 from client_side.backend.settings import LISTENER_HOST
 
 
@@ -44,6 +41,7 @@ class MessagesTest(TestFramework):
     def test_send_message_to_offline_user(self):
         response = self.send_message(self.correct_json)
         self.assertEqual(200, response.status_code, msg=response.text)
+        self.assertEqual(response.text, 'Message sent.')
 
     def test_send_message(self):
         # Prepare message to send
@@ -58,6 +56,7 @@ class MessagesTest(TestFramework):
         # Send message to another user
         response = self.send_message(self.msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
+        self.assertEqual(response.text, 'Message received.')
         self.assertEqual(self.new_queue.qsize(), 1, 'No message in queue.')
 
     def test_receive_msg_after_login(self):
@@ -68,6 +67,7 @@ class MessagesTest(TestFramework):
         # Send message to another user in offline
         response = self.send_message(self.msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
+        self.assertEqual(response.text, 'Message sent.')
 
         # Start listener for another user and log in as another user
         port = find_free_port()
