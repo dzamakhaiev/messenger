@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import routes
 import settings
 from pydantic import ValidationError
@@ -15,7 +16,11 @@ from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandl
 from server_side.app.service import Service
 from server_side.app.models import UserLogin, Message
 
+
+logging.basicConfig(format=settings.LOG_FORMAT)
 app = Flask(__name__)
+
+# Set up DB handlers
 hdd_db_handler = HDDDatabaseHandler()
 ram_db_handler = RAMDatabaseHandler()
 hdd_db_handler.create_all_tables()
@@ -43,6 +48,7 @@ def login():
         if messages:
             address_list = service.get_user_address(user_id)
             service.send_messages_by_list(address_list, messages)
+            app.logger.info(f'Messages sent to {user_id} user after log in.')
 
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 

@@ -1,7 +1,11 @@
-from client_side.backend import settings
-from threading import Thread
+import logging
 from queue import Queue
+from threading import Thread
 from flask import Flask, request
+from client_side.backend import settings
+
+
+logging.basicConfig(format=settings.LOG_FORMAT)
 
 
 def run_listener(queue: Queue, daemon=True, port=settings.LISTENER_PORT):
