@@ -1,5 +1,5 @@
 import unittest
-import test_data
+from tests import test_data
 from tests.test_framework import TestFramework
 from helpers.data import corrupt_json_field, remove_json_field
 

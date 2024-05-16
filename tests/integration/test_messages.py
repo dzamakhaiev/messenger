@@ -1,5 +1,5 @@
 import unittest
-import test_data
+from tests import test_data
 from copy import copy
 from datetime import datetime
 

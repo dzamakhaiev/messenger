@@ -1,5 +1,5 @@
 import unittest
-import test_data
+from tests import test_data
 from tests.test_framework import TestFramework
 
 
