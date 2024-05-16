@@ -23,11 +23,11 @@ class TestFramework(unittest.TestCase):
         cls.new_session_id = None
         cls.new_phone_number = '11112222'
 
-    def post_request(self, url, json_dict):
+    def post_request(self, url, json_dict, sleep_time=0.1):
         response = post_request(url, json_dict)
         if isinstance(response, requests.ConnectionError):
             self.fail('Request failed.')
-        sleep(0.1)
+        sleep(sleep_time)
         return response
 
     def log_in(self, json_dict):
@@ -44,8 +44,8 @@ class TestFramework(unittest.TestCase):
         response = self.post_request(url=self.users_url, json_dict=json_dict)
         return response
 
-    def send_message(self, json_dict):
-        response = self.post_request(url=self.messages_url, json_dict=json_dict)
+    def send_message(self, json_dict, sleep_time=0.1):
+        response = self.post_request(url=self.messages_url, json_dict=json_dict, sleep_time=sleep_time)
         return response
 
     def create_new_user(self):
