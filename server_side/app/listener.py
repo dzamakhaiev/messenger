@@ -100,4 +100,4 @@ def receive_msg():
 
 
 if __name__ == '__main__':
-    app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True)
+    app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False)

@@ -8,6 +8,7 @@ from helpers.network import post_request
 from client_side.backend.listener import run_listener
 from client_side.backend.settings import LISTENER_HOST
 from server_side.database.db_handler import HDDDatabaseHandler
+from tests import test_data
 from tests import settings
 
 
@@ -39,6 +40,11 @@ class TestFramework(unittest.TestCase):
         login_json['user_address'] = url
         response = self.log_in(login_json)
         return response
+
+    def log_in_as_another_user(self, listener_port):
+        login_json = {'username': self.new_username, 'password': test_data.PASSWORD}
+        response = self.log_in_with_listener_url(login_json, listener_port)
+        self.new_session_id = response.json()['session_id']
 
     def get_user_id(self, json_dict):
         response = self.post_request(url=self.users_url, json_dict=json_dict)

@@ -35,11 +35,6 @@ class MessagesTest(TestFramework):
         self.msg_json['session_id'] = session_id if session_id else self.session_id
         return copy(self.msg_json)
 
-    def log_in_as_another_user(self, listener_port):
-        login_json = {'username': self.new_username, 'password': test_data.PASSWORD}
-        response = self.log_in_with_listener_url(login_json, listener_port)
-        self.new_session_id = response.json()['session_id']
-
     def test_send_message_to_offline_user(self):
         response = self.send_message(self.correct_json)
         self.assertEqual(200, response.status_code, msg=response.text)
