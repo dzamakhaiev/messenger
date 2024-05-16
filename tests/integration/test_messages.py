@@ -28,15 +28,18 @@ class MessagesTest(TestFramework):
                              'receiver_id': self.another_user_id, 'session_id': self.session_id,
                              'send_date': datetime.now().strftime(test_data.DATETIME_FORMAT)}
 
-    def create_new_msg_json(self):
+    def create_new_msg_json(self, sender_id=None, username=None, receiver_id=None, session_id=None):
         self.msg_json = copy(self.correct_json)
-        self.msg_json['receiver_id'] = self.new_user_id
+        self.msg_json['sender_id'] = sender_id if sender_id else self.user_id
+        self.msg_json['sender_username'] = username if username else self.username
+        self.msg_json['receiver_id'] = receiver_id if receiver_id else self.new_user_id
+        self.msg_json['session_id'] = session_id if session_id else self.session_id
+        return copy(self.msg_json)
 
     def log_in_as_another_user(self, listener_port):
-        # Store listener address in DB during login operation
-        url = f'http://{LISTENER_HOST}:{listener_port}'
-        login_json = {'username': self.new_username, 'password': test_data.PASSWORD, 'user_address': url}
-        response = self.log_in(login_json)
+        login_json = {'username': self.new_username, 'password': test_data.PASSWORD}
+        response = self.log_in_with_listener_url(login_json, listener_port)
+        self.new_session_id = response.json()['session_id']
 
     def test_send_message_to_offline_user(self):
         response = self.send_message(self.correct_json)
@@ -44,23 +47,51 @@ class MessagesTest(TestFramework):
         self.assertEqual(response.text, 'Message sent.')
 
     def test_send_message(self):
-        # Prepare message to send
+        # Create new user and prepare message to send
         self.create_new_user()
         self.create_new_msg_json()
 
         # Start listener for another user and log in as another user
         port = find_free_port()
-        self.run_client_listener(port)
+        new_queue = self.run_client_listener(port)
         self.log_in_as_another_user(port)
 
         # Send message to another user
         response = self.send_message(self.msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
         self.assertEqual(response.text, 'Message received.')
-        self.assertEqual(self.new_queue.qsize(), 1, 'No message in queue.')
+        self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
+
+    def test_send_mutual_messages(self):
+        # Run listener for default user
+        default_port = find_free_port()
+        default_queue = self.run_client_listener(default_port)
+        login_json = {'username': self.username, 'password': test_data.PASSWORD}
+        self.log_in_with_listener_url(login_json, default_port)
+
+        # Create new user
+        self.create_new_user()
+        new_port = find_free_port()
+        new_queue = self.run_client_listener(new_port)
+        self.log_in_as_another_user(new_port)
+
+        # Create message json for first user to send to new user and to default user
+        msg_to_new_user = self.create_new_msg_json()
+        msg_to_default_user = self.create_new_msg_json(sender_id=self.new_user_id, username=self.new_username,
+                                                       receiver_id=self.user_id, session_id=self.new_session_id)
+
+        # Send messages to both users
+        response_new = self.send_message(msg_to_new_user)
+        response_default = self.send_message(msg_to_default_user)
+
+        # Check response and listener queue
+        self.assertEqual(200, response_new.status_code, msg=response_new.text)
+        self.assertEqual(200, response_default.status_code, msg=response_default.text)
+        self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
+        self.assertEqual(default_queue.qsize(), 1, 'No message in queue.')
 
     def test_receive_msg_after_login(self):
-        # Prepare message to send
+        # Create new user and prepare message to send
         self.create_new_user()
         self.create_new_msg_json()
 
@@ -71,9 +102,9 @@ class MessagesTest(TestFramework):
 
         # Start listener for another user and log in as another user
         port = find_free_port()
-        self.run_client_listener(port)
+        new_queue = self.run_client_listener(port)
         self.log_in_as_another_user(port)
-        self.assertEqual(self.new_queue.qsize(), 1, 'No message in queue.')
+        self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
 
     def test_validation_error(self):
         for field in ['message', 'sender_id', 'sender_username', 'receiver_id', 'session_id', 'send_date']:
