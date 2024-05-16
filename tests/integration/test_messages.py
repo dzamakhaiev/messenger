@@ -6,7 +6,6 @@ from datetime import datetime
 from tests.test_framework import TestFramework
 from helpers.network import find_free_port
 from helpers.data import corrupt_json_field, remove_json_field
-from client_side.backend.settings import LISTENER_HOST
 
 
 class MessagesTest(TestFramework):
