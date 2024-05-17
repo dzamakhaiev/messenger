@@ -9,8 +9,11 @@ global_lock = Lock()
 class DatabaseHandler:
 
     def __init__(self, database):
-        self.conn = sqlite3.connect(database, check_same_thread=False)
-        self.cursor = self.conn.cursor()
+        try:
+            self.conn = sqlite3.connect(database, check_same_thread=False)
+            self.cursor = self.conn.cursor()
+        except sqlite3.Error as e:
+            quit(e)
 
     def cursor_with_lock(self, query, args):
         try:
