@@ -60,9 +60,9 @@ class DatabaseHandler:
 
     def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor.execute('SELECT id, username FROM users WHERE id = ?', (user_id,))
+            result = self.cursor_with_lock('SELECT id, username FROM users WHERE id = ?', (user_id,))
         elif username:
-            result = self.cursor.execute('SELECT id, username FROM users WHERE username = ?', (username,))
+            result = self.cursor_with_lock('SELECT id, username FROM users WHERE username = ?', (username,))
         else:
             return
 
@@ -71,19 +71,19 @@ class DatabaseHandler:
             return result
 
     def get_user_messages(self, receiver_id):
-        result = self.cursor.execute('SELECT * FROM messages WHERE user_receiver_id = ?',
+        result = self.cursor_with_lock('SELECT * FROM messages WHERE user_receiver_id = ?',
                                      (receiver_id,))
         return result.fetchall()
 
     def get_user_password(self, username):
-        result = self.cursor.execute('SELECT password FROM users WHERE username = ?',
+        result = self.cursor_with_lock('SELECT password FROM users WHERE username = ?',
                                      (username,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_username(self, user_id):
-        result = self.cursor.execute('SELECT username FROM users WHERE user_id = ?', (user_id,))
+        result = self.cursor_with_lock('SELECT username FROM users WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -91,7 +91,7 @@ class DatabaseHandler:
             return ''
 
     def get_user_id(self, username):
-        result = self.cursor.execute('SELECT id FROM users WHERE username = ?', (username,))
+        result = self.cursor_with_lock('SELECT id FROM users WHERE username = ?', (username,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -99,12 +99,12 @@ class DatabaseHandler:
             return None
 
     def get_user_address(self, user_id):
-        result = self.cursor.execute('SELECT user_address FROM user_address WHERE user_id = ?',
+        result = self.cursor_with_lock('SELECT user_address FROM user_address WHERE user_id = ?',
                                      (user_id,))
         return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def get_user_session(self, user_id):
-        result = self.cursor.execute('SELECT session_id FROM sessions WHERE user_id = ?',
+        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE user_id = ?',
                                      (user_id,))
         result = result.fetchone()
         if result:
@@ -202,7 +202,7 @@ class RAMDatabaseHandler(DatabaseHandler):
             return result
 
     def get_username(self, user_id):
-        result = self.cursor.execute('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
+        result = self.cursor_with_lock('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -210,7 +210,7 @@ class RAMDatabaseHandler(DatabaseHandler):
             return ''
 
     def get_user_id(self, username):
-        result = self.cursor.execute('SELECT user_id FROM usernames WHERE username = ?', (username,))
+        result = self.cursor_with_lock('SELECT user_id FROM usernames WHERE username = ?', (username,))
         result = result.fetchone()
         if result:
             return result[0]
