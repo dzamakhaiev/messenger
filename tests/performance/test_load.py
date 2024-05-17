@@ -34,7 +34,7 @@ class LoadTest(TestFramework):
         messages_to_send = 100
 
         # Send N messages to offline user
-        self.send_n_messages(msg_json, responses)
+        self.send_n_messages(msg_json, responses, messages_to_send)
         self.assertEqual(len(responses), messages_to_send)
 
         for response in responses:
@@ -55,11 +55,56 @@ class LoadTest(TestFramework):
         messages_to_send = 100
 
         # Send N messages to online user
-        self.send_n_messages(msg_json, responses)
+        self.send_n_messages(msg_json, responses, messages_to_send)
         self.assertEqual(len(responses), messages_to_send)
         self.assertEqual(len(responses), new_queue.qsize())
 
         for response in responses:
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.text, 'Message received.')
+
+    def test_min_load_two_users(self):
+        # Start listener for default user
+        default_queue = self.run_client_listener(self.default_port)
+
+        # Create new user and start listener
+        self.create_new_user()
+        port = find_free_port()
+        new_queue = self.run_client_listener(port)
+        self.log_in_as_another_user(port)
+
+        # Prepare message json for both users
+        msg_json_default_user = {'message': 'test', 'sender_id': self.user_id, 'sender_username': self.username,
+                                 'receiver_id': self.new_user_id, 'session_id': self.session_id}
+        msg_json_new_user = {'message': 'test', 'sender_id': self.new_user_id, 'receiver_id': self.user_id,
+                             'sender_username': self.new_username, 'session_id': self.new_session_id}
+        default_responses = []
+        new_responses = []
+        messages_to_send = 10
+
+        # Send N messages to both online users
+        thread_for_default_user = Thread(target=self.send_n_messages,
+                                         args=(msg_json_default_user, default_responses, messages_to_send))
+        thread_for_new_user = Thread(target=self.send_n_messages,
+                                     args=(msg_json_new_user, new_responses, messages_to_send))
+
+        # Start and wait both threads
+        thread_for_default_user.start()
+        thread_for_new_user.start()
+        thread_for_default_user.join()
+        thread_for_new_user.join()
+
+        # Check both lists with responses
+        self.assertEqual(len(default_responses), messages_to_send)
+        self.assertEqual(len(new_responses), messages_to_send)
+        self.assertEqual(len(default_responses), default_queue.qsize())
+        self.assertEqual(len(new_responses), new_queue.qsize())
+
+        for response in default_responses:
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.text, 'Message received.')
+
+        for response in new_responses:
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message received.')
 
