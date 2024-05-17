@@ -1,5 +1,9 @@
 import os
 import sqlite3
+from threading import Lock
+
+
+global_lock = Lock()
 
 
 class DatabaseHandler:
@@ -7,6 +11,15 @@ class DatabaseHandler:
     def __init__(self, database):
         self.conn = sqlite3.connect(database, check_same_thread=False)
         self.cursor = self.conn.cursor()
+
+    def cursor_with_lock(self, query, args):
+        try:
+            global_lock.acquire(True)
+            result = self.cursor.execute(query, args)
+        finally:
+            global_lock.release()
+
+        return result
 
     def create_users_table(self):
         self.cursor.execute('''
@@ -178,9 +191,9 @@ class RAMDatabaseHandler(DatabaseHandler):
 
     def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor.execute('SELECT * FROM usernames WHERE user_id = ?', (user_id,))
+            result = self.cursor_with_lock('SELECT * FROM usernames WHERE user_id = ?', (user_id,))
         elif username:
-            result = self.cursor.execute('SELECT * FROM usernames WHERE username = ?', (username,))
+            result = self.cursor_with_lock('SELECT * FROM usernames WHERE username = ?', (username,))
         else:
             return
 
