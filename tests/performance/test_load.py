@@ -100,6 +100,38 @@ class LoadTest(TestFramework):
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message received.')
 
+    def test_min_load_multi_threads_to_one_user(self):
+        # Create new user and prepare message to send
+        new_user = self.create_new_user()
+        msg_json = self.create_new_msg_json(receiver_id=new_user.user_id)
+
+        # Start listener for new user and log in as new user
+        port = find_free_port()
+        new_queue = self.run_client_listener(port)
+        self.log_in_with_listener_url(new_user, port)
+
+        responses = []
+        threads = []
+        messages_to_send = 10
+        number_of_threads = 10
+
+        # Send messages in multiple threads to one user
+        for _ in range(number_of_threads):
+            t = Thread(target=self.send_n_messages, args=(msg_json, responses, messages_to_send))
+            threads.append(t)
+
+        # Start threads and wait for completion
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(len(responses), messages_to_send*number_of_threads)
+        self.assertEqual(len(responses), new_queue.qsize())
+        for response in responses:
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.text, 'Message received.')
+
 
 if __name__ == '__main__':
     unittest.main()

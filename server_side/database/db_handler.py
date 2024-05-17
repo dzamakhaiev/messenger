@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from time import sleep
 from threading import Lock
 
 
@@ -18,6 +19,7 @@ class DatabaseHandler:
     def cursor_with_lock(self, query, args):
         try:
             global_lock.acquire(True)
+            sleep(0.01)  # bottleneck of app
             result = self.cursor.execute(query, args)
         finally:
             global_lock.release()
