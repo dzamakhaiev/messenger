@@ -79,9 +79,11 @@ def receive_msg():
     try:
         msg = Message(**request.json)
     except ValidationError as e:
+        app.logger.error(e)
         return settings.VALIDATION_ERROR, 400
 
     if not service.check_user_id(msg.receiver_id):
+        app.logger.error(f'User id "{msg.receiver_id}" not found.')
         return settings.VALIDATION_ERROR, 400
 
     username = service.get_username_by_user_id(msg.sender_id)
