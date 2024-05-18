@@ -1,13 +1,17 @@
 import os
 import sqlite3
 from time import sleep
+from datetime import datetime, timedelta
 from threading import Lock
 
 
 global_lock = Lock()
+MIN_REQUEST_INTERVAL = timedelta(microseconds=10000)
 
 
 class DatabaseHandler:
+
+    last_request_time = datetime.now()
 
     def __init__(self, database):
         try:
@@ -16,10 +20,21 @@ class DatabaseHandler:
         except sqlite3.Error as e:
             quit(e)
 
+    def check_min_request_interval(self):
+        # Sleep to resolve bottleneck issue
+        now = datetime.now()
+        delta = now - self.last_request_time
+
+        if delta < MIN_REQUEST_INTERVAL:
+            seconds = MIN_REQUEST_INTERVAL.microseconds / 10 ** 6
+            sleep(seconds)
+
+        self.last_request_time = datetime.now()
+
     def cursor_with_lock(self, query, args):
         try:
             global_lock.acquire(True)
-            sleep(0.01)  # bottleneck of app
+            self.check_min_request_interval()
             result = self.cursor.execute(query, args)
         finally:
             global_lock.release()
@@ -109,8 +124,13 @@ class DatabaseHandler:
         return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def get_user_session(self, user_id):
-        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE user_id = ?',
-                                     (user_id,))
+        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE user_id = ?', (user_id,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+
+    def get_session(self, session_id):
+        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE session_id = ?', (session_id,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -136,20 +156,6 @@ class DatabaseHandler:
         self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
                             (user_id, session_id))
         self.conn.commit()
-
-    def is_phone_exists(self, phone_number):
-        result = self.cursor.execute('SELECT phone FROM users WHERE username = ?', (phone_number,))
-        if result.fetchall():
-            return True
-        else:
-            return False
-
-    def is_session_exists(self, session_id):
-        result = self.cursor.execute('SELECT session_id FROM sessions WHERE session_id = ?',
-                                     (session_id,))
-        result = result.fetchone()
-        if result:
-            return result[0]
 
     def delete_user_messages(self, receiver_id):
         self.cursor.execute('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
