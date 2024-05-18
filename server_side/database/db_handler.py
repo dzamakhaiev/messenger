@@ -103,7 +103,7 @@ class DatabaseHandler:
             return result[0]
 
     def get_username(self, user_id):
-        result = self.cursor_with_lock('SELECT username FROM users WHERE user_id = ?', (user_id,))
+        result = self.cursor_with_lock('SELECT username FROM users WHERE id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
