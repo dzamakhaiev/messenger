@@ -104,9 +104,9 @@ class Service:
         return messages
 
     def check_session_exists(self, session_id):
-        session_id = self.ram_db_handler.is_session_exists(session_id)
+        session_id = self.ram_db_handler.get_user_session(session_id)
         if not session_id:
-            session_id = self.hdd_db_handler.is_session_exists(session_id)
+            session_id = self.hdd_db_handler.get_user_session(session_id)
 
         if session_id:
             return True
