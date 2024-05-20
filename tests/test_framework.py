@@ -40,7 +40,7 @@ class TestFramework(unittest.TestCase):
     def post_request(self, url, json_dict, sleep_time=0.1):
         response = post_request(url, json_dict)
         if isinstance(response, requests.ConnectionError):
-            self.fail('Request failed.')
+            self.fail(f'Request failed: {response}')
         sleep(sleep_time)
         return response
 
