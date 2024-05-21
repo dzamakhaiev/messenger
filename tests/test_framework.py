@@ -7,7 +7,7 @@ from random import randint
 from datetime import datetime
 
 from helpers.network import post_request
-from helpers.data import create_username, create_phone_number
+from helpers.data import create_username, create_phone_number, create_password
 from client_side.backend.listener import run_listener
 from client_side.backend.settings import LISTENER_HOST
 from server_side.database.db_handler import HDDDatabaseHandler
@@ -72,11 +72,18 @@ class TestFramework(unittest.TestCase):
     def create_new_user(self):
         username = create_username()
         phone_number = create_phone_number()
-        self.db_handler.insert_user(username=username, phone_number=phone_number)
-        user_id = self.db_handler.get_user_id(username)
+        password = create_password(default=True)
+        user_json = {'username': username, 'phone_number': phone_number, 'password': password, 'request': 'create_user'}
 
-        user = User(user_id=user_id, username=username, phone_number=phone_number)
-        self.users.append(user)
+        response = self.users_request(user_json)
+        if response.status_code == 201:
+            user_id = response.json()['user_id']
+            user = User(user_id=user_id, username=username, phone_number=phone_number)
+            self.users.append(user)
+
+        else:
+            self.fail(response.text)
+
         return user
 
     def create_new_msg_json(self, **kwargs):
