@@ -2,10 +2,10 @@ import requests
 from datetime import datetime
 from client_side.backend import settings
 from server_side.app.routes import LOGIN, USERS, MESSAGES
-from server_side.app.settings import REST_API_HOST, REST_API_PORT
+from server_side.app.settings import REST_API_PORT
 
 
-SERVER_URL = f'http://{REST_API_HOST}:{REST_API_PORT}'
+SERVER_URL = f'http://localhost:{REST_API_PORT}'
 
 
 class ClientSender:
@@ -15,8 +15,8 @@ class ClientSender:
         try:
             response = requests.post(url, json=json_dict)
             return response
-        except requests.exceptions.ConnectionError:
-            pass
+        except requests.exceptions.ConnectionError as e:
+            print(e)
 
     def login_request(self, json_dict, url=SERVER_URL + LOGIN, listener_url=settings.LISTENER_URL):
         json_dict.update({'user_address': listener_url})
