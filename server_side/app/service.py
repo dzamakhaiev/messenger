@@ -4,17 +4,18 @@ import requests
 
 class Service:
 
-    def __init__(self, hdd_db_handler, ram_db_handler):
+    def __init__(self, hdd_db_handler, ram_db_handler, logger):
         self.hdd_db_handler = hdd_db_handler
         self.ram_db_handler = ram_db_handler
+        self.logger = logger
 
-    @staticmethod
-    def send_message(url, msg_json):
+    def send_message(self, url, msg_json):
         try:
             response = requests.post(url, json=msg_json)
+            self.logger.info(f'Message sent with status code: {response.status_code}')
             return response
-        except requests.exceptions.ConnectionError:
-            pass
+        except requests.exceptions.ConnectionError as e:
+            self.logger.error(f'Message sent with error: {e}')
 
     def send_message_by_list(self, address_list, msg_json):
         message_received = False

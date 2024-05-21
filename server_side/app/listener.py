@@ -25,7 +25,7 @@ hdd_db_handler = HDDDatabaseHandler()
 ram_db_handler = RAMDatabaseHandler()
 hdd_db_handler.create_all_tables()
 ram_db_handler.create_all_tables()
-service = Service(hdd_db_handler, ram_db_handler)
+service = Service(hdd_db_handler, ram_db_handler, app.logger)
 
 
 def create_user(request_json: dict):

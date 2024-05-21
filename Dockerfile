@@ -1,5 +1,5 @@
 FROM python:3-alpine
-EXPOSE 5000
+EXPOSE 5000-5010
 COPY server_side /app/server_side
 COPY requirements.txt /app
 RUN rm /app/server_side/database/database.sqlite
