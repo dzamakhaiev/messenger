@@ -82,7 +82,7 @@ class MessagesTest(TestFramework):
     def test_validation_error(self):
         for field in ['message', 'sender_id', 'sender_username', 'receiver_id', 'session_id', 'send_date']:
 
-            with self.subTest(f'Send message with no {field} field'):
+            with self.subTest(f'Send message with no "{field}" field.'):
                 incorrect_json = remove_json_field(self.msg_json, field)
                 response = self.send_message(incorrect_json)
                 self.assertEqual(400, response.status_code, msg=response.text)
@@ -90,7 +90,7 @@ class MessagesTest(TestFramework):
     def test_data_error(self):
         for field, code in [('sender_id', 400), ('sender_username', 401), ('receiver_id', 400), ('session_id', 401)]:
 
-            with self.subTest(f'Send message with incorrect {field} field'):
+            with self.subTest(f'Send message with incorrect "{field}" field.'):
                 incorrect_json = corrupt_json_field(self.msg_json, field)
                 response = self.send_message(incorrect_json)
                 self.assertEqual(code, response.status_code, msg=response.text)

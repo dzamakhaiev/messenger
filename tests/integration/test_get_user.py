@@ -1,6 +1,7 @@
 import unittest
 from tests import test_data
 from tests.test_framework import TestFramework
+from helpers.data import corrupt_json_field, remove_json_field
 
 
 class UsersTest(TestFramework):
@@ -9,7 +10,7 @@ class UsersTest(TestFramework):
         login_json = {'username': test_data.USERNAME, 'password': test_data.PASSWORD, 'user_address': 'some_ip'}
         response = self.log_in(login_json)
         self.session_id = response.json()['session_id']
-        self.correct_json = {'username': test_data.USERNAME, 'session_id': self.session_id}
+        self.correct_json = {'username': test_data.USERNAME, 'session_id': self.session_id, 'request': 'get_user'}
 
     def test_get_user_id_positive(self):
         response = self.get_user_id(self.correct_json)
@@ -18,14 +19,16 @@ class UsersTest(TestFramework):
         self.assertEqual(test_data.USER_ID, user_id, f'Incorrect user_id: {user_id}')
 
     def test_get_no_user(self):
-        incorrect_json = {'username': 'some user', 'session_id': self.session_id}
+        incorrect_json = corrupt_json_field(self.correct_json, 'username')
         response = self.get_user_id(incorrect_json)
         self.assertEqual(404, response.status_code, msg=response.text)
 
     def test_validation_error(self):
-        incorrect_json = {'session_id': self.session_id}
-        response = self.get_user_id(incorrect_json)
-        self.assertEqual(400, response.status_code, msg=response.text)
+        for field, code in (('session_id', 401), ('request', 400)):
+            with self.subTest(f'Get user with incorrect "{field}" field.'):
+                incorrect_json = corrupt_json_field(self.correct_json, field)
+                response = self.get_user_id(incorrect_json)
+                self.assertEqual(code, response.status_code, msg=response.text)
 
 
 if __name__ == '__main__':

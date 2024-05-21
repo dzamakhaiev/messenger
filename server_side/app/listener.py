@@ -28,6 +28,23 @@ ram_db_handler.create_all_tables()
 service = Service(hdd_db_handler, ram_db_handler)
 
 
+def create_user(request_json: dict):
+    pass
+
+
+def get_user(request_json: dict):
+
+    if username := request_json.get('username'):
+        user_id = service.get_user_id_by_username(username)
+    else:
+        return settings.VALIDATION_ERROR, 400
+
+    if user_id:
+        return jsonify({'user_id': user_id})
+    else:
+        return f'User "{username}" not found', 404
+
+
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
     try:
@@ -58,24 +75,21 @@ def login():
 
 
 @app.route(f'{routes.USERS}', methods=['POST'])
-def get_user_id():
+def users():
     session_id = request.json.get('session_id')
     if not service.check_session_exists(session_id):
         return settings.NOT_AUTHORIZED, 401
 
-    if username := request.json.get('username'):
-        user_id = service.get_user_id_by_username(username)
+    if request.json.get('request') and request.json.get('request') == 'create_user':
+        return create_user(request.json)
+    elif request.json.get('request') and request.json.get('request') == 'get_user':
+        return get_user(request.json)
     else:
         return settings.VALIDATION_ERROR, 400
 
-    if user_id:
-        return jsonify({'user_id': user_id})
-    else:
-        return f'User "{username}" not found', 404
-
 
 @app.route(routes.MESSAGES, methods=['POST'])
-def receive_msg():
+def messages():
     try:
         msg = Message(**request.json)
     except ValidationError as e:
