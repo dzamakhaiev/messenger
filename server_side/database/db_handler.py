@@ -241,6 +241,10 @@ class HDDDatabaseHandler(DatabaseHandler):
         self.create_sessions_table()
         self.create_user_address_table()
 
+        # Add test users
+        self.insert_user('user_1', '123456789')
+        self.insert_user('user_2', '987654321')
+
 
 if __name__ == '__main__':
     handler = HDDDatabaseHandler()
