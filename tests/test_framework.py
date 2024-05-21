@@ -64,6 +64,8 @@ class TestFramework(unittest.TestCase):
 
         if response.status_code == 200:
             user.session_id = response.json()['session_id']
+        else:
+            self.fail(response.text)
         return response
 
     def create_new_user(self):
