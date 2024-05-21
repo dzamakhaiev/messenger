@@ -7,6 +7,7 @@ from random import randint
 from datetime import datetime
 
 from helpers.network import post_request
+from helpers.data import create_username, create_phone_number
 from client_side.backend.listener import run_listener
 from client_side.backend.settings import LISTENER_HOST
 from server_side.database.db_handler import HDDDatabaseHandler
@@ -48,7 +49,7 @@ class TestFramework(unittest.TestCase):
         response = self.post_request(url=self.login_url, json_dict=json_dict)
         return response
 
-    def get_user_id(self, json_dict):
+    def users_request(self, json_dict):
         response = self.post_request(url=self.users_url, json_dict=json_dict)
         return response
 
@@ -69,8 +70,8 @@ class TestFramework(unittest.TestCase):
         return response
 
     def create_new_user(self):
-        username = 'user_{}'.format(randint(1, 666))
-        phone_number = '{}'.format(randint(10 ** 9, 10 ** 10 - 1))
+        username = create_username()
+        phone_number = create_phone_number()
         self.db_handler.insert_user(username=username, phone_number=phone_number)
         user_id = self.db_handler.get_user_id(username)
 

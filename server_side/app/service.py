@@ -47,6 +47,12 @@ class Service:
         messages_to_delete = ','.join([str(msg) for msg in messages_to_delete])
         self.ram_db_handler.delete_messages(messages_to_delete)
 
+    def create_user(self, user):
+        self.hdd_db_handler.insert_user(user.username, user.phone_number, user.password)
+        user_id = self.hdd_db_handler.get_user_id(user.username)
+        self.ram_db_handler.insert_username(user_id, user.username)
+        return user_id
+
     def store_message_to_db(self, msg_json):
         self.ram_db_handler.insert_message(msg_json.get('sender_id'),
                                            msg_json.get('receiver_id'),

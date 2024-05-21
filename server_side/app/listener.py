@@ -14,7 +14,7 @@ sys.path.insert(0, repo_dir)
 
 from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 from server_side.app.service import Service
-from server_side.app.models import UserLogin, Message
+from server_side.app.models import UserLogin, User, Message
 
 
 logging.basicConfig(format=settings.LOG_FORMAT)
@@ -29,7 +29,17 @@ service = Service(hdd_db_handler, ram_db_handler)
 
 
 def create_user(request_json: dict):
-    pass
+    try:
+        user = User(**request_json)
+    except ValidationError as e:
+        return settings.VALIDATION_ERROR, 400
+
+    username = hdd_db_handler.get_user(username=user.username)
+    if username:
+        return 'Username already exists.', 400
+    else:
+        user_id = service.create_user(user)
+        return jsonify({'user_id': user_id}), 201
 
 
 def get_user(request_json: dict):
@@ -76,20 +86,22 @@ def login():
 
 @app.route(f'{routes.USERS}', methods=['POST'])
 def users():
-    session_id = request.json.get('session_id')
-    if not service.check_session_exists(session_id):
-        return settings.NOT_AUTHORIZED, 401
-
     if request.json.get('request') and request.json.get('request') == 'create_user':
         return create_user(request.json)
+
     elif request.json.get('request') and request.json.get('request') == 'get_user':
+
+        session_id = request.json.get('session_id')
+        if not service.check_session_exists(session_id):
+            return settings.NOT_AUTHORIZED, 401
         return get_user(request.json)
+
     else:
         return settings.VALIDATION_ERROR, 400
 
 
 @app.route(routes.MESSAGES, methods=['POST'])
-def messages():
+def process_messages():
     try:
         msg = Message(**request.json)
     except ValidationError as e:

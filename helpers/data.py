@@ -1,4 +1,6 @@
 import copy
+import string
+from random import randint, choice
 
 
 def corrupt_json_field(json_dict: dict, incorrect_field: str, value='incorrect'):
@@ -29,3 +31,20 @@ def remove_json_field(json_dict: dict, remove_field: str):
             incorrect_dict.pop(field)
 
     return incorrect_dict
+
+
+def create_username():
+    return 'user_{}'.format(randint(1, 666))
+
+
+def create_phone_number():
+    return '{}'.format(randint(10 ** 9, 10 ** 10 - 1))
+
+
+def create_password(length=10):
+    password = ''
+    for _ in range(length//2):
+        password += string.ascii_letters
+        password += str(randint(0, 9))
+
+    return password
