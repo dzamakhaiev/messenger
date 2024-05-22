@@ -17,3 +17,7 @@ def post_request(url, json_dict=None):
         return response
     except requests.exceptions.ConnectionError as e:
         return e
+
+
+def get_local_ip():
+    return socket.gethostbyname(socket.gethostname())

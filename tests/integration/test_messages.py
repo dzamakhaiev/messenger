@@ -1,6 +1,5 @@
 import unittest
 from tests import test_data
-from copy import copy
 from datetime import datetime
 
 from tests.test_framework import TestFramework

@@ -1,5 +1,7 @@
 import uuid
+import socket
 import requests
+from urllib.parse import urlparse
 
 
 class Service:
@@ -9,8 +11,19 @@ class Service:
         self.ram_db_handler = ram_db_handler
         self.logger = logger
 
+    @staticmethod
+    def check_url(url: str):
+        parsed_url = urlparse(url)
+        local_ip = socket.gethostbyname(socket.gethostname())
+        if parsed_url.hostname == local_ip:
+            url.replace(parsed_url.hostname, 'localhost')
+
+        return url
+
     def send_message(self, url, msg_json):
         try:
+            url = self.check_url(url)
+            self.logger.info(f'Sent message to url: {url}')
             response = requests.post(url, json=msg_json)
             self.logger.info(f'Message sent with status code: {response.status_code}')
             return response

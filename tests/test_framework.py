@@ -3,13 +3,11 @@ import requests
 from copy import copy
 from time import sleep
 from queue import Queue
-from random import randint
 from datetime import datetime
 
-from helpers.network import post_request
+from helpers.network import post_request, get_local_ip
 from helpers.data import create_username, create_phone_number, create_password
 from client_side.backend.listener import run_listener
-from client_side.backend.settings import LISTENER_HOST
 from server_side.database.db_handler import HDDDatabaseHandler
 from tests import test_data
 from tests import settings
@@ -58,7 +56,8 @@ class TestFramework(unittest.TestCase):
         return response
 
     def log_in_with_listener_url(self, user: User, listener_port):
-        user.user_address = f'http://{LISTENER_HOST}:{listener_port}'
+        local_host_ip = get_local_ip()
+        user.user_address = f'http://{local_host_ip}:{listener_port}'
         user.listener_port = listener_port
         login_json = {'username': user.username, 'password': user.password, 'user_address': user.user_address}
         response = self.log_in(login_json)

@@ -11,7 +11,6 @@ repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.insert(0, repo_dir)
 
 from client_side.gui import settings
-from client_side.backend.settings import LISTENER_URL
 from client_side.backend.listener import run_listener
 from client_side.backend.sender import ClientSender
 
