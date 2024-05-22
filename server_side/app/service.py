@@ -4,6 +4,9 @@ import requests
 from urllib.parse import urlparse
 
 
+LOCAL_IP = socket.gethostbyname(socket.gethostname())
+
+
 class Service:
 
     def __init__(self, hdd_db_handler, ram_db_handler, logger):
@@ -14,8 +17,7 @@ class Service:
     @staticmethod
     def check_url(url: str):
         parsed_url = urlparse(url)
-        local_ip = socket.gethostbyname(socket.gethostname())
-        if parsed_url.hostname == local_ip:
+        if parsed_url.hostname == LOCAL_IP:
             url.replace(parsed_url.hostname, 'localhost')
 
         return url
