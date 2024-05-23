@@ -33,6 +33,8 @@ type_widget = Text(master=main_window, height=10)
 
 sender = ClientSender()
 queue = Queue()
+run_listener(queue)
+
 
 response = sender.login_request({'username': MY_USERNAME, 'password': MY_PASSWORD})
 if response and response.status_code == 200:
@@ -83,8 +85,6 @@ def put_message(json_dict):
 
 
 if __name__ == "__main__":
-    # Start http listener
-    run_listener(queue)
 
     # Main window
     main_window.title(f'{settings.WINDOW_TITLE}: {MY_USERNAME}')
