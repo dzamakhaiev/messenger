@@ -4,6 +4,7 @@ COPY server_side /app/server_side
 COPY requirements.txt /app
 RUN rm /app/server_side/database/database.sqlite
 VOLUME ["/app/server_side/database"]
+VOLUME ["/app/server_side/logs"]
 WORKDIR /app
 RUN pip3 install -r requirements.txt --break-system-packages
 WORKDIR /app/server_side/app/
