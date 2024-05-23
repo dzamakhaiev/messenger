@@ -26,7 +26,7 @@ class Service:
         try:
             url = self.check_url(url)
             self.logger.info(f'Sent message to url: {url}')
-            response = requests.post(url, json=msg_json)
+            response = requests.post(url, json=msg_json, timeout=5)
             self.logger.info(f'Message sent with status code: {response.status_code}')
             return response
         except requests.exceptions.ConnectionError as e:
