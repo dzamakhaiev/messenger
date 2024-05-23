@@ -6,7 +6,7 @@ from server_side.app.routes import LOGIN, USERS, MESSAGES
 from server_side.app.settings import REST_API_PORT
 
 
-SERVER_URL = f'http://localhost:{REST_API_PORT}'
+SERVER_URL = f'http://192.168.50.99:{REST_API_PORT}'
 LISTENER_URL = f'http://{get_local_ip()}:{settings.LISTENER_PORT}'
 
 
