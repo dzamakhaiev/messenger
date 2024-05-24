@@ -1,8 +1,17 @@
 import os
 import sqlite3
+import logging
+import settings
 from time import sleep
-from datetime import datetime, timedelta
 from threading import Lock
+from datetime import datetime, timedelta
+
+database_logger = logging.getLogger(__name__)
+database_logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter(settings.LOG_FORMAT)
+handler = logging.FileHandler(f"../logs/database.log")
+handler.setFormatter(formatter)
+database_logger.addHandler(handler)
 
 
 global_lock = Lock()
@@ -15,6 +24,7 @@ class DatabaseHandler:
 
     def __init__(self, database):
         try:
+            database_logger.info('Connection opened.')
             self.conn = sqlite3.connect(database, check_same_thread=False)
             self.cursor = self.conn.cursor()
         except sqlite3.Error as e:
@@ -33,13 +43,27 @@ class DatabaseHandler:
 
     def cursor_with_lock(self, query, args):
         try:
+            database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
             global_lock.acquire(True)
             self.check_min_request_interval()
             result = self.cursor.execute(query, args)
+
         finally:
             global_lock.release()
 
         return result
+
+    def cursor_with_commit(self, query, args=None, many=False):
+        database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
+        if args is None:
+            args = []
+
+        if many:
+            self.cursor.executemany(query, args)
+        else:
+            self.cursor.execute(query, args)
+
+        self.conn.commit()
 
     def create_users_table(self):
         self.cursor.execute('''
@@ -142,55 +166,47 @@ class DatabaseHandler:
         return result.fetchall()
 
     def insert_user_address(self, user_id, user_address):
-        self.cursor.execute('INSERT OR IGNORE INTO user_address ("user_id", "user_address") '
-                            'VALUES (?, ?)',
-                            (user_id, user_address))
-        self.conn.commit()
+        self.cursor_with_commit('INSERT OR IGNORE INTO user_address ("user_id", "user_address") VALUES (?, ?)',
+                                (user_id, user_address))
 
     def insert_user(self, username, phone_number, password='qwerty'):
-        self.cursor.execute('INSERT OR IGNORE INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
+        self.cursor_with_commit('INSERT OR IGNORE INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
                             (username, phone_number, password))
-        self.conn.commit()
 
     def insert_message(self, sender_id, receiver_id, sender_username, message):
-        self.cursor.execute('INSERT INTO messages ("user_sender_id", "user_receiver_id", "sender_username", "message") '
-                            'VALUES (?, ?, ?, ?)',
-                            (sender_id, receiver_id, sender_username, message))
-        self.conn.commit()
+        self.cursor_with_commit('INSERT INTO messages '
+                                '("user_sender_id", "user_receiver_id", "sender_username", "message") '
+                                'VALUES (?, ?, ?, ?)',
+                                (sender_id, receiver_id, sender_username, message))
 
     def insert_messages(self, messages):
-        self.cursor.executemany('INSERT INTO messages ('
+        self.cursor_with_commit('INSERT INTO messages ('
                                 '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
-                                'VALUES (?, ?, ?, ?, ?)', messages)
-        self.conn.commit()
+                                'VALUES (?, ?, ?, ?, ?)', messages, many=True)
 
     def insert_session_id(self, user_id, session_id):
-        self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
+        self.cursor_with_commit('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
                             (user_id, session_id))
-        self.conn.commit()
 
     def delete_user_messages(self, receiver_id):
-        self.cursor.execute('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
-        self.conn.commit()
+        self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
 
     def delete_messages(self, message_ids):
-        self.cursor.execute('DELETE FROM messages WHERE id IN (?)', (message_ids,))
-        self.conn.commit()
+        self.cursor_with_commit('DELETE FROM messages WHERE id IN (?)', (message_ids,))
 
     def delete_all_messages(self):
-        self.cursor.execute('DELETE FROM messages')
-        self.conn.commit()
+        self.cursor_with_commit('DELETE FROM messages')
 
     def delete_user(self, user_id=None, username=None):
         if user_id:
-            self.cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
+            self.cursor_with_commit('DELETE FROM users WHERE id = ?', (user_id,))
         elif username:
-            self.cursor.execute('DELETE FROM users WHERE username = ?', (username,))
-        self.conn.commit()
+            self.cursor_with_commit('DELETE FROM users WHERE username = ?', (username,))
 
     def __del__(self):
         self.cursor.close()
         self.conn.close()
+        database_logger.info('Connection closed.')
 
 
 class RAMDatabaseHandler(DatabaseHandler):
@@ -212,9 +228,8 @@ class RAMDatabaseHandler(DatabaseHandler):
                     ''')
 
     def insert_username(self, user_id, username):
-        self.cursor.execute('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
+        self.cursor_with_commit('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
                             (user_id, username))
-        self.conn.commit()
 
     def get_user(self, user_id=None, username=None):
         if user_id:
@@ -253,12 +268,14 @@ class HDDDatabaseHandler(DatabaseHandler):
         super().__init__(db_path)
 
     def create_all_tables(self):
+        database_logger.info('Create tables.')
         self.create_users_table()
         self.create_sessions_table()
         self.create_user_address_table()
         self.create_messages_table()
 
         # Add test users
+        database_logger.info('Create test users.')
         self.insert_user('user_1', '123456789')
         self.insert_user('user_2', '987654321')
 

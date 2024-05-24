@@ -8,7 +8,6 @@ from datetime import datetime
 from helpers.network import post_request, get_local_ip
 from helpers.data import create_username, create_phone_number, create_password
 from client_side.backend.listener import run_listener
-from server_side.database.db_handler import HDDDatabaseHandler
 from tests import test_data
 from tests import settings
 
@@ -32,7 +31,6 @@ class TestFramework(unittest.TestCase):
         cls.login_url = settings.SERVER_URL + settings.LOGIN
         cls.users_url = settings.SERVER_URL + settings.USERS
         cls.messages_url = settings.SERVER_URL + settings.MESSAGES
-        cls.db_handler = HDDDatabaseHandler()
         cls.users = []
         cls.msg_json = {}
 
@@ -99,8 +97,3 @@ class TestFramework(unittest.TestCase):
         queue = Queue()
         run_listener(queue, port=port)
         return queue
-
-    def tearDown(self):
-        if self.users:
-            for user in self.users:
-                self.db_handler.delete_user(username=user.username)
