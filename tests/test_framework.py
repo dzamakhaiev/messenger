@@ -83,6 +83,11 @@ class TestFramework(unittest.TestCase):
 
         return user
 
+    def delete_user(self, user: User):
+        user_json = {'user_id': user.user_id, 'session_id': user.session_id, 'request': 'delete_user'}
+        response = self.users_request(user_json)
+        return response
+
     def create_new_msg_json(self, **kwargs):
         msg_json = copy(self.msg_json)
         msg_json['sender_id'] = kwargs.get('sender_id', msg_json['sender_id'])
@@ -97,3 +102,8 @@ class TestFramework(unittest.TestCase):
         queue = Queue()
         run_listener(queue, port=port)
         return queue
+
+    def tearDown(self):
+        if self.users:
+            for user in self.users:
+                self.delete_user(user)

@@ -259,6 +259,12 @@ class RAMDatabaseHandler(DatabaseHandler):
         else:
             return
 
+    def delete_user(self, user_id=None, username=None):
+        if user_id:
+            self.cursor_with_commit('DELETE FROM usernames WHERE user_id = ?', (user_id,))
+        elif username:
+            self.cursor_with_commit('DELETE FROM usernames WHERE username = ?', (username,))
+
 
 class HDDDatabaseHandler(DatabaseHandler):
 

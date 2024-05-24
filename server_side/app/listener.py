@@ -67,6 +67,22 @@ def get_user(request_json: dict):
         return f'User "{username}" not found.', 404
 
 
+def delete_user(request_json: dict):
+    if user_id := request_json.get('user_id'):
+        service.delete_user(user_id)
+        return 'User deleted.', 200
+    else:
+        listener_logger.error('Field "user_id" is missing.')
+        return settings.VALIDATION_ERROR, 400
+
+
+def check_session(request_json: dict):
+    session_id = request_json.get('session_id')
+    if not service.check_session_exists(session_id):
+        listener_logger.error('Incorrect session id.')
+        return settings.NOT_AUTHORIZED, 401
+
+
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
     try:
@@ -100,15 +116,20 @@ def login():
 
 @app.route(f'{routes.USERS}', methods=['POST'])
 def users():
+    session_error = check_session(request.json)
+
     if request.json.get('request') and request.json.get('request') == 'create_user':
         return create_user(request.json)
 
     elif request.json.get('request') and request.json.get('request') == 'get_user':
-
-        session_id = request.json.get('session_id')
-        if not service.check_session_exists(session_id):
-            return settings.NOT_AUTHORIZED, 401
+        if session_error:
+            return session_error
         return get_user(request.json)
+
+    elif request.json.get('request') and request.json.get('request') == 'delete_user':
+        if session_error:
+            return session_error
+        return delete_user(request.json)
 
     else:
         listener_logger.error('Validation error for "/users" request.')

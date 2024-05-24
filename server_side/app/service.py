@@ -184,5 +184,13 @@ class Service:
         else:
             return False
 
+    def delete_user(self, user_id):
+        service_logger.info(f'Delete user id "{user_id}".')
+        if self.check_user_id(user_id):
+            self.ram_db_handler.delete_user(user_id=user_id)
+            self.ram_db_handler.delete_user_messages(user_id)
+            self.hdd_db_handler.delete_user(user_id=user_id)
+            self.hdd_db_handler.delete_user_messages(user_id)
+
     def __del__(self):
         service_logger.info('Service logger ended.')
