@@ -4,7 +4,7 @@ from tests.test_framework import TestFramework
 from helpers.data import corrupt_json_field, remove_json_field
 
 
-class UsersTest(TestFramework):
+class GetUserTest(TestFramework):
 
     def setUp(self):
         login_json = {'username': test_data.USERNAME, 'password': test_data.PASSWORD, 'user_address': 'some_ip'}

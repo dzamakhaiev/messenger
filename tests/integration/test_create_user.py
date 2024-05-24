@@ -5,7 +5,7 @@ from helpers.data import corrupt_json_field, remove_json_field
 from helpers.data import create_username, create_phone_number, create_password
 
 
-class UsersTest(TestFramework):
+class CreateUserTest(TestFramework):
 
     def setUp(self):
         self.correct_json = {'username': create_username(), 'phone_number': create_phone_number(),
