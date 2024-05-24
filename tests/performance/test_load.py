@@ -1,4 +1,5 @@
 import unittest
+from requests import Response
 from datetime import datetime
 from threading import Thread
 from tests.test_framework import TestFramework
@@ -32,6 +33,7 @@ class LoadTest(TestFramework):
         self.assertEqual(len(responses), messages_to_send)
 
         for response in responses:
+            self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message sent.')
 
@@ -53,6 +55,7 @@ class LoadTest(TestFramework):
         self.assertEqual(len(responses), new_queue.qsize())
 
         for response in responses:
+            self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message received.')
 
@@ -93,10 +96,12 @@ class LoadTest(TestFramework):
         self.assertEqual(len(new_responses), new_queue.qsize())
 
         for response in default_responses:
+            self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message received.')
 
         for response in new_responses:
+            self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message received.')
 
@@ -129,6 +134,7 @@ class LoadTest(TestFramework):
         self.assertEqual(len(responses), messages_to_send*number_of_threads)
         self.assertEqual(len(responses), new_queue.qsize())
         for response in responses:
+            self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
             self.assertEqual(response.text, 'Message received.')
 

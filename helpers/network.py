@@ -13,9 +13,9 @@ def find_free_port(port=5005):
 
 def post_request(url, json_dict=None):
     try:
-        response = requests.post(url, json=json_dict)
+        response = requests.post(url, json=json_dict, timeout=5)
         return response
-    except requests.exceptions.ConnectionError as e:
+    except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
         return e
 
 
