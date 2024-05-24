@@ -17,7 +17,9 @@ class MessagesTest(TestFramework):
                          'send_date': datetime.now().strftime(test_data.DATETIME_FORMAT)}
 
     def test_send_message_to_offline_user(self):
-        response = self.send_message(self.msg_json)
+        new_user = self.create_new_user()
+        msg_json = self.create_new_msg_json(receiver_id=new_user.user_id)
+        response = self.send_message(msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
         self.assertEqual(response.text, 'Message sent.')
 
