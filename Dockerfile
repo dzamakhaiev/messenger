@@ -8,4 +8,4 @@ VOLUME ["/app/server_side/logs"]
 WORKDIR /app
 RUN pip3 install -r requirements.txt --break-system-packages
 WORKDIR /app/server_side/app/
-CMD python3 listener.py
+CMD gunicorn -w 4 -b 0.0.0.0:5000 'listener:app'
