@@ -116,18 +116,16 @@ def login():
 
 @app.route(f'{routes.USERS}', methods=['POST'])
 def users():
-    session_error = check_session(request.json)
-
     if request.json.get('request') and request.json.get('request') == 'create_user':
         return create_user(request.json)
 
     elif request.json.get('request') and request.json.get('request') == 'get_user':
-        if session_error:
+        if session_error := check_session(request.json):
             return session_error
         return get_user(request.json)
 
     elif request.json.get('request') and request.json.get('request') == 'delete_user':
-        if session_error:
+        if session_error := check_session(request.json):
             return session_error
         return delete_user(request.json)
 
