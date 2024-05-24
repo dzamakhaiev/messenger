@@ -90,6 +90,7 @@ class Service:
         return user_id
 
     def store_message_to_ram_db(self, msg_json):
+        service_logger.debug(f'Message stored in RAM DB:\n{msg_json}')
         self.ram_db_handler.insert_message(msg_json.get('sender_id'),
                                            msg_json.get('receiver_id'),
                                            msg_json.get('sender_username'),
@@ -149,7 +150,7 @@ class Service:
             return ''
 
     def get_user_address(self, user_id):
-        service_logger.debug(f'Get user address for user id "{user_id}".')
+        service_logger.info(f'Get user address for user id "{user_id}".')
         address_list = self.ram_db_handler.get_user_address(user_id)
         if not address_list:
             address_list = self.hdd_db_handler.get_user_address(user_id)
@@ -157,9 +158,11 @@ class Service:
         return address_list
 
     def get_messages(self, user_id):
-        service_logger.debug(f'Get messages for user id "{user_id}".')
+        service_logger.info(f'Get messages for user id "{user_id}".')
         messages = self.ram_db_handler.get_user_messages(user_id)
         self.ram_db_handler.delete_user_messages(user_id)
+
+        service_logger.debug(messages)
         return messages
 
     def check_session_exists(self, session_id):
