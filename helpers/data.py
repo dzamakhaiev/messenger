@@ -34,7 +34,7 @@ def remove_json_field(json_dict: dict, remove_field: str):
 
 
 def create_username():
-    return 'user_{}'.format(randint(1, 666))
+    return 'user_{}'.format(randint(1, 999999))
 
 
 def create_phone_number():
