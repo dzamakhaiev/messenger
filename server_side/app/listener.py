@@ -48,7 +48,7 @@ def create_user(request_json: dict):
 
     else:
         user_id = service.create_user(user)
-        listener_logger.info(f'User "{username}" created with id {user_id}')
+        listener_logger.info(f'User "{user.username}" created with id {user_id}')
         return jsonify({'user_id': user_id}), 201
 
 
@@ -145,5 +145,11 @@ def process_messages():
 
 if __name__ == '__main__':
     listener_logger.info('Listener started.')
-    app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False)
+
+    try:
+        service.restore_all_messages_from_hdd()
+        app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False, threaded=True)
+    finally:
+        service.store_all_messages_to_hdd()
+
     listener_logger.info('Listener Ended.')

@@ -135,6 +135,12 @@ class DatabaseHandler:
         if result:
             return result[0]
 
+    def get_all_messages(self):
+        result = self.cursor_with_lock('SELECT user_sender_id, user_receiver_id, '
+                                       'sender_username, message, receive_date '
+                                       'FROM messages;', ())
+        return result.fetchall()
+
     def insert_user_address(self, user_id, user_address):
         self.cursor.execute('INSERT OR IGNORE INTO user_address ("user_id", "user_address") '
                             'VALUES (?, ?)',
@@ -152,6 +158,12 @@ class DatabaseHandler:
                             (sender_id, receiver_id, sender_username, message))
         self.conn.commit()
 
+    def insert_messages(self, messages):
+        self.cursor.executemany('INSERT INTO messages ('
+                                '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
+                                'VALUES (?, ?, ?, ?, ?)', messages)
+        self.conn.commit()
+
     def insert_session_id(self, user_id, session_id):
         self.cursor.execute('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
                             (user_id, session_id))
@@ -163,6 +175,10 @@ class DatabaseHandler:
 
     def delete_messages(self, message_ids):
         self.cursor.execute('DELETE FROM messages WHERE id IN (?)', (message_ids,))
+        self.conn.commit()
+
+    def delete_all_messages(self):
+        self.cursor.execute('DELETE FROM messages')
         self.conn.commit()
 
     def delete_user(self, user_id=None, username=None):
@@ -240,6 +256,7 @@ class HDDDatabaseHandler(DatabaseHandler):
         self.create_users_table()
         self.create_sessions_table()
         self.create_user_address_table()
+        self.create_messages_table()
 
         # Add test users
         self.insert_user('user_1', '123456789')

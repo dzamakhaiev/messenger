@@ -4,6 +4,7 @@ import logging
 import requests
 import settings
 from urllib.parse import urlparse
+from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
@@ -19,7 +20,7 @@ service_logger.addHandler(handler)
 
 class Service:
 
-    def __init__(self, hdd_db_handler, ram_db_handler):
+    def __init__(self, hdd_db_handler:HDDDatabaseHandler, ram_db_handler:RAMDatabaseHandler):
         service_logger.info('Service logger started.')
         self.hdd_db_handler = hdd_db_handler
         self.ram_db_handler = ram_db_handler
@@ -58,7 +59,7 @@ class Service:
 
         if not message_received:
             service_logger.info('Message not sent. Store it to DB in RAM.')
-            self.store_message_to_db(msg_json)
+            self.store_message_to_ram_db(msg_json)
         return message_received
 
     def send_messages_by_list(self, address_list, messages):
@@ -88,11 +89,22 @@ class Service:
         service_logger.info(f'User with {user.username} created: user id "{user_id}".')
         return user_id
 
-    def store_message_to_db(self, msg_json):
+    def store_message_to_ram_db(self, msg_json):
         self.ram_db_handler.insert_message(msg_json.get('sender_id'),
                                            msg_json.get('receiver_id'),
                                            msg_json.get('sender_username'),
                                            msg_json.get('message'))
+
+    def store_all_messages_to_hdd(self):
+        messages = self.ram_db_handler.get_all_messages()
+        if messages:
+            self.hdd_db_handler.insert_messages(messages)
+
+    def restore_all_messages_from_hdd(self):
+        messages = self.hdd_db_handler.get_all_messages()
+        if messages:
+            self.ram_db_handler.insert_messages(messages)
+            self.hdd_db_handler.delete_all_messages()
 
     def store_user_address_and_session(self, user_id, session_id, user_address):
         service_logger.info('Store user session and user addresses in HDD and RAM DBs.')
@@ -147,6 +159,7 @@ class Service:
     def get_messages(self, user_id):
         service_logger.debug(f'Get messages for user id "{user_id}".')
         messages = self.ram_db_handler.get_user_messages(user_id)
+        self.ram_db_handler.delete_user_messages(user_id)
         return messages
 
     def check_session_exists(self, session_id):
