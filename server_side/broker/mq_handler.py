@@ -14,6 +14,7 @@ class RabbitMQHandler:
 
         self.exchange_name = None
         self.queue_name = None
+        self.queue = None
 
     def create_exchange(self, exchange_name='TestExchange'):
         self.channel.exchange_declare(exchange_name)
@@ -22,7 +23,7 @@ class RabbitMQHandler:
     def create_and_bind_queue(self, queue_name='TestQueue', exchange_name=None):
         exchange_name = exchange_name if exchange_name else self.exchange_name
         self.queue_name = queue_name
-        self.channel.queue_declare(queue_name, durable=True)
+        self.queue = self.channel.queue_declare(queue_name, durable=True)
         self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
 
     def send_message(self):
@@ -31,9 +32,14 @@ class RabbitMQHandler:
                                    properties=properties)
 
     def receive_message(self):
-        method, _, body = self.channel.basic_get(self.queue_name)
-        self.channel.basic_ack(method.delivery_tag)
-        return body
+        if self.get_queue_len():
+            method, _, body = self.channel.basic_get(self.queue_name)
+            self.channel.basic_ack(method.delivery_tag)
+            return body
+
+    def get_queue_len(self):
+        if self.queue:
+            return self.queue.method.message_count
 
     def __del__(self):
         if hasattr(self, 'channel'):
@@ -47,4 +53,6 @@ if __name__ == '__main__':
     handler.create_exchange()
     handler.create_and_bind_queue()
     handler.send_message()
+    print(handler.get_queue_len())
+    handler.receive_message()
     handler.receive_message()
