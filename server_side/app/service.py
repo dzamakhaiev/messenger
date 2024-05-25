@@ -115,8 +115,15 @@ class Service:
         self.hdd_db_handler.insert_user_address(user_id, user_address)
 
     def put_message_in_queue(self, address_list, msg_json):
+        service_logger.info(f'Put message in {settings.MQ_MSG_QUEUE_NAME} queue.')
         queue_json = {'address_list': address_list, 'msg_json': msg_json}
         self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME, queue_name=settings.MQ_MSG_QUEUE_NAME,
+                                     body=queue_json)
+
+    def put_login_in_queue(self, user_id, user_address):
+        service_logger.info(f'Put message in {settings.MQ_LOGIN_QUEUE_NAME} queue.')
+        queue_json = {'user_id': user_id, 'user_address': user_address}
+        self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME, queue_name=settings.MQ_LOGIN_QUEUE_NAME,
                                      body=queue_json)
 
     def get_or_create_user_session(self, user_id):

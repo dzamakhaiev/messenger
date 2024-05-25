@@ -29,8 +29,8 @@ mq_handler = RabbitMQHandler()
 hdd_db_handler.create_all_tables()
 ram_db_handler.create_all_tables()
 mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
-mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME)
-mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME)
+mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
 
 service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
@@ -100,6 +100,7 @@ def login():
 
         service.store_user_address_and_session(user_id, session_id, user.user_address)
         listener_logger.info(f'User id "{user_id}" logged in with session id "{session_id}".')
+        service.put_login_in_queue(user_id, user.user_address)
 
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 

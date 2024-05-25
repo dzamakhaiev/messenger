@@ -33,16 +33,19 @@ class Sender:
 
             try:
                 message = msg_broker.receive_message(settings.MQ_MSG_QUEUE_NAME)
-                login = msg_broker.receive_message(settings.MQ_LOGIN_QUEUE_NAME)
+                login_msg = msg_broker.receive_message(settings.MQ_LOGIN_QUEUE_NAME)
 
                 if message:
                     message = json.loads(message)
                     address_list = message.get('address_list')
                     msg_json = message.get('msg_json')
-
-                    print(address_list)
-                    print(msg_json)
                     service.send_message_by_list(address_list, msg_json)
+
+                if login_msg:
+                    login_msg = json.loads(login_msg)
+                    messages = service.get_messages(login_msg['user_id'])
+                    address_list = [login_msg['user_address']]
+                    service.send_messages_by_list(address_list, messages)
 
             except KeyboardInterrupt:
                 sender_logger.info('Sender logger ended.')
