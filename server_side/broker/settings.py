@@ -1,4 +1,4 @@
-CONNECT_URI = 'amqp://guest:guest@localhost:5672/%2F'
-MQ_HOST = 'localhost'
 MQ_PORT = 5672
+MQ_HOST = '192.168.50.122'
+CONNECT_URI = f'amqp://guest:guest@{MQ_HOST}:{MQ_PORT}/%2F'
 MQ_DELIVERY_MODE = 2  # Persistent mode saves messages on HDD in case of crash

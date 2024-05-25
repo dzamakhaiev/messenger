@@ -2,7 +2,6 @@ import os
 import sys
 import json
 from time import sleep
-from server_side.logger.logger import get_logger
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
@@ -12,6 +11,7 @@ sys.path.insert(0, repo_dir)
 
 from server_side.app import settings
 from server_side.app.service import Service
+from server_side.logger.logger import get_logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.database.db_handler import RAMDatabaseHandler
 
@@ -60,4 +60,7 @@ class Sender:
 
 if __name__ == '__main__':
     sender = Sender()
-    sender.run_sender()
+    try:
+        sender.run_sender()
+    except KeyboardInterrupt:
+        quit()
