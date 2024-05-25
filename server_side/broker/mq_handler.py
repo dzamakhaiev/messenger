@@ -1,5 +1,6 @@
+import json
 import pika
-import settings
+from server_side.broker import settings
 
 
 class RabbitMQHandler:
@@ -12,47 +13,46 @@ class RabbitMQHandler:
         except (pika.exceptions.AMQPConnectionError, AttributeError):
             quit('Cannot connect to RabbitMQ.')
 
-        self.exchange_name = None
-        self.queue_name = None
-        self.queue = None
-
     def create_exchange(self, exchange_name='TestExchange'):
         self.channel.exchange_declare(exchange_name)
-        self.exchange_name = exchange_name
 
-    def create_and_bind_queue(self, queue_name='TestQueue', exchange_name=None):
-        exchange_name = exchange_name if exchange_name else self.exchange_name
-        self.queue_name = queue_name
-        self.queue = self.channel.queue_declare(queue_name, durable=True)
+    def create_and_bind_queue(self, queue_name='TestQueue', exchange_name='TestExchange'):
+        self.channel.queue_declare(queue_name, durable=True)
         self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
 
-    def send_message(self):
-        properties = pika.BasicProperties(content_type='text/plain', delivery_mode=settings.MQ_DELIVERY_MODE)
-        self.channel.basic_publish(exchange='TestExchange', routing_key=self.queue_name, body='Test message',
-                                   properties=properties)
+    def send_message(self, exchange_name, queue_name, body):
+        if isinstance(body, dict):
+            body = json.dumps(body)
 
-    def receive_message(self):
-        if self.get_queue_len():
-            method, _, body = self.channel.basic_get(self.queue_name)
+        properties = pika.BasicProperties(content_type='text/plain', delivery_mode=settings.MQ_DELIVERY_MODE)
+        self.channel.basic_publish(exchange=exchange_name, routing_key=queue_name, body=body, properties=properties)
+
+    def receive_message(self, queue_name):
+
+        if self.get_queue_len(queue_name):
+            method, _, body = self.channel.basic_get(queue_name)
             self.channel.basic_ack(method.delivery_tag)
+            body = body.decode()
             return body
 
-    def get_queue_len(self):
-        if self.queue:
-            return self.queue.method.message_count
+    def get_queue_len(self, queue_name):
+        queue = self.channel.queue_declare(queue_name, passive=True)
+        return queue.method.message_count
+
+    def close_connection(self):
+        if hasattr(self, 'connection') and self.connection.is_open:
+            self.connection.close()
 
     def __del__(self):
-        if hasattr(self, 'channel'):
-            self.channel.close()
-        if hasattr(self, 'connection'):
-            self.connection.close()
+        self.close_connection()
 
 
 if __name__ == '__main__':
     handler = RabbitMQHandler()
     handler.create_exchange()
     handler.create_and_bind_queue()
-    handler.send_message()
-    print(handler.get_queue_len())
-    handler.receive_message()
-    handler.receive_message()
+    handler.send_message(queue_name='TestQueue', exchange_name='TestExchange', body={'Test': 'test'})
+    print(handler.get_queue_len('TestQueue'))
+    handler.receive_message('TestQueue')
+    handler.receive_message('TestQueue')
+    handler.close_connection()
