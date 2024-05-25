@@ -1,4 +1,5 @@
 import unittest
+from time import sleep
 from tests import test_data
 from datetime import datetime
 
@@ -37,6 +38,7 @@ class MessagesTest(TestFramework):
         response = self.send_message(msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
         self.assertEqual(response.text, 'Message processed.')
+        sleep(1)
         self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
 
     def test_send_mutual_messages(self):
@@ -61,6 +63,7 @@ class MessagesTest(TestFramework):
         # Check response and listener queue
         self.assertEqual(200, response_new.status_code, msg=response_new.text)
         self.assertEqual(200, response_default.status_code, msg=response_default.text)
+        sleep(1)
         self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
         self.assertEqual(default_queue.qsize(), 1, 'No message in queue.')
 
@@ -78,6 +81,7 @@ class MessagesTest(TestFramework):
         port = find_free_port()
         new_queue = self.run_client_listener(port)
         self.log_in_with_listener_url(another_user, port)
+        sleep(1)
         self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
 
     def test_validation_error(self):
