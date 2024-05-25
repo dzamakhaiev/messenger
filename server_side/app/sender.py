@@ -1,9 +1,8 @@
 import os
 import sys
 import json
-import logging
 from time import sleep
-from threading import Thread, Event
+from server_side.logger.logger import get_logger
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
@@ -16,14 +15,7 @@ from server_side.app.service import Service
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.database.db_handler import RAMDatabaseHandler
 
-sender_logger = logging.getLogger(__name__)
-sender_logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(settings.LOG_FORMAT)
-handler = logging.FileHandler(f"../logs/sender.log")
-handler.setFormatter(formatter)
-sender_logger.addHandler(handler)
-
+sender_logger = get_logger('sender')
 
 msg_broker = RabbitMQHandler()
 ram_db_handler = RAMDatabaseHandler()
@@ -41,8 +33,9 @@ class Sender:
 
             try:
                 message = msg_broker.receive_message(settings.MQ_MSG_QUEUE_NAME)
-                if message:
+                login = msg_broker.receive_message(settings.MQ_LOGIN_QUEUE_NAME)
 
+                if message:
                     message = json.loads(message)
                     address_list = message.get('address_list')
                     msg_json = message.get('msg_json')

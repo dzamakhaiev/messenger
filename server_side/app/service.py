@@ -1,22 +1,16 @@
 import uuid
 import socket
-import logging
 import requests
 from urllib.parse import urlparse
 
 from server_side.app import settings
+from server_side.logger.logger import get_logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
-service_logger = logging.getLogger(__name__)
-service_logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(settings.LOG_FORMAT)
-handler = logging.FileHandler(f"../logs/service.log")
-handler.setFormatter(formatter)
-service_logger.addHandler(handler)
+service_logger = get_logger('service')
 
 
 class Service:

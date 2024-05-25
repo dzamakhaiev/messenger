@@ -1,18 +1,11 @@
 import os
 import sqlite3
-import logging
 from time import sleep
 from threading import Lock
 from datetime import datetime, timedelta
-from server_side.database import settings
+from server_side.logger.logger import get_logger
 
-database_logger = logging.getLogger(__name__)
-database_logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter(settings.LOG_FORMAT)
-handler = logging.FileHandler(f"../logs/database.log")
-handler.setFormatter(formatter)
-database_logger.addHandler(handler)
-
+database_logger = get_logger('database')
 global_lock = Lock()
 MIN_REQUEST_INTERVAL = timedelta(microseconds=10000)
 

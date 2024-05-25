@@ -1,9 +1,9 @@
 import os
 import sys
-import logging
 import routes
 from pydantic import ValidationError
 from flask import Flask, request, jsonify
+from server_side.logger.logger import get_logger
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
@@ -19,13 +19,7 @@ from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandl
 
 # Set up listener and its logger
 app = Flask(__name__)
-listener_logger = logging.getLogger(__name__)
-listener_logger.setLevel(logging.INFO)
-
-formatter = logging.Formatter(settings.LOG_FORMAT)
-handler = logging.FileHandler(f"../logs/listener.log")
-handler.setFormatter(formatter)
-listener_logger.addHandler(handler)
+listener_logger = get_logger('listener')
 
 # Set up DB handlers
 hdd_db_handler = HDDDatabaseHandler()
@@ -36,6 +30,7 @@ hdd_db_handler.create_all_tables()
 ram_db_handler.create_all_tables()
 mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
 mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME)
+mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME)
 
 service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
