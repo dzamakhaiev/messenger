@@ -4,39 +4,57 @@ from server_side.broker import settings
 from server_side.logger.logger import get_logger
 
 
+broker_logger = get_logger('broker')
+
+
 class RabbitMQHandler:
 
     def __init__(self):
         try:
-            self.parameters = pika.URLParameters('amqp://guest:guest@localhost:5672/%2F')
+            broker_logger.info('Connect to RabbitMQ.')
+            self.parameters = pika.URLParameters(settings.CONNECT_URI)
+            self.connection = pika.BlockingConnection(self.parameters)
+            self.channel = self.connection.channel()
+
+        except (pika.exceptions.AMQPConnectionError, AttributeError):
+            quit('Cannot connect to RabbitMQ.')
+
+    def reconnect(self):
+        try:
+            broker_logger.info('Reconnect to RabbitMQ.')
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
         except (pika.exceptions.AMQPConnectionError, AttributeError):
             quit('Cannot connect to RabbitMQ.')
 
-    def reconnect(self):
-        self.connection = pika.BlockingConnection(self.parameters)
-        self.channel = self.connection.channel()
-
     def create_exchange(self, exchange_name='TestExchange'):
+        broker_logger.info(f'Create an exchange: {exchange_name}.')
         self.channel.exchange_declare(exchange_name)
 
     def create_and_bind_queue(self, queue_name='TestQueue', exchange_name='TestExchange'):
+        broker_logger.info(f'Create a queue: {queue_name} for {exchange_name}.')
         self.channel.queue_declare(queue_name, durable=True)
         self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
 
     def send_message(self, exchange_name, queue_name, body):
+        broker_logger.info(f'Put message in queue {queue_name}.')
         if isinstance(body, dict):
             body = json.dumps(body)
 
-        properties = pika.BasicProperties(content_type='text/plain', delivery_mode=settings.MQ_DELIVERY_MODE)
         if self.channel.is_closed or self.connection.is_closed:
             self.reconnect()
-        self.channel.basic_publish(exchange=exchange_name, routing_key=queue_name, body=body, properties=properties)
+        try:
+            properties = pika.BasicProperties(content_type='text/plain', delivery_mode=settings.MQ_DELIVERY_MODE)
+            self.channel.basic_publish(exchange=exchange_name, routing_key=queue_name, body=body, properties=properties)
+
+        except (pika.exceptions.StreamLostError, ):
+            self.reconnect()
+            self.send_message(exchange_name, queue_name, body)
 
     def receive_message(self, queue_name):
 
         if self.get_queue_len(queue_name):
+            broker_logger.info(f'Get message from queue {queue_name}.')
             method, _, body = self.channel.basic_get(queue_name)
             self.channel.basic_ack(method.delivery_tag)
             body = body.decode()
@@ -45,13 +63,6 @@ class RabbitMQHandler:
     def get_queue_len(self, queue_name):
         queue = self.channel.queue_declare(queue_name, passive=True)
         return queue.method.message_count
-
-    def close_connection(self):
-        if hasattr(self, 'connection') and self.connection.is_open:
-            self.connection.close()
-
-    def __del__(self):
-        self.close_connection()
 
 
 if __name__ == '__main__':
@@ -62,4 +73,3 @@ if __name__ == '__main__':
     print(handler.get_queue_len('TestQueue'))
     handler.receive_message('TestQueue')
     handler.receive_message('TestQueue')
-    handler.close_connection()
