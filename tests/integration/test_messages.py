@@ -21,7 +21,7 @@ class MessagesTest(TestFramework):
         msg_json = self.create_new_msg_json(receiver_id=new_user.user_id)
         response = self.send_message(msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
-        self.assertEqual(response.text, 'Message sent.')
+        self.assertEqual(response.text, 'Message processed.')
 
     def test_send_message(self):
         # Create new user and prepare message to send
@@ -36,7 +36,7 @@ class MessagesTest(TestFramework):
         # Send message to another user
         response = self.send_message(msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
-        self.assertEqual(response.text, 'Message received.')
+        self.assertEqual(response.text, 'Message processed.')
         self.assertEqual(new_queue.qsize(), 1, 'No message in queue.')
 
     def test_send_mutual_messages(self):
@@ -72,7 +72,7 @@ class MessagesTest(TestFramework):
         # Send message to another user in offline
         response = self.send_message(msg_json)
         self.assertEqual(200, response.status_code, msg=response.text)
-        self.assertEqual(response.text, 'Message sent.')
+        self.assertEqual(response.text, 'Message processed.')
 
         # Start listener for another user and log in as another user
         port = find_free_port()

@@ -2,19 +2,20 @@ import os
 import sys
 import logging
 import routes
-import settings
 from pydantic import ValidationError
 from flask import Flask, request, jsonify
 
-# I hate python imports. Fix for run via cmd inside venv
+# Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
 current_dir = os.path.dirname(current_file)
 repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.insert(0, repo_dir)
 
-from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
+from server_side.app import settings
 from server_side.app.service import Service
+from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.app.models import UserLogin, User, Message
+from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 
 # Set up listener and its logger
 app = Flask(__name__)
@@ -29,9 +30,14 @@ listener_logger.addHandler(handler)
 # Set up DB handlers
 hdd_db_handler = HDDDatabaseHandler()
 ram_db_handler = RAMDatabaseHandler()
+mq_handler = RabbitMQHandler()
+
 hdd_db_handler.create_all_tables()
 ram_db_handler.create_all_tables()
-service = Service(hdd_db_handler, ram_db_handler)
+mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
+mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME)
+
+service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
 
 def create_user(request_json: dict):
@@ -105,7 +111,7 @@ def login():
         if messages:
             address_list = service.get_user_address(user_id)
             listener_logger.info(f'Send messages to "{user_id}" user id after log in.')
-            service.send_messages_by_list(address_list, messages)
+            service.put_send_message_in_queue(address_list, request.json)
 
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
@@ -153,9 +159,8 @@ def process_messages():
         listener_logger.info(f'Send message to "{msg.receiver_id}" user id.')
 
         address_list = service.get_user_address(msg.receiver_id)
-        msg_state = service.send_message_by_list(address_list, request.json)
-        state = 'received' if msg_state else 'sent'
-        return settings.MESSAGE_STATE.format(state), 200
+        service.put_send_message_in_queue(address_list, request.json)
+        return 'Message processed.', 200
 
     else:
         listener_logger.error('Invalid username or session id.')

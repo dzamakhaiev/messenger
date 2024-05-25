@@ -1,4 +1,5 @@
 import unittest
+from time import sleep
 from requests import Response
 from datetime import datetime
 from threading import Thread
@@ -22,6 +23,8 @@ class LoadTest(TestFramework):
             msg_json['send_date'] = datetime.now().strftime(test_data.DATETIME_FORMAT)
             response = self.send_message(msg_json, sleep_time=0)
             responses.append(response)
+
+        sleep(1)
 
     def test_min_offline_load(self):
         # Prepare message json
@@ -57,7 +60,7 @@ class LoadTest(TestFramework):
         for response in responses:
             self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
-            self.assertEqual(response.text, 'Message received.')
+            self.assertEqual(response.text, 'Message processed.')
 
     def test_min_load_two_users(self):
         # Start listener for default user
@@ -98,12 +101,12 @@ class LoadTest(TestFramework):
         for response in default_responses:
             self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
-            self.assertEqual(response.text, 'Message received.')
+            self.assertEqual(response.text, 'Message processed.')
 
         for response in new_responses:
             self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
-            self.assertEqual(response.text, 'Message received.')
+            self.assertEqual(response.text, 'Message processed.')
 
     def test_min_load_multi_threads_to_one_user(self):
         # Create new user and prepare message to send
@@ -136,7 +139,7 @@ class LoadTest(TestFramework):
         for response in responses:
             self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
-            self.assertEqual(response.text, 'Message received.')
+            self.assertEqual(response.text, 'Message processed.')
 
 
 if __name__ == '__main__':
