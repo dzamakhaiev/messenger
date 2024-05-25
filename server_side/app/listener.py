@@ -106,13 +106,6 @@ def login():
         service.store_user_address_and_session(user_id, session_id, user.user_address)
         listener_logger.info(f'User id "{user_id}" logged in with session id "{session_id}".')
 
-        # Check not received messages for current user
-        messages = service.get_messages(user_id)
-        if messages:
-            address_list = service.get_user_address(user_id)
-            listener_logger.info(f'Send messages to "{user_id}" user id after log in.')
-            service.put_send_message_in_queue(address_list, request.json)
-
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
 
     else:
@@ -159,7 +152,7 @@ def process_messages():
         listener_logger.info(f'Send message to "{msg.receiver_id}" user id.')
 
         address_list = service.get_user_address(msg.receiver_id)
-        service.put_send_message_in_queue(address_list, request.json)
+        service.put_message_in_queue(address_list, request.json)
         return 'Message processed.', 200
 
     else:

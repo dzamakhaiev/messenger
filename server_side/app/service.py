@@ -2,13 +2,14 @@ import uuid
 import socket
 import logging
 import requests
-import settings
 from urllib.parse import urlparse
+
+from server_side.app import settings
+from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
 
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
-
 service_logger = logging.getLogger(__name__)
 service_logger.setLevel(logging.INFO)
 
@@ -20,10 +21,15 @@ service_logger.addHandler(handler)
 
 class Service:
 
-    def __init__(self, hdd_db_handler: HDDDatabaseHandler, ram_db_handler: RAMDatabaseHandler):
+    def __init__(self,
+                 hdd_db_handler: HDDDatabaseHandler,
+                 ram_db_handler: RAMDatabaseHandler,
+                 mq_handler: RabbitMQHandler):
+
         service_logger.info('Service logger started.')
         self.hdd_db_handler = hdd_db_handler
         self.ram_db_handler = ram_db_handler
+        self.mq_handler = mq_handler
 
     @staticmethod
     def check_url(url: str):
@@ -113,6 +119,11 @@ class Service:
         self.hdd_db_handler.insert_session_id(user_id, session_id)
         self.ram_db_handler.insert_user_address(user_id, user_address)
         self.hdd_db_handler.insert_user_address(user_id, user_address)
+
+    def put_message_in_queue(self, address_list, msg_json):
+        queue_json = {'address_list': address_list, 'msg_json': msg_json}
+        self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME, queue_name=settings.MQ_MSG_QUEUE_NAME,
+                                     body=queue_json)
 
     def get_or_create_user_session(self, user_id):
         service_logger.info(f'Get or create session for user id "{user_id}".')
