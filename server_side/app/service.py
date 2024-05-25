@@ -20,7 +20,7 @@ service_logger.addHandler(handler)
 
 class Service:
 
-    def __init__(self, hdd_db_handler:HDDDatabaseHandler, ram_db_handler:RAMDatabaseHandler):
+    def __init__(self, hdd_db_handler: HDDDatabaseHandler, ram_db_handler: RAMDatabaseHandler):
         service_logger.info('Service logger started.')
         self.hdd_db_handler = hdd_db_handler
         self.ram_db_handler = ram_db_handler
