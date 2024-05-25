@@ -7,11 +7,15 @@ class RabbitMQHandler:
 
     def __init__(self):
         try:
-            parameters = pika.URLParameters('amqp://guest:guest@localhost:5672/%2F')
-            self.connection = pika.BlockingConnection(parameters)
+            self.parameters = pika.URLParameters('amqp://guest:guest@localhost:5672/%2F')
+            self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
         except (pika.exceptions.AMQPConnectionError, AttributeError):
             quit('Cannot connect to RabbitMQ.')
+
+    def reconnect(self):
+        self.connection = pika.BlockingConnection(self.parameters)
+        self.channel = self.connection.channel()
 
     def create_exchange(self, exchange_name='TestExchange'):
         self.channel.exchange_declare(exchange_name)
@@ -25,6 +29,8 @@ class RabbitMQHandler:
             body = json.dumps(body)
 
         properties = pika.BasicProperties(content_type='text/plain', delivery_mode=settings.MQ_DELIVERY_MODE)
+        if self.channel.is_closed or self.connection.is_closed:
+            self.reconnect()
         self.channel.basic_publish(exchange=exchange_name, routing_key=queue_name, body=body, properties=properties)
 
     def receive_message(self, queue_name):
