@@ -1,10 +1,10 @@
 import os
 import sqlite3
 import logging
-import settings
 from time import sleep
 from threading import Lock
 from datetime import datetime, timedelta
+from server_side.database import settings
 
 database_logger = logging.getLogger(__name__)
 database_logger.setLevel(logging.DEBUG)
@@ -12,7 +12,6 @@ formatter = logging.Formatter(settings.LOG_FORMAT)
 handler = logging.FileHandler(f"../logs/database.log")
 handler.setFormatter(formatter)
 database_logger.addHandler(handler)
-
 
 global_lock = Lock()
 MIN_REQUEST_INTERVAL = timedelta(microseconds=10000)
@@ -116,12 +115,12 @@ class DatabaseHandler:
 
     def get_user_messages(self, receiver_id):
         result = self.cursor_with_lock('SELECT * FROM messages WHERE user_receiver_id = ?',
-                                     (receiver_id,))
+                                       (receiver_id,))
         return result.fetchall()
 
     def get_user_password(self, username):
         result = self.cursor_with_lock('SELECT password FROM users WHERE username = ?',
-                                     (username,))
+                                       (username,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -144,7 +143,7 @@ class DatabaseHandler:
 
     def get_user_address(self, user_id):
         result = self.cursor_with_lock('SELECT user_address FROM user_address WHERE user_id = ?',
-                                     (user_id,))
+                                       (user_id,))
         return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def get_user_session(self, user_id):
@@ -171,7 +170,7 @@ class DatabaseHandler:
 
     def insert_user(self, username, phone_number, password='qwerty'):
         self.cursor_with_commit('INSERT OR IGNORE INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
-                            (username, phone_number, password))
+                                (username, phone_number, password))
 
     def insert_message(self, sender_id, receiver_id, sender_username, message):
         self.cursor_with_commit('INSERT INTO messages '
@@ -186,7 +185,7 @@ class DatabaseHandler:
 
     def insert_session_id(self, user_id, session_id):
         self.cursor_with_commit('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
-                            (user_id, session_id))
+                                (user_id, session_id))
 
     def delete_user_messages(self, receiver_id):
         self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
@@ -229,7 +228,7 @@ class RAMDatabaseHandler(DatabaseHandler):
 
     def insert_username(self, user_id, username):
         self.cursor_with_commit('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
-                            (user_id, username))
+                                (user_id, username))
 
     def get_user(self, user_id=None, username=None):
         if user_id:
@@ -311,4 +310,3 @@ if __name__ == '__main__':
 
     print(ram_handler.get_user_messages(2))
     print(ram_handler.get_user_session(1))
-
