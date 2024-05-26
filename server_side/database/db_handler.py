@@ -1,8 +1,9 @@
-import os
 import sqlite3
+import psycopg2
 from time import sleep
 from threading import Lock
 from datetime import datetime, timedelta
+from server_side.database import settings
 from server_side.logger.logger import get_logger
 
 database_logger = get_logger('database')
@@ -12,93 +13,17 @@ MIN_REQUEST_INTERVAL = timedelta(microseconds=10000)
 
 class DatabaseHandler:
 
-    last_request_time = datetime.now()
-
-    def __init__(self, database):
-        try:
-            database_logger.info('Connection opened.')
-            self.conn = sqlite3.connect(database, check_same_thread=False)
-            self.cursor = self.conn.cursor()
-        except sqlite3.Error as e:
-            quit(e)
-
-    def check_min_request_interval(self):
-        # Sleep to resolve bottleneck issue
-        now = datetime.now()
-        delta = now - self.last_request_time
-
-        if delta < MIN_REQUEST_INTERVAL:
-            seconds = MIN_REQUEST_INTERVAL.microseconds / 10 ** 6
-            sleep(seconds)
-
-        self.last_request_time = datetime.now()
-
-    def cursor_with_lock(self, query, args):
-        try:
-            database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
-            global_lock.acquire(True)
-            self.check_min_request_interval()
-            result = self.cursor.execute(query, args)
-
-        finally:
-            global_lock.release()
-
-        return result
+    def execute_query(self, query, args):
+        raise NotImplementedError
 
     def cursor_with_commit(self, query, args=None, many=False):
-        database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
-        if args is None:
-            args = []
-
-        if many:
-            self.cursor.executemany(query, args)
-        else:
-            self.cursor.execute(query, args)
-
-        self.conn.commit()
-
-    def create_users_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users
-            (id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            phone TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL)
-            ''')
-
-    def create_messages_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS messages
-            (id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_sender_id INTEGER NOT NULL,
-            user_receiver_id INTEGER NOT NULL,
-            sender_username TEXT NOT NULL,
-            message TEXT NOT NULL,
-            receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
-
-    def create_sessions_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sessions
-            (user_id INTEGER NOT NULL UNIQUE,
-            session_id TEXT NOT NULL,
-            expiration_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
-
-    def create_user_address_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_address
-            (id INTEGER PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            user_address TEXT NOT NULL,
-            last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
+        raise NotImplementedError
 
     def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor_with_lock('SELECT id, username FROM users WHERE id = ?', (user_id,))
+            result = self.execute_query('SELECT id, username FROM users WHERE id = ?', (user_id,))
         elif username:
-            result = self.cursor_with_lock('SELECT id, username FROM users WHERE username = ?', (username,))
+            result = self.execute_query('SELECT id, username FROM users WHERE username = ?', (username,))
         else:
             return
 
@@ -107,19 +32,19 @@ class DatabaseHandler:
             return result
 
     def get_user_messages(self, receiver_id):
-        result = self.cursor_with_lock('SELECT * FROM messages WHERE user_receiver_id = ?',
-                                       (receiver_id,))
+        result = self.execute_query('SELECT * FROM messages WHERE user_receiver_id = ?',
+                                    (receiver_id,))
         return result.fetchall()
 
     def get_user_password(self, username):
-        result = self.cursor_with_lock('SELECT password FROM users WHERE username = ?',
-                                       (username,))
+        result = self.execute_query('SELECT password FROM users WHERE username = ?',
+                                    (username,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_username(self, user_id):
-        result = self.cursor_with_lock('SELECT username FROM users WHERE id = ?', (user_id,))
+        result = self.execute_query('SELECT username FROM users WHERE id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -127,7 +52,7 @@ class DatabaseHandler:
             return ''
 
     def get_user_id(self, username):
-        result = self.cursor_with_lock('SELECT id FROM users WHERE username = ?', (username,))
+        result = self.execute_query('SELECT id FROM users WHERE username = ?', (username,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -135,26 +60,26 @@ class DatabaseHandler:
             return None
 
     def get_user_address(self, user_id):
-        result = self.cursor_with_lock('SELECT user_address FROM user_address WHERE user_id = ?',
-                                       (user_id,))
+        result = self.execute_query('SELECT user_address FROM user_address WHERE user_id = ?',
+                                    (user_id,))
         return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def get_user_session(self, user_id):
-        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE user_id = ?', (user_id,))
+        result = self.execute_query('SELECT session_id FROM sessions WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_session(self, session_id):
-        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE session_id = ?', (session_id,))
+        result = self.execute_query('SELECT session_id FROM sessions WHERE session_id = ?', (session_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_all_messages(self):
-        result = self.cursor_with_lock('SELECT user_sender_id, user_receiver_id, '
-                                       'sender_username, message, receive_date '
-                                       'FROM messages;', ())
+        result = self.execute_query('SELECT user_sender_id, user_receiver_id, '
+                                    'sender_username, message, receive_date '
+                                    'FROM messages;', ())
         return result.fetchall()
 
     def insert_user_address(self, user_id, user_address):
@@ -195,16 +120,36 @@ class DatabaseHandler:
         elif username:
             self.cursor_with_commit('DELETE FROM users WHERE username = ?', (username,))
 
-    def __del__(self):
-        self.cursor.close()
-        self.conn.close()
-        database_logger.info('Connection closed.')
-
 
 class RAMDatabaseHandler(DatabaseHandler):
 
     def __init__(self):
-        super().__init__(':memory:')
+        try:
+            super().__init__()
+            database_logger.info('SQLite in-memory connection opened.')
+            self.conn = sqlite3.connect(':memory:', check_same_thread=False)
+            self.cursor = self.conn.cursor()
+
+        except sqlite3.Error as e:
+            quit(e)
+
+    def execute_query(self, query, args):
+        database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
+        result = self.cursor.execute(query, args)
+        return result
+
+    def cursor_with_commit(self, query, args=None, many=False):
+        database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
+
+        if args is None:
+            args = []
+
+        if many:
+            self.cursor.executemany(query, args)
+        else:
+            self.cursor.execute(query, args)
+
+        self.conn.commit()
 
     def create_all_tables(self):
         self.create_sessions_table()
@@ -219,15 +164,43 @@ class RAMDatabaseHandler(DatabaseHandler):
                     username TEXT NOT NULL UNIQUE)
                     ''')
 
+    def create_messages_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS messages
+            (id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_sender_id INTEGER NOT NULL,
+            user_receiver_id INTEGER NOT NULL,
+            sender_username TEXT NOT NULL,
+            message TEXT NOT NULL,
+            receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
+            ''')
+
+    def create_sessions_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sessions
+            (user_id INTEGER NOT NULL UNIQUE,
+            session_id TEXT NOT NULL,
+            expiration_date DATETIME DEFAULT CURRENT_TIMESTAMP)
+            ''')
+
+    def create_user_address_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_address
+            (id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            user_address TEXT NOT NULL,
+            last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
+            ''')
+
     def insert_username(self, user_id, username):
         self.cursor_with_commit('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
                                 (user_id, username))
 
     def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor_with_lock('SELECT * FROM usernames WHERE user_id = ?', (user_id,))
+            result = self.execute_query('SELECT * FROM usernames WHERE user_id = ?', (user_id,))
         elif username:
-            result = self.cursor_with_lock('SELECT * FROM usernames WHERE username = ?', (username,))
+            result = self.execute_query('SELECT * FROM usernames WHERE username = ?', (username,))
         else:
             return
 
@@ -236,7 +209,7 @@ class RAMDatabaseHandler(DatabaseHandler):
             return result
 
     def get_username(self, user_id):
-        result = self.cursor_with_lock('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
+        result = self.execute_query('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -244,7 +217,7 @@ class RAMDatabaseHandler(DatabaseHandler):
             return ''
 
     def get_user_id(self, username):
-        result = self.cursor_with_lock('SELECT user_id FROM usernames WHERE username = ?', (username,))
+        result = self.execute_query('SELECT user_id FROM usernames WHERE username = ?', (username,))
         result = result.fetchone()
         if result:
             return result[0]
@@ -261,9 +234,80 @@ class RAMDatabaseHandler(DatabaseHandler):
 class HDDDatabaseHandler(DatabaseHandler):
 
     def __init__(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        db_path = os.path.join(current_dir, 'database.sqlite')
-        super().__init__(db_path)
+        try:
+            database_logger.info('PostgreSQL connection opened.')
+            super().__init__()
+            self.conn = psycopg2.connect(database=settings.DB_NAME, user=settings.DB_USER, port=settings.DB_PORT,
+                                         password=settings.DB_PASSWORD, host=settings.DB_HOST)
+            self.cursor_pg = self.conn.cursor()
+
+        except (psycopg2.DatabaseError, Exception) as error:
+            database_logger.error(error)
+            quit(error)
+
+    def change_query(self, query: str):
+        query = query.replace('?', '%s')
+        query = query.replace('OR IGNORE ', '')
+        return query
+
+    def cursor_with_commit(self, query, args=None, many=False):
+        database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
+        query = self.change_query(query)
+        if args is None:
+            args = []
+
+        try:
+            if many:
+                self.cursor_pg.executemany(query, args)
+            else:
+                self.cursor_pg.execute(query, args)
+
+            self.conn.commit()
+        except (psycopg2.errors.UniqueViolation, psycopg2.errors.InFailedSqlTransaction) as e:
+            database_logger.error(e)
+
+    def execute_query(self, query, args):
+        database_logger.info(f'Execute query:\n{query}\nArgs:\n{args}')
+        query = self.change_query(query)
+        result = self.cursor_pg.execute(query, args)
+        return result
+
+    def create_users_table(self):
+        self.execute_query('''
+            CREATE TABLE IF NOT EXISTS users
+            (id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
+            phone TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL)
+            ''', ())
+
+    def create_messages_table(self):
+        self.execute_query('''
+            CREATE TABLE IF NOT EXISTS messages
+            (id SERIAL PRIMARY KEY,
+            user_sender_id INTEGER NOT NULL,
+            user_receiver_id INTEGER NOT NULL,
+            sender_username TEXT NOT NULL,
+            message TEXT NOT NULL,
+            receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            ''', ())
+
+    def create_sessions_table(self):
+        self.execute_query('''
+            CREATE TABLE IF NOT EXISTS sessions
+            (user_id INTEGER NOT NULL UNIQUE,
+            session_id TEXT NOT NULL,
+            expiration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            ''', ())
+
+    def create_user_address_table(self):
+        self.execute_query('''
+            CREATE TABLE IF NOT EXISTS user_address
+            (id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            user_address TEXT NOT NULL,
+            last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            ''', ())
 
     def create_all_tables(self):
         database_logger.info('Create tables.')
@@ -277,15 +321,20 @@ class HDDDatabaseHandler(DatabaseHandler):
         self.insert_user('user_1', '123456789')
         self.insert_user('user_2', '987654321')
 
+    def __del__(self):
+        self.cursor_pg.close()
+        self.conn.close()
+        database_logger.info('PostgreSQL connection closed.')
+
 
 if __name__ == '__main__':
     handler = HDDDatabaseHandler()
-    handler.create_users_table()
-    handler.create_user_address_table()
+    handler.create_all_tables()
 
     # Add test users
     handler.insert_user('user_1', '123456789')
     handler.insert_user('user_2', '987654321')
+    handler.insert_user_address(1, 'some')
 
     ram_handler = RAMDatabaseHandler()
     ram_handler.create_messages_table()
