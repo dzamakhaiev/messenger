@@ -1,3 +1,4 @@
+version: "3"
 services:
 
   rabbitmq:
@@ -7,7 +8,6 @@ services:
 
   listener:
     image: "bogart047/messenger"
-#    build: .
     depends_on:
       - rabbitmq
     ports:
@@ -16,7 +16,6 @@ services:
 
   sender:
     image: "bogart047/messenger"
-#    build: .
     depends_on:
       - rabbitmq
     command: sh -c "sleep 10 && python sender.py"
