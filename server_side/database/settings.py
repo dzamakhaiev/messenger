@@ -1,1 +1,5 @@
-LOG_FORMAT = "%(asctime)s %(levelname)s %(module)s: %(message)s"
+DB_HOST = 'localhost'
+DB_PORT = 5432
+DB_NAME = 'postgres'
+DB_USER = 'postgres'
+DB_PASSWORD = 'password'
