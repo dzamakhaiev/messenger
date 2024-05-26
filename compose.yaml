@@ -6,15 +6,17 @@ services:
       - "5672:5672"
 
   listener:
-    build: .
+    image: "bogart047/messenger"
+#    build: .
     depends_on:
       - rabbitmq
     ports:
       - "5000:5000"
-    command: python listener.py
+    command: sh -c "sleep 10 && python listener.py"
 
   sender:
-    build: .
+    image: "bogart047/messenger"
+#    build: .
     depends_on:
       - rabbitmq
-    command: python sender.py
+    command: sh -c "sleep 10 && python sender.py"
