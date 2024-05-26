@@ -1,0 +1,20 @@
+services:
+
+  rabbitmq:
+    image: "rabbitmq:alpine"
+    ports:
+      - "5672:5672"
+
+  listener:
+    build: .
+    depends_on:
+      - rabbitmq
+    ports:
+      - "5000:5000"
+    command: python listener.py
+
+  sender:
+    build: .
+    depends_on:
+      - rabbitmq
+    command: python sender.py
