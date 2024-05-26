@@ -61,6 +61,10 @@ class Sender:
 if __name__ == '__main__':
     sender = Sender()
     try:
+        msg_broker.create_exchange(settings.MQ_EXCHANGE_NAME)
+        msg_broker.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+        msg_broker.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
         sender.run_sender()
-    except KeyboardInterrupt:
-        quit()
+    except (KeyboardInterrupt, Exception) as e:
+        quit(e)
+
