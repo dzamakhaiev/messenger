@@ -12,10 +12,10 @@ services:
       - rabbitmq
     ports:
       - "5000:5000"
-    command: sh -c "sleep 10 && python listener.py"
+    command: sh -c "sleep 30 && python listener.py"
 
   sender:
     image: "bogart047/messenger"
     depends_on:
       - rabbitmq
-    command: sh -c "sleep 10 && python sender.py"
+    command: sh -c "sleep 30 && python sender.py"
