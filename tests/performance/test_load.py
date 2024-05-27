@@ -38,7 +38,7 @@ class LoadTest(TestFramework):
         for response in responses:
             self.assertTrue(isinstance(response, Response), str(response))
             self.assertEqual(response.status_code, 200, response.text)
-            self.assertEqual(response.text, 'Message sent.')
+            self.assertEqual(response.text, 'Message processed.')
 
     def test_min_load_one_user(self):
         # Create new user and prepare message to send
