@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-from time import sleep
+from threading import Thread
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
@@ -32,7 +32,8 @@ def process_message(channel, method, properties, body):
 
     address_list = message.get('address_list')
     msg_json = message.get('msg_json')
-    service.send_message_by_list(address_list, msg_json)
+    thread = Thread(target=service.send_message_by_list, args=(address_list, msg_json), daemon=True)
+    thread.start()
 
 
 def process_login(channel, method, properties, body):
@@ -44,8 +45,6 @@ def process_login(channel, method, properties, body):
     messages = service.get_messages(login_msg['user_id'])
     address_list = [login_msg['user_address']]
     service.send_messages_by_list(address_list, messages)
-    sender_logger.info('Login message sent.')
-
 
 
 if __name__ == '__main__':
