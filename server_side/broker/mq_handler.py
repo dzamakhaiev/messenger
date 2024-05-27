@@ -64,6 +64,19 @@ class RabbitMQHandler:
         queue = self.channel.queue_declare(queue_name, passive=True)
         return queue.method.message_count
 
+    def connect_and_consume_from_multiple_queues(self, queue_dict: dict):
+        broker_logger.info('Connect consumer to RabbitMQ.')
+
+        def on_open(connection):
+            connection.channel(on_open_callback=on_channel_open)
+
+        def on_channel_open(channel):
+            for q_name, func in queue_dict.items():
+                channel.basic_consume(queue=q_name, on_message_callback=func)
+
+        connection = pika.SelectConnection(self.parameters, on_open_callback=on_open)
+        return connection
+
 
 if __name__ == '__main__':
     handler = RabbitMQHandler()

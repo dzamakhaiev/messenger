@@ -24,47 +24,42 @@ ram_db_handler.create_user_address_table()
 service = Service(None, ram_db_handler, msg_broker)
 
 
-class Sender:
+def process_message(channel, method, properties, body):
+    sender_logger.info('Message received.')
+    channel.basic_ack(delivery_tag=method.delivery_tag)
+    message = body.decode()
+    message = json.loads(message)
 
-    def run_sender(self):
-        sender_logger.info('Sender logger started.')
+    address_list = message.get('address_list')
+    msg_json = message.get('msg_json')
+    service.send_message_by_list(address_list, msg_json)
 
-        while True:
 
-            try:
-                message = msg_broker.receive_message(settings.MQ_MSG_QUEUE_NAME)
-                login_msg = msg_broker.receive_message(settings.MQ_LOGIN_QUEUE_NAME)
+def process_login(channel, method, properties, body):
+    sender_logger.info('Login message received.')
+    channel.basic_ack(delivery_tag=method.delivery_tag)
+    login_msg = body.decode()
+    login_msg = json.loads(login_msg)
 
-                if message:
-                    message = json.loads(message)
-                    address_list = message.get('address_list')
-                    msg_json = message.get('msg_json')
-                    service.send_message_by_list(address_list, msg_json)
+    messages = service.get_messages(login_msg['user_id'])
+    address_list = [login_msg['user_address']]
+    service.send_messages_by_list(address_list, messages)
+    sender_logger.info('Login message sent.')
 
-                if login_msg:
-                    login_msg = json.loads(login_msg)
-                    messages = service.get_messages(login_msg['user_id'])
-                    address_list = [login_msg['user_address']]
-                    service.send_messages_by_list(address_list, messages)
-
-            except KeyboardInterrupt:
-                sender_logger.info('Sender logger ended.')
-                break
-
-            except Exception as e:
-                sender_logger.error(e)
-                print(e)
-
-            sleep(0.1)
 
 
 if __name__ == '__main__':
-    sender = Sender()
     try:
         msg_broker.create_exchange(settings.MQ_EXCHANGE_NAME)
         msg_broker.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
         msg_broker.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-        sender.run_sender()
+
+        sender_logger.info('Sender logger started.')
+        queue_dict = {settings.MQ_MSG_QUEUE_NAME: process_message, settings.MQ_LOGIN_QUEUE_NAME: process_login}
+        connection = msg_broker.connect_and_consume_from_multiple_queues(queue_dict)
+        connection.ioloop.start()
+
     except (KeyboardInterrupt, Exception) as e:
+        sender_logger.info('Sender logger ended.')
         quit(e)
 
