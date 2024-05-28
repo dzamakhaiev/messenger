@@ -6,7 +6,8 @@ from urllib.parse import urlparse
 from server_side.app import settings
 from server_side.logger.logger import get_logger
 from server_side.broker.mq_handler import RabbitMQHandler
-from server_side.database.db_handler import HDDDatabaseHandler, RAMDatabaseHandler
+from server_side.database.db_handler import RAMDatabaseHandler
+from server_side.database.postgres_handler import PostgresHandler
 
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
@@ -16,7 +17,7 @@ service_logger = get_logger('service')
 class Service:
 
     def __init__(self,
-                 hdd_db_handler: HDDDatabaseHandler,
+                 hdd_db_handler: PostgresHandler,
                  ram_db_handler: RAMDatabaseHandler,
                  mq_handler: RabbitMQHandler):
 
