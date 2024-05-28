@@ -6,10 +6,18 @@ services:
     ports:
       - "5672:5672"
 
+  postgres:
+    image: "postgres:alpine"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+
   listener:
     image: "bogart047/messenger"
     depends_on:
       - rabbitmq
+      - postgres
     ports:
       - "5000:5000"
     command: sh -c "sleep 30 && python listener.py"
@@ -18,4 +26,5 @@ services:
     image: "bogart047/messenger"
     depends_on:
       - rabbitmq
+      - postgres
     command: sh -c "sleep 30 && python sender.py"
