@@ -1,5 +1,6 @@
 FROM python:3-alpine
 EXPOSE 5000
+ENV RUN_INSIDE_DOCKER 1
 COPY server_side/app /app/server_side/app
 COPY server_side/logger /app/server_side/logger
 COPY server_side/broker /app/server_side/broker

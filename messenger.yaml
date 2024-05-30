@@ -5,26 +5,38 @@ services:
     image: "rabbitmq:alpine"
     ports:
       - "5672:5672"
+    networks:
+      - backend
 
   postgres:
     image: "postgres:alpine"
     ports:
       - "5432:5432"
+    networks:
+      - backend
     environment:
       POSTGRES_PASSWORD: postgres
 
   listener:
-    image: "bogart047/messenger"
+    build: .
     depends_on:
       - rabbitmq
       - postgres
     ports:
       - "5000:5000"
+    networks:
+      - backend
     command: sh -c "sleep 30 && python listener.py"
 
   sender:
-    image: "bogart047/messenger"
+    build: .
     depends_on:
       - rabbitmq
       - postgres
+    networks:
+      - backend
     command: sh -c "sleep 30 && python sender.py"
+
+networks:
+  backend:
+    driver: bridge
