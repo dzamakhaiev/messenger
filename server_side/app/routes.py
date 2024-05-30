@@ -1,3 +1,4 @@
-LOGIN = '/login/'
-USERS = '/users/'
-MESSAGES = '/messages/'
+API = '/api'
+LOGIN = API + '/login/'
+USERS = API + '/users/'
+MESSAGES = API + '/messages/'

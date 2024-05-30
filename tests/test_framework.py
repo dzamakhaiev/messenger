@@ -5,7 +5,7 @@ from time import sleep
 from queue import Queue
 from datetime import datetime
 
-from helpers.network import post_request, get_local_ip
+from helpers import network
 from helpers.data import create_username, create_phone_number, create_password
 from client_side.backend.listener import run_listener
 from tests import test_data
@@ -34,27 +34,47 @@ class TestFramework(unittest.TestCase):
         cls.users = []
         cls.msg_json = {}
 
-    def post_request(self, url, json_dict, sleep_time=0.1):
-        response = post_request(url, json_dict)
+    def request(self, url, json_dict, sleep_time=0.1, request_type='post'):
+        if request_type == 'get':
+            response = network.get_request(url, json_dict)
+        elif request_type == 'post':
+            response = network.post_request(url, json_dict)
+        elif request_type == 'put':
+            response = network.put_request(url, json_dict)
+        elif request_type == 'patch':
+            response = network.patch_request(url, json_dict)
+        elif request_type == 'delete':
+            response = network.delete_request(url, json_dict)
+        else:
+            raise NotImplementedError
+
         if isinstance(response, requests.ConnectionError):
             self.fail(f'Request failed: {response}')
         sleep(sleep_time)
         return response
 
-    def log_in(self, json_dict):
-        response = self.post_request(url=self.login_url, json_dict=json_dict)
+    def get_user(self, json_dict):
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='get')
         return response
 
-    def users_request(self, json_dict):
-        response = self.post_request(url=self.users_url, json_dict=json_dict)
+    def create_user(self, json_dict):
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='post')
+        return response
+
+    def delete_user(self, json_dict):
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='delete')
         return response
 
     def send_message(self, json_dict, sleep_time=0.1):
-        response = self.post_request(url=self.messages_url, json_dict=json_dict, sleep_time=sleep_time)
+        response = self.request(url=self.messages_url, json_dict=json_dict, sleep_time=sleep_time)
+        return response
+
+    def log_in(self, json_dict):
+        response = self.request(url=self.login_url, json_dict=json_dict)
         return response
 
     def log_in_with_listener_url(self, user: User, listener_port):
-        local_host_ip = get_local_ip()
+        local_host_ip = network.get_local_ip()
         user.user_address = f'http://{local_host_ip}:{listener_port}'
         user.listener_port = listener_port
         login_json = {'username': user.username, 'password': user.password, 'user_address': user.user_address}
@@ -72,7 +92,7 @@ class TestFramework(unittest.TestCase):
         password = create_password(default=True)
         user_json = {'username': username, 'phone_number': phone_number, 'password': password, 'request': 'create_user'}
 
-        response = self.users_request(user_json)
+        response = self.create_user(user_json)
         if response.status_code == 201:
             user_id = response.json()['user_id']
             user = User(user_id=user_id, username=username, phone_number=phone_number)
@@ -83,9 +103,9 @@ class TestFramework(unittest.TestCase):
 
         return user
 
-    def delete_user(self, user: User):
+    def delete_new_user(self, user: User):
         user_json = {'user_id': user.user_id, 'session_id': user.session_id, 'request': 'delete_user'}
-        response = self.users_request(user_json)
+        response = self.delete_user(user_json)
         return response
 
     def create_new_msg_json(self, **kwargs):
@@ -106,4 +126,4 @@ class TestFramework(unittest.TestCase):
     def tearDown(self):
         if self.users:
             for user in self.users:
-                self.delete_user(user)
+                self.delete_new_user(user)

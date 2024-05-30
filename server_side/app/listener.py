@@ -37,9 +37,17 @@ mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHA
 service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
 
-def create_user(request_json: dict):
+def check_session(request_json: dict):
+    session_id = request_json.get('session_id')
+    if not service.check_session_exists(session_id):
+        listener_logger.error('Incorrect session id.')
+        return settings.NOT_AUTHORIZED, 401
+
+
+@app.route(f'{routes.USERS}', methods=['POST'])
+def create_user():
     try:
-        user = User(**request_json)
+        user = User(**request.json)
     except ValidationError as e:
         listener_logger.error(f'User validation caused error: {e}')
         return settings.VALIDATION_ERROR, 400
@@ -55,9 +63,9 @@ def create_user(request_json: dict):
         return jsonify({'user_id': user_id}), 201
 
 
-def get_user(request_json: dict):
-
-    if username := request_json.get('username'):
+@app.route(f'{routes.USERS}', methods=['GET'])
+def get_user():
+    if username := request.args.get('username'):
         user_id = service.get_user_id_by_username(username)
     else:
         listener_logger.error('Field "username" is missing.')
@@ -70,20 +78,19 @@ def get_user(request_json: dict):
         return f'User "{username}" not found.', 404
 
 
-def delete_user(request_json: dict):
-    if user_id := request_json.get('user_id'):
+@app.route(f'{routes.USERS}', methods=['DELETE'])
+def delete_user():
+    result = check_session(request.json)
+    if result:
+        return result
+
+    if user_id := request.json.get('user_id'):
         service.delete_user(user_id)
         return 'User deleted.', 200
+
     else:
         listener_logger.error('Field "user_id" is missing.')
         return settings.VALIDATION_ERROR, 400
-
-
-def check_session(request_json: dict):
-    session_id = request_json.get('session_id')
-    if not service.check_session_exists(session_id):
-        listener_logger.error('Incorrect session id.')
-        return settings.NOT_AUTHORIZED, 401
 
 
 @app.route(routes.LOGIN, methods=['POST'])
@@ -109,26 +116,6 @@ def login():
     else:
         listener_logger.error('Incorrect username or password.')
         return 'Incorrect username or password.', 401
-
-
-@app.route(f'{routes.USERS}', methods=['POST'])
-def users():
-    if request.json.get('request') and request.json.get('request') == 'create_user':
-        return create_user(request.json)
-
-    elif request.json.get('request') and request.json.get('request') == 'get_user':
-        if session_error := check_session(request.json):
-            return session_error
-        return get_user(request.json)
-
-    elif request.json.get('request') and request.json.get('request') == 'delete_user':
-        if session_error := check_session(request.json):
-            return session_error
-        return delete_user(request.json)
-
-    else:
-        listener_logger.error('Validation error for "/users" request.')
-        return settings.VALIDATION_ERROR, 400
 
 
 @app.route(routes.MESSAGES, methods=['POST'])

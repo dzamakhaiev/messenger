@@ -4,7 +4,6 @@ VALIDATION_ERROR = 'Validation error.'
 NOT_AUTHORIZED = 'Not authorized.'
 SUCCESSFUL = 'Operation successful.'
 MESSAGE_STATE = 'Message {}.'
-LOG_FORMAT = "%(asctime)s %(levelname)s %(module)s: %(message)s"
 MQ_EXCHANGE_NAME = 'EXCHANGE'
 MQ_MSG_QUEUE_NAME = 'MSG_QUEUE'
 MQ_LOGIN_QUEUE_NAME = 'LOGIN_QUEUE'
