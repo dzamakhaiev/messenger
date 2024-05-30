@@ -6,8 +6,9 @@ from server_side.app.routes import LOGIN, USERS, MESSAGES
 from server_side.app.settings import REST_API_PORT
 
 
-SERVER_URL = f'http://192.168.50.99:{REST_API_PORT}'
+SERVER_URL = f'http://localhost:{REST_API_PORT}'
 LISTENER_URL = f'http://{get_local_ip()}:{settings.LISTENER_PORT}'
+HEADERS = {'Content-type': 'application/json'}
 
 
 class ClientSender:
@@ -15,7 +16,15 @@ class ClientSender:
     @staticmethod
     def post_request(url, json_dict=None):
         try:
-            response = requests.post(url, json=json_dict)
+            response = requests.post(url, json=json_dict, headers=HEADERS)
+            return response
+        except requests.exceptions.ConnectionError as e:
+            print(e)
+
+    @staticmethod
+    def get_request(url, json_dict=None):
+        try:
+            response = requests.get(url, params=json_dict, headers=HEADERS)
             return response
         except requests.exceptions.ConnectionError as e:
             print(e)
@@ -31,7 +40,7 @@ class ClientSender:
         return response
 
     def user_request(self, json_dict, url=SERVER_URL + USERS):
-        response = self.post_request(url, json_dict)
+        response = self.get_request(url, json_dict)
         return response
 
 
