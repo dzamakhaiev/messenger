@@ -195,8 +195,9 @@ class DatabaseHandler:
             self.cursor_with_commit('DELETE FROM users WHERE username = ?', (username,))
 
     def __del__(self):
-        self.cursor.close()
-        self.conn.close()
+        if self.conn and self.cursor:
+            self.cursor.close()
+            self.conn.close()
         database_logger.info('Connection closed.')
 
 

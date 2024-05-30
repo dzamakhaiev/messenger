@@ -180,8 +180,10 @@ class PostgresHandler:
             self.cursor_with_commit('DELETE FROM users WHERE username = %s', (username,))
 
     def __del__(self):
-        self.cursor.close()
-        self.connection.close()
+        if self.connection and self.cursor:
+            self.cursor.close()
+            self.connection.close()
+        database_logger.info('Connection closed.')
 
 
 if __name__ == '__main__':
