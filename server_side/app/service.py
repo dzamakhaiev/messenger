@@ -188,7 +188,7 @@ class Service:
             result = self.hdd_db_handler.get_session(session_id)
             service_logger.debug(f'Session id from HDD: "{result}".')
 
-        if session_id:
+        if result:
             return True
         else:
             return False
