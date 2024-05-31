@@ -14,7 +14,7 @@ class LoadTest(TestFramework):
         self.user = self.create_new_user()
         self.log_in_with_listener_url(user=self.user, listener_port=find_free_port())
         self.msg_json = {'message': 'test', 'sender_id': self.user.user_id, 'sender_username': self.user.username,
-                         'receiver_id': test_data.ANOTHER_USER_ID, 'session_id': self.user.session_id,
+                         'receiver_id': None, 'session_id': self.user.session_id,
                          'send_date': datetime.now().strftime(test_data.DATETIME_FORMAT)}
 
     def send_n_messages(self, msg_json: dict, responses: list, messages_to_send=100):
@@ -32,6 +32,8 @@ class LoadTest(TestFramework):
         messages_to_send = 100
 
         # Send N messages to offline user
+        new_user = self.create_new_user()
+        self.msg_json['receiver_id'] = new_user.user_id
         self.send_n_messages(self.msg_json, responses, messages_to_send)
         self.assertEqual(len(responses), messages_to_send)
 
