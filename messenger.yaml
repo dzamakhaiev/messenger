@@ -19,6 +19,7 @@ services:
 
   listener-1:
     image: "dzamakhaiev/messenger"
+    restart: on-failure
     depends_on:
       - rabbitmq
       - postgres
@@ -28,6 +29,7 @@ services:
 
   listener-2:
     image: "dzamakhaiev/messenger"
+    restart: on-failure
     depends_on:
       - rabbitmq
       - postgres
@@ -37,6 +39,7 @@ services:
 
   sender-1:
     image: "dzamakhaiev/messenger"
+    restart: on-failure
     depends_on:
       - rabbitmq
       - postgres
@@ -46,8 +49,8 @@ services:
 
   nginx:
     image: "dzamakhaiev/messenger-nginx"
+    restart: on-failure
     ports:
-      - "80:80"
       - "5000:5000"
     networks:
       - backend
