@@ -18,7 +18,7 @@ services:
       POSTGRES_PASSWORD: postgres
 
   listener:
-    image: "bogart047/messenger"
+    image: "dzamakhaiev/messenger"
     depends_on:
       - rabbitmq
       - postgres
@@ -26,16 +26,16 @@ services:
       - "5000:5000"
     networks:
       - backend
-    command: sh -c "sleep 30 && python listener.py"
+    command: sh -c "sleep 30 && git pull && python listener.py"
 
   sender:
-    image: "bogart047/messenger"
+    image: "dzamakhaiev/messenger"
     depends_on:
       - rabbitmq
       - postgres
     networks:
       - backend
-    command: sh -c "sleep 30 && python sender.py"
+    command: sh -c "sleep 30 && git pull && python sender.py"
 
 networks:
   backend:
