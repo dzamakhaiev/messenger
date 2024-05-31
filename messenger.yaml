@@ -45,7 +45,7 @@ services:
     command: sh -c "sleep 30 && git pull && python sender.py"
 
   nginx:
-    build: ./nginx
+    image: "dzamakhaiev/messenger-nginx"
     ports:
       - "80:80"
       - "5000:5000"
