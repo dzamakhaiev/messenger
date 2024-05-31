@@ -12,6 +12,7 @@ from server_side.database.postgres_handler import PostgresHandler
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
 service_logger = get_logger('service')
+service_logger.setLevel('DEBUG')
 
 
 class Service:
@@ -180,9 +181,12 @@ class Service:
 
     def check_session_exists(self, session_id):
         service_logger.info(f'Check session id "{session_id}".')
-        session_id = self.ram_db_handler.get_session(session_id)
-        if not session_id:
-            session_id = self.hdd_db_handler.get_session(session_id)
+        result = self.ram_db_handler.get_session(session_id)
+        service_logger.debug(f'Session id from RAM: "{result}".')
+
+        if not result:
+            result = self.hdd_db_handler.get_session(session_id)
+            service_logger.debug(f'Session id from HDD: "{result}".')
 
         if session_id:
             return True
