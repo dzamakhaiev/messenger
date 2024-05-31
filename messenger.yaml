@@ -17,18 +17,25 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
 
-  listener:
+  listener-1:
     image: "dzamakhaiev/messenger"
     depends_on:
       - rabbitmq
       - postgres
-    ports:
-      - "5000:5000"
     networks:
       - backend
     command: sh -c "sleep 30 && git pull && python listener.py"
 
-  sender:
+  listener-2:
+    image: "dzamakhaiev/messenger"
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - backend
+    command: sh -c "sleep 30 && git pull && python listener.py"
+
+  sender-1:
     image: "dzamakhaiev/messenger"
     depends_on:
       - rabbitmq
@@ -36,6 +43,15 @@ services:
     networks:
       - backend
     command: sh -c "sleep 30 && git pull && python sender.py"
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "5000:5000"
+    networks:
+      - backend
+    command: sh -c "sleep 30 && nginx -g 'daemon off;'"
 
 networks:
   backend:
