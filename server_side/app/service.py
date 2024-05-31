@@ -176,7 +176,7 @@ class Service:
         messages = self.ram_db_handler.get_user_messages(user_id)
         self.ram_db_handler.delete_user_messages(user_id)
 
-        service_logger.debug(messages)
+        service_logger.debug(f'Messages: {messages}')
         return messages
 
     def check_session_exists(self, session_id):
