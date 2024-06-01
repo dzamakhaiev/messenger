@@ -150,8 +150,18 @@ class PostgresHandler:
                                      'FROM messages;', ())
         return result.fetchall()
 
+    def check_user_address(self, user_id, user_address):
+        result = self.cursor_execute('SELECT user_id FROM user_address WHERE user_id=%s AND user_address=%s',
+                                     (user_id, user_address))
+        result = result.fetchone()
+        if result:
+            return True
+        else:
+            return False
+
     def insert_user_address(self, user_id, user_address):
-        self.cursor_with_commit('INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
+        if not self.check_user_address(user_id, user_address):
+            self.cursor_with_commit('INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
                                 (user_id, user_address))
 
     def insert_user(self, username, phone_number, password='qwerty'):

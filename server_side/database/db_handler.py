@@ -156,9 +156,19 @@ class DatabaseHandler:
                                        'FROM messages;', ())
         return result.fetchall()
 
+    def check_user_address(self, user_id, user_address):
+        result = self.cursor_with_lock('SELECT user_id FROM user_address WHERE user_id=? AND user_address=?',
+                                       (user_id, user_address))
+        result = result.fetchone()
+        if result:
+            return True
+        else:
+            return False
+
     def insert_user_address(self, user_id, user_address):
-        self.cursor_with_commit('INSERT OR IGNORE INTO user_address ("user_id", "user_address") VALUES (?, ?)',
-                                (user_id, user_address))
+        if not self.check_user_address(user_id, user_address):
+            self.cursor_with_commit('INSERT OR IGNORE INTO user_address ("user_id", "user_address") VALUES (?, ?)',
+                                    (user_id, user_address))
 
     def insert_user(self, username, phone_number, password='qwerty'):
         self.cursor_with_commit('INSERT OR IGNORE INTO users ("username", "phone", "password") VALUES (?, ?, ?)',
