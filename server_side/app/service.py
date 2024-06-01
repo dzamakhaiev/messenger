@@ -61,7 +61,7 @@ class Service:
 
         if not message_received:
             service_logger.info('Message not sent. Store it to DB in RAM.')
-            self.store_message_to_ram_db(msg_json)
+            self.store_message_to_db(msg_json)
         return message_received
 
     def send_messages_by_list(self, address_list, messages):
@@ -80,6 +80,7 @@ class Service:
 
         messages_to_delete = ','.join([str(msg) for msg in messages_to_delete])
         self.ram_db_handler.delete_messages(messages_to_delete)
+        self.hdd_db_handler.delete_messages(messages_to_delete)
 
     def create_user(self, user):
         service_logger.info('Create new user.')
@@ -91,9 +92,15 @@ class Service:
         service_logger.info(f'User with {user.username} created: user id "{user_id}".')
         return user_id
 
-    def store_message_to_ram_db(self, msg_json):
+    def store_message_to_db(self, msg_json):
         service_logger.debug(f'Message stored in RAM DB:\n{msg_json}')
         self.ram_db_handler.insert_message(msg_json.get('sender_id'),
+                                           msg_json.get('receiver_id'),
+                                           msg_json.get('sender_username'),
+                                           msg_json.get('message'))
+
+        service_logger.debug(f'Message stored in HDD DB:\n{msg_json}')
+        self.hdd_db_handler.insert_message(msg_json.get('sender_id'),
                                            msg_json.get('receiver_id'),
                                            msg_json.get('sender_username'),
                                            msg_json.get('message'))
@@ -172,9 +179,13 @@ class Service:
         return address_list
 
     def get_messages(self, user_id):
-        service_logger.info(f'Get messages for user id "{user_id}".')
+        service_logger.info(f'Get messages for user id "{user_id}" from RAM DB.')
         messages = self.ram_db_handler.get_user_messages(user_id)
         self.ram_db_handler.delete_user_messages(user_id)
+
+        if not messages:
+            service_logger.info(f'Get messages for user id "{user_id}" from HDD DB.')
+            self.hdd_db_handler.get_user_messages(user_id)
 
         service_logger.debug(f'Messages: {messages}')
         return messages

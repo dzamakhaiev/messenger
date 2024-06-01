@@ -158,6 +158,12 @@ class PostgresHandler:
         self.cursor_with_commit('INSERT INTO users ("username", "phone", "password") VALUES (%s, %s, %s)',
                                 (username, phone_number, password))
 
+    def insert_message(self, sender_id, receiver_id, sender_username, message):
+        self.cursor_with_commit('INSERT INTO messages '
+                                '("user_sender_id", "user_receiver_id", "sender_username", "message") '
+                                'VALUES (%s, %s, %s, %s)',
+                                (sender_id, receiver_id, sender_username, message))
+
     def insert_messages(self, messages):
         self.cursor_with_commit('INSERT INTO messages ('
                                 '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
@@ -169,6 +175,9 @@ class PostgresHandler:
 
     def delete_all_messages(self):
         self.cursor_with_commit('DELETE FROM messages')
+
+    def delete_messages(self, message_ids):
+        self.cursor_with_commit('DELETE FROM messages WHERE id IN (%s)', (message_ids,))
 
     def delete_user_messages(self, receiver_id):
         self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = %s', (receiver_id,))
