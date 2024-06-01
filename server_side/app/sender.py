@@ -14,6 +14,7 @@ from server_side.app.service import Service
 from server_side.logger.logger import get_logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.database.db_handler import RAMDatabaseHandler
+from server_side.database.postgres_handler import PostgresHandler
 
 sender_logger = get_logger('sender')
 
@@ -21,7 +22,8 @@ msg_broker = RabbitMQHandler()
 ram_db_handler = RAMDatabaseHandler()
 ram_db_handler.create_messages_table()
 ram_db_handler.create_user_address_table()
-service = Service(None, ram_db_handler, msg_broker)
+hdd_db_handler = PostgresHandler()
+service = Service(hdd_db_handler, ram_db_handler, msg_broker)
 
 
 def process_message(channel, method, properties, body):
