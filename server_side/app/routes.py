@@ -1,3 +1,4 @@
+HEALTH = '/health'
 API = '/api'
 LOGIN = API + '/login/'
 USERS = API + '/users/'

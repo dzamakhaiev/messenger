@@ -145,6 +145,12 @@ def process_messages():
         return settings.NOT_AUTHORIZED, 401
 
 
+@app.route(routes.HEALTH, methods=['HEAD'])
+def health_check():
+    listener_logger.debug('Health checked by nginx server.')
+    return 'OK', 200
+
+
 if __name__ == '__main__':
     listener_logger.info('Listener started.')
 
