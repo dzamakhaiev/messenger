@@ -79,8 +79,9 @@ class Service:
                 messages_to_delete.append(msg_id)
 
         messages_to_delete = ','.join([str(msg) for msg in messages_to_delete])
-        self.ram_db_handler.delete_messages(messages_to_delete)
-        self.hdd_db_handler.delete_messages(messages_to_delete)
+        if messages_to_delete:
+            self.ram_db_handler.delete_messages(messages_to_delete)
+            self.hdd_db_handler.delete_messages(messages_to_delete)
 
     def create_user(self, user):
         service_logger.info('Create new user.')
