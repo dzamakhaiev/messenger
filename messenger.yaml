@@ -69,6 +69,9 @@ services:
     container_name: nginx
     image: "dzamakhaiev/messenger-nginx"
     restart: on-failure
+    depends_on:
+      - listener-1
+      - listener-2
     ports:
       - "5000:5000"
     networks:
