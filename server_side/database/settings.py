@@ -6,3 +6,6 @@ DB_PORT = 5432
 DB_NAME = 'postgres'
 DB_USER = 'postgres'
 DB_PASSWORD = 'postgres'
+
+REDIS_HOST = 'redis' if INSIDE_DOCKER else 'localhost'
+REDIS_PORT = '6379'
