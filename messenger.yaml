@@ -2,6 +2,7 @@ version: "3"
 services:
 
   rabbitmq:
+    container_name: rabbitmq
     image: "rabbitmq:alpine"
     ports:
       - "5672:5672"
@@ -9,6 +10,7 @@ services:
       - backend
 
   postgres:
+    container_name: postgres
     image: "postgres:alpine"
     ports:
       - "5432:5432"
@@ -16,8 +18,11 @@ services:
       - backend
     environment:
       POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./server_side/database:/var/lib/postgresql
 
   listener-1:
+    container_name: listener-1
     image: "dzamakhaiev/messenger"
     restart: on-failure
     depends_on:
@@ -28,6 +33,7 @@ services:
     command: sh -c "sleep 30 && git pull && python listener.py"
 
   listener-2:
+    container_name: listener-2
     image: "dzamakhaiev/messenger"
     restart: on-failure
     depends_on:
@@ -38,6 +44,18 @@ services:
     command: sh -c "sleep 30 && git pull && python listener.py"
 
   sender-1:
+    container_name: sender-1
+    image: "dzamakhaiev/messenger"
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - backend
+    command: sh -c "sleep 30 && git pull && python sender.py"
+
+  sender-2:
+    container_name: sender-2
     image: "dzamakhaiev/messenger"
     restart: on-failure
     depends_on:
@@ -48,6 +66,7 @@ services:
     command: sh -c "sleep 30 && git pull && python sender.py"
 
   nginx:
+    container_name: nginx
     image: "dzamakhaiev/messenger-nginx"
     restart: on-failure
     ports:
