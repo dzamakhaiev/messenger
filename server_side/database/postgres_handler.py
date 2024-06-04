@@ -9,7 +9,7 @@ class PostgresHandler:
 
     def __init__(self):
         try:
-            database_logger.info('PostgreSQL connection opened.')
+            database_logger.info('Connecting to PostgreSQL.')
             self.connection = psycopg2.connect(database=settings.DB_NAME, user=settings.DB_USER, port=settings.DB_PORT,
                                                password=settings.DB_PASSWORD, host=settings.DB_HOST)
             self.cursor = self.connection.cursor()
@@ -199,7 +199,7 @@ class PostgresHandler:
             self.cursor_with_commit('DELETE FROM users WHERE username = %s', (username,))
 
     def __del__(self):
-        if self.connection and self.cursor:
+        if hasattr(self, 'connection') and hasattr(self, 'cursor'):
             self.cursor.close()
             self.connection.close()
         database_logger.info('Connection closed.')
