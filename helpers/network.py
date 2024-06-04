@@ -59,14 +59,14 @@ def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
 
 
-def async_requests(url: str, json_dict: dict, n: int, method='get'):
+def async_requests(url: str, json_dicts: list, method='get'):
     if hasattr(grequests, method):
         req_method = getattr(grequests, method)
     else:
         return []
 
     req_list = []
-    for _ in range(n):
+    for json_dict in json_dicts:
 
         if method == 'get':
             req_list.append(req_method(url=url, params=json_dict, headers=headers))
@@ -78,6 +78,6 @@ def async_requests(url: str, json_dict: dict, n: int, method='get'):
 
 
 if __name__ == '__main__':
-    result = async_requests('http://localhost:5000/api/users/', {'username': 'user_1'}, 100)
+    result = async_requests('http://localhost:5000/api/users/', [{'username': 'user_1'}])
     for response in result:
         print(response.status_code)
