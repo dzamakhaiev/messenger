@@ -46,7 +46,8 @@ def process_login(channel, method, properties, body):
 
     messages = service.get_messages(login_msg['user_id'])
     address_list = [login_msg['user_address']]
-    service.send_messages_by_list(address_list, messages)
+    thread = Thread(target=service.send_messages_by_list, args=(address_list, messages), daemon=True)
+    thread.start()
 
 
 if __name__ == '__main__':
