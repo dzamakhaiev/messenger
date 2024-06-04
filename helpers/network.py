@@ -1,5 +1,6 @@
 import socket
 import requests
+import grequests
 from random import randint
 
 
@@ -56,3 +57,27 @@ def delete_request(url, json_dict=None):
 
 def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
+
+
+def async_requests(url: str, json_dict: dict, n: int, method='get'):
+    if hasattr(grequests, method):
+        req_method = getattr(grequests, method)
+    else:
+        return []
+
+    req_list = []
+    for _ in range(n):
+
+        if method == 'get':
+            req_list.append(req_method(url=url, params=json_dict, headers=headers))
+        else:
+            req_list.append(req_method(url=url, json=json_dict, headers=headers))
+
+    response_list = grequests.map(req_list)
+    return response_list
+
+
+if __name__ == '__main__':
+    result = async_requests('http://localhost:5000/api/users/', {'username': 'user_1'}, 100)
+    for response in result:
+        print(response.status_code)
