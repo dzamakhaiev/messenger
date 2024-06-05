@@ -1,10 +1,6 @@
 import socket
 import requests
-import grequests
 from random import randint
-
-
-headers = {'Content-type': 'application/json'}
 
 
 def find_free_port(port=5005):
@@ -15,7 +11,7 @@ def find_free_port(port=5005):
             return port
 
 
-def get_request(url, params=None):
+def get_request(url, headers, params=None):
     try:
         response = requests.get(url, params=params, headers=headers)
         return response
@@ -23,7 +19,7 @@ def get_request(url, params=None):
         return e
 
 
-def post_request(url, json_dict=None):
+def post_request(url, headers, json_dict=None):
     try:
         response = requests.post(url, json=json_dict, headers=headers)
         return response
@@ -31,7 +27,7 @@ def post_request(url, json_dict=None):
         return e
 
 
-def put_request(url, json_dict=None):
+def put_request(url, headers, json_dict=None):
     try:
         response = requests.put(url, json=json_dict, headers=headers)
         return response
@@ -39,7 +35,7 @@ def put_request(url, json_dict=None):
         return e
 
 
-def patch_request(url, json_dict=None):
+def patch_request(url, headers, json_dict=None):
     try:
         response = requests.patch(url, json=json_dict, headers=headers)
         return response
@@ -47,7 +43,7 @@ def patch_request(url, json_dict=None):
         return e
 
 
-def delete_request(url, json_dict=None):
+def delete_request(url, headers, json_dict=None):
     try:
         response = requests.delete(url, json=json_dict, headers=headers)
         return response
@@ -57,27 +53,3 @@ def delete_request(url, json_dict=None):
 
 def get_local_ip():
     return socket.gethostbyname(socket.gethostname())
-
-
-def async_requests(url: str, json_dicts: list, method='get'):
-    if hasattr(grequests, method):
-        req_method = getattr(grequests, method)
-    else:
-        return []
-
-    req_list = []
-    for json_dict in json_dicts:
-
-        if method == 'get':
-            req_list.append(req_method(url=url, params=json_dict, headers=headers))
-        else:
-            req_list.append(req_method(url=url, json=json_dict, headers=headers))
-
-    response_list = grequests.map(req_list)
-    return response_list
-
-
-if __name__ == '__main__':
-    result = async_requests('http://localhost:5000/api/users/', [{'username': 'user_1'}])
-    for response in result:
-        print(response.status_code)
