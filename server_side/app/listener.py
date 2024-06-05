@@ -1,6 +1,9 @@
 import os
 import sys
+import jwt
 import routes
+from functools import wraps
+from datetime import datetime, timedelta
 from pydantic import ValidationError
 from flask import Flask, request, jsonify
 
@@ -21,6 +24,7 @@ from server_side.database.postgres_handler import PostgresHandler
 
 # Set up listener and its logger
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'replace_that_secret_key'
 listener_logger = get_logger('listener')
 
 # Set up DB handlers
@@ -35,6 +39,42 @@ mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANG
 mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
 
 service = Service(hdd_db_handler, ram_db_handler, mq_handler)
+
+
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        listener_logger.info('Check authorization token.')
+        auth_header = request.headers.get('Authorization')
+
+        if auth_header:
+            token = auth_header.split(' ')[-1]
+        else:
+            listener_logger.error('Authorization header not found.')
+            return settings.NOT_AUTHORIZED, 401
+
+        try:
+            jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            listener_logger.info('Token decoded.')
+
+        except jwt.exceptions.ExpiredSignatureError:
+            listener_logger.error('Token expired.')
+            return settings.INVALID_TOKEN, 401
+
+        except jwt.exceptions.InvalidTokenError:
+            listener_logger.error('Invalid expired.')
+            return settings.INVALID_TOKEN, 401
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def create_token(username):
+    token = jwt.encode({'user': username, 'exp': datetime.now() + timedelta(minutes=settings.TOKEN_EXP_MINUTES)},
+                       app.config['SECRET_KEY'], algorithm='HS256')
+    listener_logger.info(f'Token created.')
+    return token
 
 
 def check_session(request_json: dict):
@@ -78,6 +118,7 @@ def get_user():
         return f'User "{username}" not found.', 404
 
 
+@token_required
 @app.route(f'{routes.USERS}', methods=['DELETE'])
 def delete_user():
     result = check_session(request.json)
@@ -103,6 +144,7 @@ def login():
 
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
+
         user_id = service.get_user_id_by_username(user.username)
         ram_db_handler.insert_username(user_id, user.username)  # store it in ram for further checks
         session_id = service.get_or_create_user_session(user_id)
@@ -110,14 +152,16 @@ def login():
         service.store_user_address_and_session(user_id, session_id, user.user_address)
         listener_logger.info(f'User id "{user_id}" logged in with session id "{session_id}".')
         service.put_login_in_queue(user_id, user.user_address)
+        token = create_token(user.username)
 
-        return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id})
+        return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id, 'token': token})
 
     else:
         listener_logger.error('Incorrect username or password.')
         return 'Incorrect username or password.', 401
 
 
+@token_required
 @app.route(routes.MESSAGES, methods=['POST'])
 def process_messages():
     try:

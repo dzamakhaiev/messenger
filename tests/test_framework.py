@@ -12,6 +12,9 @@ from tests import test_data
 from tests import settings
 
 
+HEADERS = {'Content-type': 'application/json', 'Authorization': None}
+
+
 class User:
 
     def __init__(self, user_id, username, phone_number, password=test_data.PASSWORD):
@@ -20,6 +23,7 @@ class User:
         self.password = password
         self.phone_number = phone_number
         self.session_id = None
+        self.token = None
         self.user_address = None
         self.listener_port = None
 
@@ -34,17 +38,17 @@ class TestFramework(unittest.TestCase):
         cls.users = []
         cls.msg_json = {}
 
-    def request(self, url, json_dict, sleep_time=0.1, request_type='post'):
+    def request(self, url, json_dict, headers, sleep_time=0.1, request_type='post'):
         if request_type == 'get':
-            response = network.get_request(url, json_dict)
+            response = network.get_request(url, headers, json_dict)
         elif request_type == 'post':
-            response = network.post_request(url, json_dict)
+            response = network.post_request(url, headers, json_dict)
         elif request_type == 'put':
-            response = network.put_request(url, json_dict)
+            response = network.put_request(url, headers, json_dict)
         elif request_type == 'patch':
-            response = network.patch_request(url, json_dict)
+            response = network.patch_request(url, headers, json_dict)
         elif request_type == 'delete':
-            response = network.delete_request(url, json_dict)
+            response = network.delete_request(url, headers, json_dict)
         else:
             raise NotImplementedError
 
@@ -54,23 +58,31 @@ class TestFramework(unittest.TestCase):
         return response
 
     def get_user(self, json_dict):
-        response = self.request(url=self.users_url, json_dict=json_dict, request_type='get')
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='get', headers=HEADERS)
         return response
 
     def create_user(self, json_dict):
-        response = self.request(url=self.users_url, json_dict=json_dict, request_type='post')
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='post', headers=HEADERS)
         return response
 
-    def delete_user(self, json_dict):
-        response = self.request(url=self.users_url, json_dict=json_dict, request_type='delete')
+    def delete_user(self, json_dict, token=None):
+        headers = copy(HEADERS)
+        if token:
+            headers['token'] = token
+
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='delete', headers=headers)
         return response
 
-    def send_message(self, json_dict, sleep_time=0.1):
-        response = self.request(url=self.messages_url, json_dict=json_dict, sleep_time=sleep_time)
+    def send_message(self, json_dict, sleep_time=0.1, token=None):
+        headers = copy(HEADERS)
+        if token:
+            headers['token'] = token
+
+        response = self.request(url=self.messages_url, json_dict=json_dict, sleep_time=sleep_time, headers=headers)
         return response
 
     def log_in(self, json_dict):
-        response = self.request(url=self.login_url, json_dict=json_dict)
+        response = self.request(url=self.login_url, json_dict=json_dict, headers=HEADERS)
         return response
 
     def log_in_with_listener_url(self, user: User, listener_port):
@@ -82,6 +94,7 @@ class TestFramework(unittest.TestCase):
 
         if response.status_code == 200:
             user.session_id = response.json()['session_id']
+
         else:
             self.fail(response.text)
         return response

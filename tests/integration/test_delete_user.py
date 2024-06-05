@@ -7,12 +7,12 @@ from helpers.network import find_free_port
 class DeleteUserTest(TestFramework):
 
     def setUp(self):
-        user = self.create_new_user()
-        self.log_in_with_listener_url(user, find_free_port())
-        self.delete_json = {'user_id': user.user_id, 'session_id': user.session_id}
+        self.user = self.create_new_user()
+        self.log_in_with_listener_url(self.user, find_free_port())
+        self.delete_json = {'user_id': self.user.user_id, 'session_id': self.user.session_id}
 
     def test_delete_user_positive(self):
-        response = self.delete_user(self.delete_json)
+        response = self.delete_user(self.delete_json, token=self.user.token)
         self.assertEqual(200, response.status_code, msg=response.text)
         self.assertEqual('User deleted.', response.text, msg=response.text)
 

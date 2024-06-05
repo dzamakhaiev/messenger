@@ -13,10 +13,14 @@ class LoginTest(TestFramework):
         response = self.log_in(self.correct_json)
         self.assertEqual(response.status_code, 200, response.text)
 
-        user_id = response.json()['user_id']
+        user_id = response.json().get('user_id')
         self.assertEqual(test_data.USER_ID, user_id, f'Incorrect user_id: {user_id}')
-        session_id = response.json()['session_id']
+
+        session_id = response.json().get('session_id')
         self.assertIsInstance(session_id, str, f'Unexpected session_id data type: {session_id}')
+
+        token = response.json().get('token')
+        self.assertIsInstance(token, str, f'Unexpected token data type: {token}')
 
     def test_incorrect_login(self):
         for field in ('username', 'password', 'username and password'):
