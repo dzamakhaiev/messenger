@@ -2,7 +2,6 @@ import os
 import sys
 import jwt
 import routes
-from functools import wraps
 from datetime import datetime, timedelta
 from pydantic import ValidationError
 from flask import Flask, request, jsonify
@@ -41,33 +40,27 @@ mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHA
 service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
 
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        listener_logger.info('Check authorization token.')
-        auth_header = request.headers.get('Authorization')
+def check_token(headers: dict):
+    listener_logger.info('Check authorization token.')
+    auth_header = headers.get('Authorization')
 
-        if auth_header:
-            token = auth_header.split(' ')[-1]
-        else:
-            listener_logger.error('Authorization header not found.')
-            return settings.NOT_AUTHORIZED, 401
+    if auth_header:
+        token = auth_header.split(' ')[-1]
+    else:
+        listener_logger.error('Authorization header not found.')
+        return settings.NOT_AUTHORIZED, 401
 
-        try:
-            jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            listener_logger.info('Token decoded.')
+    try:
+        jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        listener_logger.info('Token decoded.')
 
-        except jwt.exceptions.ExpiredSignatureError:
-            listener_logger.error('Token expired.')
-            return settings.INVALID_TOKEN, 401
+    except jwt.exceptions.ExpiredSignatureError:
+        listener_logger.error('Token expired.')
+        return settings.INVALID_TOKEN, 401
 
-        except jwt.exceptions.InvalidTokenError:
-            listener_logger.error('Invalid expired.')
-            return settings.INVALID_TOKEN, 401
-
-        return f(*args, **kwargs)
-
-    return decorated
+    except jwt.exceptions.InvalidTokenError:
+        listener_logger.error('Invalid expired.')
+        return settings.INVALID_TOKEN, 401
 
 
 def create_token(username):
@@ -118,7 +111,6 @@ def get_user():
         return f'User "{username}" not found.', 404
 
 
-@token_required
 @app.route(f'{routes.USERS}', methods=['DELETE'])
 def delete_user():
     result = check_session(request.json)
@@ -161,7 +153,6 @@ def login():
         return 'Incorrect username or password.', 401
 
 
-@token_required
 @app.route(routes.MESSAGES, methods=['POST'])
 def process_messages():
     try:
@@ -169,6 +160,10 @@ def process_messages():
     except ValidationError as e:
         listener_logger.error(f'Message validation caused error: {e}')
         return settings.VALIDATION_ERROR, 400
+
+    error = check_token(request.headers)
+    if error:
+        return error
 
     if not service.check_user_id(msg.receiver_id):
         listener_logger.error(f'User id "{msg.receiver_id}" not found.')
