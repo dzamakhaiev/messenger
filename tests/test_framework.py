@@ -65,18 +65,14 @@ class TestFramework(unittest.TestCase):
         response = self.request(url=self.users_url, json_dict=json_dict, request_type='post', headers=HEADERS)
         return response
 
-    def delete_user(self, json_dict, token=None):
-        headers = copy(HEADERS)
-        if token:
-            headers['token'] = token
-
-        response = self.request(url=self.users_url, json_dict=json_dict, request_type='delete', headers=headers)
+    def delete_user(self, json_dict):
+        response = self.request(url=self.users_url, json_dict=json_dict, request_type='delete', headers=HEADERS)
         return response
 
     def send_message(self, json_dict, sleep_time=0.1, token=None):
         headers = copy(HEADERS)
         if token:
-            headers['token'] = token
+            headers['Authorization'] = f'Bearer {token}'
 
         response = self.request(url=self.messages_url, json_dict=json_dict, sleep_time=sleep_time, headers=headers)
         return response
@@ -94,6 +90,7 @@ class TestFramework(unittest.TestCase):
 
         if response.status_code == 200:
             user.session_id = response.json()['session_id']
+            user.token = response.json()['token']
 
         else:
             self.fail(response.text)

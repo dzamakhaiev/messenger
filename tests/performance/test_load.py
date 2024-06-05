@@ -4,7 +4,7 @@ from requests import Response
 from datetime import datetime
 from threading import Thread
 from tests.test_framework import TestFramework
-from helpers.network import find_free_port, async_requests
+from helpers.network import find_free_port
 from tests import test_data
 
 
@@ -17,15 +17,13 @@ class LoadTest(TestFramework):
                          'receiver_id': None, 'session_id': self.user.session_id,
                          'send_date': datetime.now().strftime(test_data.DATETIME_FORMAT)}
 
-    def send_n_messages(self, msg_json: dict, responses: list, messages_to_send=100):
-        messages = []
-
+    def send_n_messages(self, msg_json: dict, responses: list, token: str, messages_to_send=100):
         for i in range(messages_to_send):
             msg_json['message'] = f'test_{i}'
             msg_json['send_date'] = datetime.now().strftime(test_data.DATETIME_FORMAT)
-            messages.append(msg_json)
+            response = self.send_message(msg_json, token=token, sleep_time=0)
+            responses.append(response)
 
-        responses.extend(async_requests(url=self.messages_url, json_dicts=messages, method='post'))
         sleep(1)
 
     def test_min_offline_load(self):
@@ -36,7 +34,7 @@ class LoadTest(TestFramework):
         # Send N messages to offline user
         new_user = self.create_new_user()
         self.msg_json['receiver_id'] = new_user.user_id
-        self.send_n_messages(self.msg_json, responses, messages_to_send)
+        self.send_n_messages(self.msg_json, responses, self.user.token, messages_to_send)
         self.assertEqual(len(responses), messages_to_send)
 
         for response in responses:
@@ -57,7 +55,7 @@ class LoadTest(TestFramework):
         # Send N messages to online user
         responses = []
         messages_to_send = 100
-        self.send_n_messages(msg_json, responses, messages_to_send)
+        self.send_n_messages(msg_json, responses, self.user.token, messages_to_send)
         self.assertEqual(len(responses), messages_to_send)
         self.assertEqual(len(responses), new_queue.qsize())
 
@@ -86,9 +84,9 @@ class LoadTest(TestFramework):
 
         # Send N messages to both online users
         thread_for_default_user = Thread(target=self.send_n_messages,
-                                         args=(msg_to_new_user, default_responses, messages_to_send))
+                                         args=(msg_to_new_user, default_responses, self.user.token, messages_to_send))
         thread_for_new_user = Thread(target=self.send_n_messages,
-                                     args=(msg_to_default_user, new_responses, messages_to_send))
+                                     args=(msg_to_default_user, new_responses, new_user.token, messages_to_send))
 
         # Start and wait both threads
         thread_for_default_user.start()
@@ -129,7 +127,7 @@ class LoadTest(TestFramework):
 
         # Send messages in multiple threads to one user
         for _ in range(number_of_threads):
-            t = Thread(target=self.send_n_messages, args=(msg_json, responses, messages_to_send))
+            t = Thread(target=self.send_n_messages, args=(msg_json, responses, self.user.token, messages_to_send))
             threads.append(t)
 
         # Start threads and wait for completion

@@ -12,7 +12,7 @@ class DeleteUserTest(TestFramework):
         self.delete_json = {'user_id': self.user.user_id, 'session_id': self.user.session_id}
 
     def test_delete_user_positive(self):
-        response = self.delete_user(self.delete_json, token=self.user.token)
+        response = self.delete_user(self.delete_json)
         self.assertEqual(200, response.status_code, msg=response.text)
         self.assertEqual('User deleted.', response.text, msg=response.text)
 
