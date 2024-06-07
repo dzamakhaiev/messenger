@@ -22,6 +22,8 @@ class Logger:
         self.logger.addHandler(stdout_handler)
 
     def push_log_to_loki(self, log_row, level):
+        self.logger.debug('Push message to Loki container.')
+
         log_json = {
             'streams': [{
                 'stream': {
@@ -34,15 +36,20 @@ class Logger:
             response = requests.post(url=settings.LOKI_URL, json=log_json)
             if response.status_code != 204:
                 self.logger.error(f'Cannot push log to Loki container: {response.text}')
+            else:
+                self.logger.debug('Message pushed.')
 
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
             self.logger.critical(f'Cannot connect to Loki container: {e}')
 
     def error(self, msg):
         self.logger.error(msg)
+        self.push_log_to_loki(msg, 'error')
 
     def info(self, msg):
         self.logger.info(msg)
+        self.push_log_to_loki(msg, 'info')
 
     def debug(self, msg):
-        self.logger.info(msg)
+        self.logger.debug(msg)
+        self.push_log_to_loki(msg, 'debug')
