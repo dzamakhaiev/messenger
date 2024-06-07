@@ -30,7 +30,7 @@ services:
       - postgres
     networks:
       - backend
-    command: sh -c "sleep 30 && git pull && python listener.py"
+    command: sh -c "sleep 10 && git pull && python listener.py"
 
   listener-2:
     container_name: listener-2
@@ -41,7 +41,7 @@ services:
       - postgres
     networks:
       - backend
-    command: sh -c "sleep 30 && git pull && python listener.py"
+    command: sh -c "sleep 10 && git pull && python listener.py"
 
   sender-1:
     container_name: sender-1
@@ -52,7 +52,7 @@ services:
       - postgres
     networks:
       - backend
-    command: sh -c "sleep 30 && git pull && python sender.py"
+    command: sh -c "sleep 10 && git pull && python sender.py"
 
   sender-2:
     container_name: sender-2
@@ -63,7 +63,7 @@ services:
       - postgres
     networks:
       - backend
-    command: sh -c "sleep 30 && git pull && python sender.py"
+    command: sh -c "sleep 10 && git pull && python sender.py"
 
   nginx:
     container_name: nginx
@@ -76,7 +76,7 @@ services:
       - "5000:5000"
     networks:
       - backend
-    command: sh -c "sleep 30 && nginx -g 'daemon off;'"
+    command: sh -c "sleep 15 && nginx -g 'daemon off;'"
 
 networks:
   backend:
