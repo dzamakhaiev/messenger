@@ -32,7 +32,7 @@ services:
     networks:
       - backend
     volumes:
-      - loki-data:/loki
+      - ./loki:/loki
 
   listener-1:
     container_name: listener-1
