@@ -64,28 +64,35 @@ def check_token(headers: dict):
 
 
 def create_token(username):
+    listener_logger.info('Create authorization token.')
     token = jwt.encode({'user': username, 'exp': datetime.now() + timedelta(minutes=settings.TOKEN_EXP_MINUTES)},
                        app.config['SECRET_KEY'], algorithm='HS256')
-    listener_logger.info(f'Token created.')
+    listener_logger.debug('Token created.')
     return token
 
 
 def check_session(request_json: dict):
+    listener_logger.info('Create session.')
     session_id = request_json.get('session_id')
+    listener_logger.debug(f'Session id: {session_id}')
+
     if not service.check_session_exists(session_id):
-        listener_logger.error('Incorrect session id.')
+        listener_logger.error(f'Incorrect session id: {session_id}')
         return settings.NOT_AUTHORIZED, 401
 
 
 @app.route(f'{routes.USERS}', methods=['POST'])
 def create_user():
+    listener_logger.info('Create user.')
     try:
         user = User(**request.json)
     except ValidationError as e:
         listener_logger.error(f'User validation caused error: {e}')
         return settings.VALIDATION_ERROR, 400
 
+    listener_logger.debug(f'Create user with username: {user.username}')
     username = hdd_db_handler.get_user(username=user.username)
+
     if username:
         listener_logger.error(f'Username "{username}" already exists.')
         return 'Username already exists.', 400
@@ -98,6 +105,7 @@ def create_user():
 
 @app.route(f'{routes.USERS}', methods=['GET'])
 def get_user():
+    listener_logger.info('Get user.')
     if username := request.args.get('username'):
         user_id = service.get_user_id_by_username(username)
     else:
@@ -105,6 +113,7 @@ def get_user():
         return settings.VALIDATION_ERROR, 400
 
     if user_id:
+        listener_logger.debug(f'User found: {user_id}')
         return jsonify({'user_id': user_id})
     else:
         listener_logger.error(f'User "{username}" not found.')
@@ -113,12 +122,14 @@ def get_user():
 
 @app.route(f'{routes.USERS}', methods=['DELETE'])
 def delete_user():
+    listener_logger.info('Delete user.')
     result = check_session(request.json)
     if result:
         return result
 
     if user_id := request.json.get('user_id'):
         service.delete_user(user_id)
+        listener_logger.debug(f'User deleted: {user_id}')
         return 'User deleted.', 200
 
     else:
@@ -128,6 +139,7 @@ def delete_user():
 
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
+    listener_logger.info('Login request.')
     try:
         user = UserLogin(**request.json)
     except ValidationError as e:
@@ -136,16 +148,19 @@ def login():
 
     exp_password = hdd_db_handler.get_user_password(user.username)
     if exp_password and exp_password == user.password:
+        listener_logger.debug(f'Login successful for username: {user.username}')
 
         user_id = service.get_user_id_by_username(user.username)
-        ram_db_handler.insert_username(user_id, user.username)  # store it in ram for further checks
+        ram_db_handler.insert_username(user_id, user.username)
         session_id = service.get_or_create_user_session(user_id)
 
         service.store_user_address_and_session(user_id, session_id, user.user_address)
-        listener_logger.info(f'User id "{user_id}" logged in with session id "{session_id}".')
         service.put_login_in_queue(user_id, user.user_address)
         token = create_token(user.username)
 
+        listener_logger.debug(f'User id "{user_id}" logged in with session id "{session_id}".')
+        listener_logger.debug(f'User id "{user_id}" logged in with token "{token}".')
+        listener_logger.debug(f'User id "{user_id}" logged in with address "{user.user_address}".')
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id, 'token': token})
 
     else:
@@ -155,6 +170,7 @@ def login():
 
 @app.route(routes.MESSAGES, methods=['POST'])
 def process_messages():
+    listener_logger.info('Messages request.')
     try:
         msg = Message(**request.json)
     except ValidationError as e:
@@ -172,9 +188,13 @@ def process_messages():
     username = service.get_username_by_user_id(msg.sender_id)
     session_id = service.get_session_id(msg.sender_id)
 
+    listener_logger.debug(f'Username from message: "{msg.sender_username}"')
+    listener_logger.debug(f'Username from database: "{username}"')
+    listener_logger.debug(f'Session id from message "{msg.session_id}"')
+    listener_logger.debug(f'Session id from database "{session_id}"')
+
     if msg.session_id == session_id and msg.sender_username == username:
         listener_logger.info(f'Send message to "{msg.receiver_id}" user id.')
-
         address_list = service.get_user_address(msg.receiver_id)
         service.put_message_in_queue(address_list, request.json)
         return 'Message processed.', 200
@@ -186,7 +206,7 @@ def process_messages():
 
 @app.route(routes.HEALTH, methods=['HEAD'])
 def health_check():
-    listener_logger.debug('Health checked by nginx server.')
+    listener_logger.info('Health checked for other services.')
     return 'OK', 200
 
 

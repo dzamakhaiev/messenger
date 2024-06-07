@@ -34,20 +34,28 @@ def process_message(channel, method, properties, body):
 
     address_list = message.get('address_list')
     msg_json = message.get('msg_json')
+    sender_logger.debug(f'Message to send:\n{msg_json}To user address list:\n{address_list}')
+
     thread = Thread(target=service.send_message_by_list, args=(address_list, msg_json), daemon=True)
+    sender_logger.debug(f'Thread "{thread.name}" created.')
     thread.start()
+    sender_logger.debug(f'Thread "{thread.name}" started.')
 
 
 def process_login(channel, method, properties, body):
-    sender_logger.info('Login message received.')
+    sender_logger.info('Login event received.')
     channel.basic_ack(delivery_tag=method.delivery_tag)
     login_msg = body.decode()
     login_msg = json.loads(login_msg)
 
     messages = service.get_messages(login_msg['user_id'])
     address_list = [login_msg['user_address']]
+    sender_logger.debug(f'Messages to send after log in:\n{messages}To user address list:\n{address_list}')
+
     thread = Thread(target=service.send_messages_by_list, args=(address_list, messages), daemon=True)
+    sender_logger.debug(f'Thread "{thread.name}" created.')
     thread.start()
+    sender_logger.debug(f'Thread "{thread.name}" started.')
 
 
 if __name__ == '__main__':
