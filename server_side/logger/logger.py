@@ -23,17 +23,18 @@ class Logger:
 
     def push_log_to_loki(self, log_row, level):
         self.logger.debug('Push message to Loki container.')
+        timestamp = str(int(datetime.now().timestamp() * 1e9))
 
         log_json = {
             'streams': [{
                 'stream': {
                     'service': self.logger_name,
                     'level': level},
-                'values': [[datetime.now().strftime(settings.DATETIME_FORMAT), log_row]]}]
+                'values': [[timestamp, log_row]]}]
         }
 
         try:
-            response = requests.post(url=settings.LOKI_URL, json=log_json)
+            response = requests.post(url=settings.LOKI_URL+settings.LOKI_PUSH, json=log_json)
             if response.status_code != 204:
                 self.logger.error(f'Cannot push log to Loki container: {response.text}')
             else:
@@ -53,3 +54,8 @@ class Logger:
     def debug(self, msg):
         self.logger.debug(msg)
         self.push_log_to_loki(msg, 'debug')
+
+
+if __name__ == '__main__':
+    logger = Logger('test')
+    logger.info('Test message.')
