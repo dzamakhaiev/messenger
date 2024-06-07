@@ -14,7 +14,7 @@ sys.path.insert(0, repo_dir)
 
 from server_side.app import settings
 from server_side.app.service import Service
-from server_side.logger.logger import get_logger
+from server_side.logger.logger import Logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.app.models import UserLogin, User, Message
 from server_side.database.db_handler import RAMDatabaseHandler
@@ -24,7 +24,7 @@ from server_side.database.postgres_handler import PostgresHandler
 # Set up listener and its logger
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'replace_that_secret_key'
-listener_logger = get_logger('listener')
+listener_logger = Logger('listener')
 
 # Set up DB handlers
 hdd_db_handler = PostgresHandler()

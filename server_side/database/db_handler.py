@@ -3,9 +3,9 @@ import sqlite3
 from time import sleep
 from threading import Lock
 from datetime import datetime, timedelta
-from server_side.logger.logger import get_logger
+from server_side.logger.logger import Logger
 
-database_logger = get_logger('database')
+database_logger = Logger('database')
 global_lock = Lock()
 MIN_REQUEST_INTERVAL = timedelta(microseconds=10000)
 

@@ -1,18 +1,27 @@
-import sys
 import logging
 
 
-def get_logger(logger_name, level=logging.INFO):
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(level)
+class Logger:
 
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s: %(message)s")
-    file_handler = logging.FileHandler(f"../logs/{logger_name}.log")
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    def __init__(self, logger_name, level=logging.DEBUG):
+        self.logger = logging.getLogger(logger_name)
+        self.logger.setLevel(level)
 
-    stdout_handler = logging.StreamHandler()
-    stdout_handler.setFormatter(formatter)
-    logger.addHandler(stdout_handler)
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(module)s: %(message)s")
 
-    return logger
+        file_handler = logging.FileHandler(f"../logs/{logger_name}.log")
+        file_handler.setFormatter(formatter)
+        self.logger.addHandler(file_handler)
+
+        stdout_handler = logging.StreamHandler()
+        stdout_handler.setFormatter(formatter)
+        self.logger.addHandler(stdout_handler)
+
+    def error(self, msg):
+        self.logger.error(msg)
+
+    def info(self, msg):
+        self.logger.info(msg)
+
+    def debug(self, msg):
+        self.logger.info(msg)

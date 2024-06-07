@@ -1,8 +1,8 @@
 import psycopg2
 from server_side.database import settings
-from server_side.logger.logger import get_logger
+from server_side.logger.logger import Logger
 
-database_logger = get_logger('postgres_database')
+database_logger = Logger('postgres_database')
 
 
 class PostgresHandler:

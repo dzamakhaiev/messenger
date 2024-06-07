@@ -4,15 +4,14 @@ import requests
 from urllib.parse import urlparse
 
 from server_side.app import settings
-from server_side.logger.logger import get_logger
+from server_side.logger.logger import Logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.database.db_handler import RAMDatabaseHandler
 from server_side.database.postgres_handler import PostgresHandler
 
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
-service_logger = get_logger('service')
-service_logger.setLevel('DEBUG')
+service_logger = Logger('service')
 
 
 class Service:

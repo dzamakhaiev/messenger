@@ -1,10 +1,10 @@
 import json
 import pika
 from server_side.broker import settings
-from server_side.logger.logger import get_logger
+from server_side.logger.logger import Logger
 
 
-broker_logger = get_logger('broker')
+broker_logger = Logger('broker')
 
 
 class RabbitMQHandler:
