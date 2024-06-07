@@ -31,6 +31,8 @@ services:
       - "3100:3100"
     networks:
       - backend
+    volumes:
+      - loki-data:/loki
 
   listener-1:
     container_name: listener-1

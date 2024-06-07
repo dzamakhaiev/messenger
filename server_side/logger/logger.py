@@ -1,3 +1,4 @@
+import os
 import logging
 import requests
 from datetime import datetime
@@ -11,9 +12,11 @@ class Logger:
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(level)
 
-        formatter = logging.Formatter()
+        formatter = logging.Formatter(settings.FORMAT)
+        log_directory = os.path.abspath("../logs/")
+        log_file_path = os.path.join(log_directory, f"{logger_name}.log")
 
-        file_handler = logging.FileHandler(f"../logs/{logger_name}.log")
+        file_handler = logging.FileHandler(log_file_path)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
 
