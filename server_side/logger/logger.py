@@ -23,13 +23,13 @@ class Logger:
         self.logger.addHandler(stdout_handler)
 
     def error(self, msg):
-        self.logger.error(msg)
+        self.logger.error(msg, extra={'unit': self.logger_name})
 
     def info(self, msg):
-        self.logger.info(msg)
+        self.logger.info(msg, extra={'unit': self.logger_name})
 
     def debug(self, msg):
-        self.logger.debug(msg)
+        self.logger.debug(msg, extra={'unit': self.logger_name})
 
 
 if __name__ == '__main__':
