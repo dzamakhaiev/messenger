@@ -14,12 +14,6 @@ class UserLogin(BaseModel):
     user_address: str
 
 
-class Session(BaseModel):
-    id: int
-    session_id: int
-    expiration_date: datetime
-
-
 class UserAddress(BaseModel):
     id: int
     user_id: int
@@ -30,7 +24,6 @@ class UserAddress(BaseModel):
 class Message(BaseModel):
     sender_id: int
     receiver_id: int
-    session_id: str
     sender_username: str
     message: str
     send_date: datetime

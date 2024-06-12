@@ -76,14 +76,6 @@ class DatabaseHandler:
             receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
             ''')
 
-    def create_sessions_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sessions
-            (user_id INTEGER NOT NULL UNIQUE,
-            session_id TEXT NOT NULL,
-            expiration_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
-
     def create_user_address_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_address
@@ -138,18 +130,6 @@ class DatabaseHandler:
                                        (user_id,))
         return [item[0] for item in result.fetchall()]  # convert tuple to string
 
-    def get_user_session(self, user_id):
-        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE user_id = ?', (user_id,))
-        result = result.fetchone()
-        if result:
-            return result[0]
-
-    def get_session(self, session_id):
-        result = self.cursor_with_lock('SELECT session_id FROM sessions WHERE session_id = ?', (session_id,))
-        result = result.fetchone()
-        if result:
-            return result[0]
-
     def get_all_messages(self):
         result = self.cursor_with_lock('SELECT user_sender_id, user_receiver_id, '
                                        'sender_username, message, receive_date '
@@ -185,10 +165,6 @@ class DatabaseHandler:
                                 '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
                                 'VALUES (?, ?, ?, ?, ?)', messages, many=True)
 
-    def insert_session_id(self, user_id, session_id):
-        self.cursor_with_commit('INSERT OR IGNORE INTO sessions ("user_id", "session_id") VALUES (?, ?)',
-                                (user_id, session_id))
-
     def delete_user_messages(self, receiver_id):
         self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = ?', (receiver_id,))
 
@@ -218,7 +194,6 @@ class RAMDatabaseHandler(DatabaseHandler):
         super().__init__(':memory:')
 
     def create_all_tables(self):
-        self.create_sessions_table()
         self.create_messages_table()
         self.create_usernames_table()
         self.create_user_address_table()
@@ -280,7 +255,6 @@ class HDDDatabaseHandler(DatabaseHandler):
     def create_all_tables(self):
         database_logger.info('Create tables.')
         self.create_users_table()
-        self.create_sessions_table()
         self.create_user_address_table()
         self.create_messages_table()
 
@@ -302,7 +276,6 @@ if __name__ == '__main__':
     ram_handler = RAMDatabaseHandler()
     ram_handler.create_messages_table()
     ram_handler.create_user_address_table()
-    ram_handler.create_sessions_table()
 
     ram_handler.insert_user_address(1, 'http://127.0.0.1:6666')
     ram_handler.insert_user_address(2, 'http://127.0.0.1:7777')
@@ -310,8 +283,4 @@ if __name__ == '__main__':
     ram_handler.insert_message(1, 2, 'user_1', 'test')
     ram_handler.insert_message(1, 2, 'user_1', 'test1')
     ram_handler.insert_message(1, 2, 'user_1', 'test2')
-
-    ram_handler.insert_session_id(1, '123')
-
     print(ram_handler.get_user_messages(2))
-    print(ram_handler.get_user_session(1))

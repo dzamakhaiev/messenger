@@ -38,7 +38,6 @@ run_listener(queue)
 
 response = sender.login_request({'username': MY_USERNAME, 'password': MY_PASSWORD})
 if response and response.status_code == 200:
-    MY_SESSION_ID = response.json().get('session_id')
     MY_USER_ID = response.json().get('user_id')
     MY_TOKEN = response.json().get('token')
 
@@ -72,7 +71,7 @@ def send_message():
 
     if text:
         json_dict = {'message': text, 'sender_id': MY_USER_ID, 'sender_username': MY_USERNAME,
-                     'receiver_id': COMPANION_USER_ID, 'session_id': MY_SESSION_ID}
+                     'receiver_id': COMPANION_USER_ID}
 
         response = sender.message_request(json_dict, token=MY_TOKEN)
         if response and response.status_code == 200:

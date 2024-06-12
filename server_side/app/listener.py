@@ -71,16 +71,6 @@ def create_token(username):
     return token
 
 
-def check_session(request_json: dict):
-    listener_logger.info('Create session.')
-    session_id = request_json.get('session_id')
-    listener_logger.debug(f'Session id: {session_id}')
-
-    if not service.check_session_exists(session_id):
-        listener_logger.error(f'Incorrect session id: {session_id}')
-        return settings.NOT_AUTHORIZED, 401
-
-
 @app.route(f'{routes.USERS}', methods=['POST'])
 def create_user():
     listener_logger.info('Create user.')
@@ -123,9 +113,6 @@ def get_user():
 @app.route(f'{routes.USERS}', methods=['DELETE'])
 def delete_user():
     listener_logger.info('Delete user.')
-    result = check_session(request.json)
-    if result:
-        return result
 
     if user_id := request.json.get('user_id'):
         service.delete_user(user_id)
@@ -140,6 +127,8 @@ def delete_user():
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
     listener_logger.info('Login request.')
+    listener_logger.debug(f'Request: {request.json}')
+
     try:
         user = UserLogin(**request.json)
     except ValidationError as e:
@@ -152,16 +141,14 @@ def login():
 
         user_id = service.get_user_id_by_username(user.username)
         ram_db_handler.insert_username(user_id, user.username)
-        session_id = service.get_or_create_user_session(user_id)
 
-        service.store_user_address_and_session(user_id, session_id, user.user_address)
+        service.store_user_address(user_id, user.user_address)
         service.put_login_in_queue(user_id, user.user_address)
         token = create_token(user.username)
 
-        listener_logger.debug(f'User id "{user_id}" logged in with session id "{session_id}".')
         listener_logger.debug(f'User id "{user_id}" logged in with token "{token}".')
         listener_logger.debug(f'User id "{user_id}" logged in with address "{user.user_address}".')
-        return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'session_id': session_id, 'token': token})
+        return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'token': token})
 
     else:
         listener_logger.error('Incorrect username or password.')
@@ -188,21 +175,17 @@ def process_messages():
         return settings.VALIDATION_ERROR, 400
 
     username = service.get_username_by_user_id(msg.sender_id)
-    session_id = service.get_session_id(msg.sender_id)
-
     listener_logger.debug(f'Username from message: "{msg.sender_username}"')
     listener_logger.debug(f'Username from database: "{username}"')
-    listener_logger.debug(f'Session id from message "{msg.session_id}"')
-    listener_logger.debug(f'Session id from database "{session_id}"')
 
-    if msg.session_id == session_id and msg.sender_username == username:
+    if msg.sender_username == username:
         listener_logger.info(f'Send message to "{msg.receiver_id}" user id.')
         address_list = service.get_user_address(msg.receiver_id)
         service.put_message_in_queue(address_list, request.json)
         return 'Message processed.', 200
 
     else:
-        listener_logger.error('Invalid username or session id.')
+        listener_logger.error('Invalid username.')
         return settings.NOT_AUTHORIZED, 401
 
 

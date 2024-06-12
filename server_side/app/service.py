@@ -116,10 +116,8 @@ class Service:
             self.ram_db_handler.insert_messages(messages)
             self.hdd_db_handler.delete_all_messages()
 
-    def store_user_address_and_session(self, user_id, session_id, user_address):
-        service_logger.info('Store user session and user addresses in HDD and RAM DBs.')
-        self.ram_db_handler.insert_session_id(user_id, session_id)
-        self.hdd_db_handler.insert_session_id(user_id, session_id)
+    def store_user_address(self, user_id, user_address):
+        service_logger.info('Store user user addresses in HDD and RAM DBs.')
         self.ram_db_handler.insert_user_address(user_id, user_address)
         self.hdd_db_handler.insert_user_address(user_id, user_address)
 
@@ -134,22 +132,6 @@ class Service:
         queue_json = {'user_id': user_id, 'user_address': user_address}
         self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME, queue_name=settings.MQ_LOGIN_QUEUE_NAME,
                                      body=queue_json)
-
-    def get_or_create_user_session(self, user_id):
-        service_logger.info(f'Get or create session for user id "{user_id}".')
-        session_id = self.get_session_id(user_id)
-        if not session_id:
-            session_id = str(uuid.uuid4())
-
-        service_logger.debug(f'Session id: "{session_id}".')
-        return session_id
-
-    def get_session_id(self, user_id):
-        session_id = self.ram_db_handler.get_user_session(user_id)
-        if session_id:
-            return session_id
-        else:
-            return self.hdd_db_handler.get_user_session(user_id)
 
     def get_user_id_by_username(self, username):
         service_logger.debug(f'Get user id for username "{username}".')
@@ -189,20 +171,6 @@ class Service:
 
         service_logger.debug(f'Messages: {messages}')
         return messages
-
-    def check_session_exists(self, session_id):
-        service_logger.info(f'Check session id "{session_id}".')
-        result = self.ram_db_handler.get_session(session_id)
-        service_logger.debug(f'Session id from RAM: "{result}".')
-
-        if not result:
-            result = self.hdd_db_handler.get_session(session_id)
-            service_logger.debug(f'Session id from HDD: "{result}".')
-
-        if result:
-            return True
-        else:
-            return False
 
     def check_user_id(self, user_id):
         service_logger.info(f'Check user id "{user_id}".')

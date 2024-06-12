@@ -52,14 +52,12 @@ if __name__ == '__main__':
     client = ClientSender()
     response = client.login_request(json_dict={'username': 'user_1', 'password': 'qwerty'})
     sender_json = response.json()
-    session_id = sender_json.get('session_id')
     token = sender_json.get('token')
 
     response = client.user_request('user_2')
     receiver_json = response.json()
     receiver_id = receiver_json.get('user_id')
 
-    msg_json = {'message': 'Pidor!', 'sender_id': 1, 'receiver_id': 2,
-                'session_id': session_id, 'sender_address': '127.0.0.1:666'}
+    msg_json = {'message': 'Pidor!', 'sender_id': 1, 'receiver_id': 2, 'sender_address': '127.0.0.1:666'}
     response = client.message_request(json_dict=msg_json, token=token)
 

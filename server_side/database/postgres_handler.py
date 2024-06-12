@@ -64,14 +64,6 @@ class PostgresHandler:
             receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
             ''')
 
-    def create_sessions_table(self):
-        self.cursor_with_commit('''
-            CREATE TABLE IF NOT EXISTS sessions
-            (user_id INTEGER NOT NULL UNIQUE,
-            session_id TEXT NOT NULL,
-            expiration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
-            ''')
-
     def create_user_address_table(self):
         self.cursor_with_commit('''
             CREATE TABLE IF NOT EXISTS user_address
@@ -83,7 +75,6 @@ class PostgresHandler:
     def create_all_tables(self):
         database_logger.info('Create tables.')
         self.create_users_table()
-        self.create_sessions_table()
         self.create_user_address_table()
         self.create_messages_table()
 
@@ -136,18 +127,6 @@ class PostgresHandler:
         else:
             return None
 
-    def get_user_session(self, user_id):
-        result = self.cursor_execute('SELECT session_id FROM sessions WHERE user_id = %s', (user_id,))
-        result = result.fetchone()
-        if result:
-            return result[0]
-
-    def get_session(self, session_id):
-        result = self.cursor_execute('SELECT session_id FROM sessions WHERE session_id = %s', (session_id,))
-        result = result.fetchone()
-        if result:
-            return result[0]
-
     def get_all_messages(self):
         result = self.cursor_execute('SELECT user_sender_id, user_receiver_id, '
                                      'sender_username, message, receive_date '
@@ -182,10 +161,6 @@ class PostgresHandler:
         self.cursor_with_commit('INSERT INTO messages ('
                                 '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
                                 'VALUES (%s, %s, %s, %s, %s)', messages, many=True)
-
-    def insert_session_id(self, user_id, session_id):
-        self.cursor_with_commit('INSERT INTO sessions ("user_id", "session_id") VALUES (%s, %s)',
-                                (user_id, session_id))
 
     def delete_all_messages(self):
         self.cursor_with_commit('DELETE FROM messages')
