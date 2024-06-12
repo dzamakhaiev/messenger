@@ -37,8 +37,12 @@ class PostgresHandler:
                 self.cursor.execute(query, args)
             self.connection.commit()
 
-        except (psycopg2.OperationalError, psycopg2.errors.UniqueViolation):
+        except (psycopg2.OperationalError, psycopg2.errors.UniqueViolation, psycopg2.DatabaseError, Exception) as e:
+            database_logger.debug(f'Query caused an error: {e}')
             self.connection.rollback()
+
+        except Exception as e:
+            database_logger.debug(f'PostgreSQL handler got an error: {e}')
 
     def create_users_table(self):
         self.cursor_with_commit('''
