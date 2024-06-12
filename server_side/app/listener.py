@@ -171,6 +171,8 @@ def login():
 @app.route(routes.MESSAGES, methods=['POST'])
 def process_messages():
     listener_logger.info('Messages request.')
+    listener_logger.debug(f'Request: {request.json}')
+
     try:
         msg = Message(**request.json)
     except ValidationError as e:
