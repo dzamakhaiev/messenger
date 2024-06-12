@@ -216,11 +216,8 @@ if __name__ == '__main__':
     listener_logger.info('Listener started.')
 
     try:
-        service.restore_all_messages_from_hdd()
         app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, use_reloader=False, threaded=True)
     except Exception as e:
         listener_logger.info(f'Listener failed with unexpected error:\n{e}.')
-    finally:
-        service.store_all_messages_to_hdd()
 
-    listener_logger.info('Listener Ended.')
+    listener_logger.info('Listener ended.')
