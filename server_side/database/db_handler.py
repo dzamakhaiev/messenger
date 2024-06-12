@@ -38,23 +38,34 @@ class DatabaseHandler:
             global_lock.acquire(True)
             self.check_min_request_interval()
             result = self.cursor.execute(query, args)
+            return result
+
+        except sqlite3.DatabaseError as e:
+            database_logger.debug(f'Query caused an error: {e}')
+            self.conn.rollback()
 
         finally:
             global_lock.release()
-
-        return result
 
     def cursor_with_commit(self, query, args=None, many=False):
         database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
         if args is None:
             args = []
 
-        if many:
-            self.cursor.executemany(query, args)
-        else:
-            self.cursor.execute(query, args)
+        try:
+            global_lock.acquire(True)
+            if many:
+                self.cursor.executemany(query, args)
+            else:
+                self.cursor.execute(query, args)
+            self.conn.commit()
 
-        self.conn.commit()
+        except sqlite3.DatabaseError as e:
+            database_logger.debug(f'Query caused an error: {e}')
+            self.conn.rollback()
+
+        finally:
+            global_lock.release()
 
     def create_users_table(self):
         self.cursor.execute('''
