@@ -97,12 +97,18 @@ class PostgresHandler:
     def get_user_address(self, user_id):
         result = self.cursor_execute('SELECT user_address FROM user_address WHERE user_id = %s',
                                      (user_id,))
-        return [item[0] for item in result.fetchall()]  # convert tuple to string
+        if self.cursor.rowcount != 0:
+            return [item[0] for item in result.fetchall()]  # convert tuple to string
+        else:
+            return []
 
     def get_user_messages(self, receiver_id):
         result = self.cursor_execute('SELECT * FROM messages WHERE user_receiver_id = %s',
                                      (receiver_id,))
-        return result.fetchall()
+        if self.cursor.rowcount != 0:
+            return [item[0] for item in result.fetchall()]  # convert tuple to string
+        else:
+            return []
 
     def get_user_password(self, username):
         result = self.cursor_execute('SELECT password FROM users WHERE username = %s',
@@ -129,9 +135,12 @@ class PostgresHandler:
 
     def get_all_messages(self):
         result = self.cursor_execute('SELECT user_sender_id, user_receiver_id, '
-                                     'sender_username, message, receive_date '
+                                     'sender_username, message, receive_date '        
                                      'FROM messages;', ())
-        return result.fetchall()
+        if self.cursor.rowcount != 0:
+            return result.fetchall()
+        else:
+            return []
 
     def check_user_address(self, user_id, user_address):
         result = self.cursor_execute('SELECT user_id FROM user_address WHERE user_id=%s AND user_address=%s',
