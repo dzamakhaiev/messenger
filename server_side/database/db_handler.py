@@ -21,7 +21,7 @@ class DatabaseHandler:
     def cursor_with_lock(self, query, args):
         try:
             database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
-            sleep(uniform(0.0025, 0.0175))
+            sleep(uniform(0.0025, 0.0275))  # temporary work around to increase stability
             global_lock.acquire(True)
             result = self.cursor.execute(query, args)
             return result
