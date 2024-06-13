@@ -167,7 +167,7 @@ class Service:
 
         if not messages:
             service_logger.info(f'Get messages for user id "{user_id}" from HDD DB.')
-            self.hdd_db_handler.get_user_messages(user_id)
+            messages = self.hdd_db_handler.get_user_messages(user_id)
 
         service_logger.debug(f'Messages: {messages}')
         return messages
