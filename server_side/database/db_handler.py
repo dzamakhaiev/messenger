@@ -36,7 +36,10 @@ class DatabaseHandler:
             database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
             global_lock.acquire(True)
             result = self.cursor.execute(query, args)
-            return result
+            if result:
+                return result.fetchall()
+            else:
+                return []
 
         except sqlite3.DatabaseError as e:
             database_logger.debug(f'Query caused an error: {e}')
@@ -105,53 +108,47 @@ class DatabaseHandler:
         else:
             return
 
-        result = result.fetchone()
         if result:
-            return result
+            return result[0]
 
     def get_user_messages(self, receiver_id):
-        result = self.cursor_with_lock('SELECT * FROM messages WHERE user_receiver_id = ?',
-                                       (receiver_id,))
-        return result.fetchall()
+        result = self.cursor_with_lock('SELECT * FROM messages WHERE user_receiver_id = ?', (receiver_id,))
+        return result[0]
 
     def get_user_password(self, username):
         result = self.cursor_with_lock('SELECT password FROM users WHERE username = ?',
                                        (username,))
-        result = result.fetchone()
         if result:
-            return result[0]
+            return result[0][0]
 
     def get_username(self, user_id):
         result = self.cursor_with_lock('SELECT username FROM users WHERE id = ?', (user_id,))
-        result = result.fetchone()
         if result:
-            return result[0]
+            return result[0][0]
         else:
             return ''
 
     def get_user_id(self, username):
         result = self.cursor_with_lock('SELECT id FROM users WHERE username = ?', (username,))
-        result = result.fetchone()
         if result:
-            return result[0]
+            return result[0][0]
         else:
             return None
 
     def get_user_address(self, user_id):
         result = self.cursor_with_lock('SELECT user_address FROM user_address WHERE user_id = ?',
                                        (user_id,))
-        return [item[0] for item in result.fetchall()]  # convert tuple to string
+        return [item[0] for item in result]  # convert tuple to string
 
     def get_all_messages(self):
         result = self.cursor_with_lock('SELECT user_sender_id, user_receiver_id, '
                                        'sender_username, message, receive_date '
                                        'FROM messages;', ())
-        return result.fetchall()
+        return result
 
     def check_user_address(self, user_id, user_address):
         result = self.cursor_with_lock('SELECT user_id FROM user_address WHERE user_id=? AND user_address=?',
                                        (user_id, user_address))
-        result = result.fetchone()
         if result:
             return True
         else:
@@ -226,25 +223,20 @@ class RAMDatabaseHandler(DatabaseHandler):
         else:
             return
 
-        result = result.fetchone()
         if result:
-            return result
+            return result[0]
 
     def get_username(self, user_id):
         result = self.cursor_with_lock('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
-        result = result.fetchone()
         if result:
-            return result[0]
+            return result[0][0]
         else:
             return ''
 
     def get_user_id(self, username):
         result = self.cursor_with_lock('SELECT user_id FROM usernames WHERE username = ?', (username,))
-        result = result.fetchone()
         if result:
-            return result[0]
-        else:
-            return
+            return result[0][0]
 
     def delete_user(self, user_id=None, username=None):
         if user_id:
