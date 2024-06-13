@@ -138,7 +138,10 @@ class DatabaseHandler:
     def get_user_address(self, user_id):
         result = self.cursor_with_lock('SELECT user_address FROM user_address WHERE user_id = ?',
                                        (user_id,))
-        return [item[0] for item in result]  # convert tuple to string
+        if result:
+            return [item[0] for item in result]  # convert tuple to string
+        else:
+            return []
 
     def get_all_messages(self):
         result = self.cursor_with_lock('SELECT user_sender_id, user_receiver_id, '
