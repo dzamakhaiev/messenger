@@ -50,7 +50,7 @@ def process_login(channel, method, properties, body):
 
     messages = service.get_messages(login_msg['user_id'])
     address_list = [login_msg['user_address']]
-    sender_logger.debug(f'Messages to send after log in:\n{messages}To user address list:\n{address_list}')
+    sender_logger.debug(f'Messages to send after log in:\n{messages}\nTo user address list:\n{address_list}')
 
     thread = Thread(target=service.send_messages_by_list, args=(address_list, messages), daemon=True)
     sender_logger.debug(f'Thread "{thread.name}" created.')
