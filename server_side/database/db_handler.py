@@ -1,7 +1,5 @@
 import os
 import sqlite3
-from time import sleep
-from random import uniform
 from threading import Lock
 from server_side.logger.logger import Logger
 
@@ -12,16 +10,30 @@ global_lock = Lock()
 class DatabaseHandler:
 
     def __init__(self, database):
+        self.conn = None
+        self.cursor = None
+        self.database = database
+
+    def connect_to_db(self):
+        database_logger.debug('Connecting to database.')
         try:
-            self.conn = sqlite3.connect(database, check_same_thread=False)
+            self.conn = sqlite3.connect(self.database, check_same_thread=False)
             self.cursor = self.conn.cursor()
+            database_logger.debug('Connected to database.')
         except sqlite3.Error as e:
             quit(e)
 
+    def close_connection(self):
+        if self.conn and self.cursor:
+            self.cursor.close()
+            self.conn.close()
+        database_logger.info('Connection closed.')
+
     def cursor_with_lock(self, query, args):
+        self.connect_to_db()
+
         try:
             database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
-            sleep(uniform(0.0025, 0.0175))
             global_lock.acquire(True)
             result = self.cursor.execute(query, args)
             return result
@@ -32,14 +44,15 @@ class DatabaseHandler:
 
         finally:
             global_lock.release()
+            self.close_connection()
 
     def cursor_with_commit(self, query, args=None, many=False):
+        self.connect_to_db()
         database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
         if args is None:
             args = []
 
         try:
-            sleep(uniform(0.0050, 0.0125))
             global_lock.acquire(True)
             if many:
                 self.cursor.executemany(query, args)
@@ -53,18 +66,19 @@ class DatabaseHandler:
 
         finally:
             global_lock.release()
+            self.close_connection()
 
     def create_users_table(self):
-        self.cursor.execute('''
+        self.cursor_with_lock('''
             CREATE TABLE IF NOT EXISTS users
             (id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             phone TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL)
-            ''')
+            ''', [])
 
     def create_messages_table(self):
-        self.cursor.execute('''
+        self.cursor_with_lock('''
             CREATE TABLE IF NOT EXISTS messages
             (id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_sender_id INTEGER NOT NULL,
@@ -72,16 +86,16 @@ class DatabaseHandler:
             sender_username TEXT NOT NULL,
             message TEXT NOT NULL,
             receive_date DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
+            ''', [])
 
     def create_user_address_table(self):
-        self.cursor.execute('''
+        self.cursor_with_lock('''
             CREATE TABLE IF NOT EXISTS user_address
             (id INTEGER PRIMARY KEY,
             user_id INTEGER NOT NULL,
             user_address TEXT NOT NULL,
             last_used DATETIME DEFAULT CURRENT_TIMESTAMP)
-            ''')
+            ''', [])
 
     def get_user(self, user_id=None, username=None):
         if user_id:
@@ -179,10 +193,7 @@ class DatabaseHandler:
             self.cursor_with_commit('DELETE FROM users WHERE username = ?', (username,))
 
     def __del__(self):
-        if self.conn and self.cursor:
-            self.cursor.close()
-            self.conn.close()
-        database_logger.info('Connection closed.')
+        self.close_connection()
 
 
 class RAMDatabaseHandler(DatabaseHandler):
@@ -197,11 +208,11 @@ class RAMDatabaseHandler(DatabaseHandler):
         self.create_user_address_table()
 
     def create_usernames_table(self):
-        self.cursor.execute('''
+        self.cursor_with_lock('''
                     CREATE TABLE IF NOT EXISTS usernames
                     (user_id INTEGER UNIQUE,
                     username TEXT NOT NULL UNIQUE)
-                    ''')
+                    ''', [])
 
     def insert_username(self, user_id, username):
         self.cursor_with_commit('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
