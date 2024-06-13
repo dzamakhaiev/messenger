@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from time import sleep
+from random import uniform
 from threading import Lock
 from datetime import datetime, timedelta
 from server_side.logger.logger import Logger
@@ -21,22 +22,11 @@ class DatabaseHandler:
         except sqlite3.Error as e:
             quit(e)
 
-    def check_min_request_interval(self):
-        # Sleep to resolve bottleneck issue
-        now = datetime.now()
-        delta = now - self.last_request_time
-
-        if delta < MIN_REQUEST_INTERVAL:
-            seconds = MIN_REQUEST_INTERVAL.microseconds / 10 ** 6
-            sleep(seconds)
-
-        self.last_request_time = datetime.now()
-
     def cursor_with_lock(self, query, args):
         try:
             database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
+            sleep(uniform(0.0050, 0.0125))
             global_lock.acquire(True)
-            self.check_min_request_interval()
             result = self.cursor.execute(query, args)
             return result
 
@@ -53,6 +43,7 @@ class DatabaseHandler:
             args = []
 
         try:
+            sleep(uniform(0.0050, 0.0125))
             global_lock.acquire(True)
             if many:
                 self.cursor.executemany(query, args)
