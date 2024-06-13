@@ -3,17 +3,13 @@ import sqlite3
 from time import sleep
 from random import uniform
 from threading import Lock
-from datetime import datetime, timedelta
 from server_side.logger.logger import Logger
 
 database_logger = Logger('database')
 global_lock = Lock()
-MIN_REQUEST_INTERVAL = timedelta(microseconds=10000)
 
 
 class DatabaseHandler:
-
-    last_request_time = datetime.now()
 
     def __init__(self, database):
         try:
@@ -25,7 +21,7 @@ class DatabaseHandler:
     def cursor_with_lock(self, query, args):
         try:
             database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
-            sleep(uniform(0.0050, 0.0125))
+            sleep(uniform(0.0025, 0.0175))
             global_lock.acquire(True)
             result = self.cursor.execute(query, args)
             return result
