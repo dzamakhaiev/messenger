@@ -5,7 +5,7 @@ from random import uniform
 from threading import Lock
 from server_side.logger.logger import Logger
 
-database_logger = Logger('database')
+database_logger = Logger('sqlite')
 global_lock = Lock()
 
 
