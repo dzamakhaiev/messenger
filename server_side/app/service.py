@@ -1,4 +1,3 @@
-import uuid
 import socket
 import requests
 from urllib.parse import urlparse
@@ -6,7 +5,7 @@ from urllib.parse import urlparse
 from server_side.app import settings
 from server_side.logger.logger import Logger
 from server_side.broker.mq_handler import RabbitMQHandler
-from server_side.database.db_handler import RAMDatabaseHandler
+from server_side.database.sqlite_handler import RAMDatabaseHandler
 from server_side.database.postgres_handler import PostgresHandler
 
 
@@ -59,7 +58,7 @@ class Service:
                 print(e)
 
         if not message_received:
-            service_logger.info('Message not sent. Store it to DB in RAM.')
+            service_logger.info('Message not sent. Store it into DB.')
             self.store_message_to_db(msg_json)
         return message_received
 
@@ -74,17 +73,15 @@ class Service:
             msg_received = self.send_message_by_list(address_list, msg_json)
 
             if msg_received:
-                service_logger.info('Message deleted from RAM DB.')
                 messages_to_delete.append(msg_id)
 
         messages_to_delete = ','.join([str(msg) for msg in messages_to_delete])
         if messages_to_delete:
-            self.ram_db_handler.delete_messages(messages_to_delete)
             self.hdd_db_handler.delete_messages(messages_to_delete)
+            service_logger.info('Message deleted from DB.')
 
     def create_user(self, user):
         service_logger.info('Create new user.')
-
         self.hdd_db_handler.insert_user(user.username, user.phone_number, user.password)
         user_id = self.hdd_db_handler.get_user_id(user.username)
         self.ram_db_handler.insert_username(user_id, user.username)
@@ -93,31 +90,15 @@ class Service:
         return user_id
 
     def store_message_to_db(self, msg_json):
-        service_logger.debug(f'Message stored in RAM DB:\n{msg_json}')
-        self.ram_db_handler.insert_message(msg_json.get('sender_id'),
-                                           msg_json.get('receiver_id'),
-                                           msg_json.get('sender_username'),
-                                           msg_json.get('message'))
-
         service_logger.debug(f'Message stored in HDD DB:\n{msg_json}')
         self.hdd_db_handler.insert_message(msg_json.get('sender_id'),
                                            msg_json.get('receiver_id'),
                                            msg_json.get('sender_username'),
                                            msg_json.get('message'))
 
-    def store_all_messages_to_hdd(self):
-        messages = self.ram_db_handler.get_all_messages()
-        if messages:
-            self.hdd_db_handler.insert_messages(messages)
-
-    def restore_all_messages_from_hdd(self):
-        messages = self.hdd_db_handler.get_all_messages()
-        if messages:
-            self.ram_db_handler.insert_messages(messages)
-            self.hdd_db_handler.delete_all_messages()
-
     def store_user_address(self, user_id, user_address):
         service_logger.info('Store user user addresses in HDD and RAM DBs.')
+        self.hdd_db_handler.insert_address(user_address)
         self.ram_db_handler.insert_user_address(user_id, user_address)
         self.hdd_db_handler.insert_user_address(user_id, user_address)
 
@@ -161,14 +142,8 @@ class Service:
         return address_list
 
     def get_messages(self, user_id):
-        service_logger.info(f'Get messages for user id "{user_id}" from RAM DB.')
-        messages = self.ram_db_handler.get_user_messages(user_id)
-        self.ram_db_handler.delete_user_messages(user_id)
-
-        if not messages:
-            service_logger.info(f'Get messages for user id "{user_id}" from HDD DB.')
-            messages = self.hdd_db_handler.get_user_messages(user_id)
-
+        service_logger.info(f'Get messages for user id "{user_id}" from DB.')
+        messages = self.hdd_db_handler.get_user_messages(user_id)
         service_logger.debug(f'Messages: {messages}')
         return messages
 
@@ -187,8 +162,9 @@ class Service:
         service_logger.info(f'Delete user id "{user_id}".')
         if self.check_user_id(user_id):
             self.ram_db_handler.delete_user(user_id=user_id)
-            self.ram_db_handler.delete_user_messages(user_id)
             self.hdd_db_handler.delete_user(user_id=user_id)
+            self.ram_db_handler.delete_user_address(user_id)
+            self.hdd_db_handler.delete_user_address(user_id)
             self.hdd_db_handler.delete_user_messages(user_id)
 
     def __del__(self):

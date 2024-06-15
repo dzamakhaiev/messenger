@@ -37,12 +37,13 @@ class PostgresHandler:
                 self.cursor.execute(query, args)
             self.connection.commit()
 
-        except (psycopg2.OperationalError, psycopg2.errors.UniqueViolation, psycopg2.DatabaseError, Exception) as e:
-            database_logger.debug(f'Query caused an error: {e}')
+        except (psycopg2.OperationalError, psycopg2.errors.UniqueViolation, psycopg2.DatabaseError) as e:
+            database_logger.debug(f'Query caused an error: {e}\n Query: {query, args}')
             self.connection.rollback()
 
         except Exception as e:
             database_logger.debug(f'PostgreSQL handler got an error: {e}')
+            self.connection.rollback()
 
     def create_users_table(self):
         self.cursor_with_commit('''
@@ -64,17 +65,27 @@ class PostgresHandler:
             receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
             ''')
 
+    def create_address_table(self):
+        self.cursor_with_commit('''
+            CREATE TABLE IF NOT EXISTS address
+            (user_address TEXT NOT NULL UNIQUE,
+            last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            ''')
+
     def create_user_address_table(self):
         self.cursor_with_commit('''
             CREATE TABLE IF NOT EXISTS user_address
             (user_id INTEGER NOT NULL,
             user_address TEXT NOT NULL,
-            last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            PRIMARY KEY (user_id, user_address),
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (user_address) REFERENCES address (user_address))
             ''')
 
     def create_all_tables(self):
         database_logger.info('Create tables.')
         self.create_users_table()
+        self.create_address_table()
         self.create_user_address_table()
         self.create_messages_table()
 
@@ -103,10 +114,9 @@ class PostgresHandler:
             return []
 
     def get_user_messages(self, receiver_id):
-        result = self.cursor_execute('SELECT * FROM messages WHERE user_receiver_id = %s',
-                                     (receiver_id,))
+        result = self.cursor_execute('SELECT * FROM messages WHERE user_receiver_id = %s', (receiver_id,))
         if self.cursor.rowcount != 0:
-            return [item[0] for item in result.fetchall()]  # convert tuple to string
+            return result.fetchall()
         else:
             return []
 
@@ -151,14 +161,17 @@ class PostgresHandler:
         else:
             return False
 
-    def insert_user_address(self, user_id, user_address):
-        if not self.check_user_address(user_id, user_address):
-            self.cursor_with_commit('INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
-                                (user_id, user_address))
-
     def insert_user(self, username, phone_number, password='qwerty'):
         self.cursor_with_commit('INSERT INTO users ("username", "phone", "password") VALUES (%s, %s, %s)',
                                 (username, phone_number, password))
+
+    def insert_address(self, user_address):
+        self.cursor_with_commit('INSERT INTO address ("user_address") VALUES (%s)', (user_address,))
+
+    def insert_user_address(self, user_id, user_address):
+        if not self.check_user_address(user_id, user_address):
+            self.cursor_with_commit('INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
+                                    (user_id, user_address))
 
     def insert_message(self, sender_id, receiver_id, sender_username, message):
         self.cursor_with_commit('INSERT INTO messages '
@@ -185,6 +198,9 @@ class PostgresHandler:
             self.cursor_with_commit('DELETE FROM users WHERE id = %s', (user_id,))
         elif username:
             self.cursor_with_commit('DELETE FROM users WHERE username = %s', (username,))
+
+    def delete_user_address(self, user_id):
+        self.cursor_with_commit('DELETE FROM user_address WHERE user_id = %s', (user_id,))
 
     def __del__(self):
         if hasattr(self, 'connection') and hasattr(self, 'cursor'):
