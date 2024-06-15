@@ -1,7 +1,4 @@
-import os
 import sqlite3
-from time import sleep
-from random import uniform
 from threading import Lock
 from server_side.logger.logger import Logger
 
@@ -22,7 +19,6 @@ class RAMDatabaseHandler:
     def cursor_with_lock(self, query, args):
         try:
             database_logger.debug(f'Execute query:\n{query}\nArgs:\n{args}')
-            sleep(uniform(0.0025, 0.0275))  # temporary work around to increase stability
             global_lock.acquire(True)
             result = self.cursor.execute(query, args)
             return result
@@ -40,7 +36,6 @@ class RAMDatabaseHandler:
             args = []
 
         try:
-            sleep(uniform(0.0050, 0.0125))
             global_lock.acquire(True)
             if many:
                 self.cursor.executemany(query, args)
