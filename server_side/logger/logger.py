@@ -12,6 +12,9 @@ class Logger:
 
         if os.environ.get('SERVICE_NAME') and logger_name in os.environ.get('SERVICE_NAME'):
             logger_name = os.environ.get('SERVICE_NAME')
+        elif os.environ.get('SERVICE_NAME'):
+            n = os.environ.get('SERVICE_NAME').split('-')[-1]
+            logger_name += f'-{n}'
 
         formatter = logging.Formatter(settings.FORMAT)
         log_directory = os.path.abspath("../logs/")
