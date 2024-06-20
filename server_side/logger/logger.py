@@ -12,6 +12,7 @@ class Logger:
 
         formatter = logging.Formatter(settings.FORMAT)
         log_directory = os.path.abspath("../logs/")
+        logger_name = os.environ.get('SERVICE_NAME', logger_name)
         log_file_path = os.path.join(log_directory, f"{logger_name}.log")
 
         file_handler = logging.FileHandler(log_file_path)

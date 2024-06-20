@@ -43,6 +43,8 @@ services:
       - postgres
     networks:
       - backend
+    environment:
+      SERVICE_NAME: listener-1
     volumes:
       - logs:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
@@ -56,6 +58,8 @@ services:
       - postgres
     networks:
       - backend
+    environment:
+      SERVICE_NAME: listener-2
     volumes:
       - logs:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
@@ -69,6 +73,8 @@ services:
       - postgres
     networks:
       - backend
+    environment:
+      SERVICE_NAME: sender-1
     volumes:
       - logs:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
@@ -82,6 +88,8 @@ services:
       - postgres
     networks:
       - backend
+    environment:
+      SERVICE_NAME: sender-2
     volumes:
       - logs:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
