@@ -2,6 +2,7 @@ import os
 import sys
 import json
 from threading import Thread
+from pika.exceptions import AMQPConnectionError
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
@@ -59,19 +60,24 @@ def process_login(channel, method, properties, body):
 
 
 if __name__ == '__main__':
-    try:
-        msg_broker.create_exchange(settings.MQ_EXCHANGE_NAME)
-        msg_broker.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-        msg_broker.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+    msg_broker.create_exchange(settings.MQ_EXCHANGE_NAME)
+    msg_broker.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+    msg_broker.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
 
-        sender_logger.info('Sender logger started.')
-        queue_dict = {settings.MQ_MSG_QUEUE_NAME: process_message, settings.MQ_LOGIN_QUEUE_NAME: process_login}
-        connection = msg_broker.connect_and_consume_from_multiple_queues(queue_dict)
-        connection.ioloop.start()
+    while True:
 
-    except (KeyboardInterrupt, Exception) as e:
-        sender_logger.info('Sender logger ended.')
-        connection.close()
-        connection.ioloop.stop()
-        quit(e)
+        try:
+            sender_logger.info('Sender logger started.')
+            queue_dict = {settings.MQ_MSG_QUEUE_NAME: process_message, settings.MQ_LOGIN_QUEUE_NAME: process_login}
+            connection = msg_broker.connect_and_consume_from_multiple_queues(queue_dict)
+            connection.ioloop.start()
+
+        except AMQPConnectionError as e:
+            sender_logger.error(f'Connection to RabbitMQ lost: {e}')
+
+        except (KeyboardInterrupt, Exception) as e:
+            sender_logger.info('Sender logger ended.')
+            connection.close()
+            connection.ioloop.stop()
+            quit(e)
 
