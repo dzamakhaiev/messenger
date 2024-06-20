@@ -35,7 +35,7 @@ def process_message(channel, method, properties, body):
     msg_json = message.get('msg_json')
     sender_logger.debug(f'Message to send:\n{msg_json}To user address list:\n{address_list}')
 
-    thread = Thread(target=service.send_message_by_list, args=(address_list, msg_json), daemon=True)
+    thread = Thread(target=service.send_message_by_list, args=(address_list, msg_json))
     sender_logger.debug(f'Thread "{thread.name}" created.')
     thread.start()
     sender_logger.debug(f'Thread "{thread.name}" started.')
@@ -46,6 +46,7 @@ def process_login(channel, method, properties, body):
     channel.basic_ack(delivery_tag=method.delivery_tag)
     login_msg = body.decode()
     login_msg = json.loads(login_msg)
+    sender_logger.debug(f'Login message: {login_msg}')
 
     messages = service.get_messages(login_msg['user_id'])
     address_list = [login_msg['user_address']]
@@ -70,5 +71,7 @@ if __name__ == '__main__':
 
     except (KeyboardInterrupt, Exception) as e:
         sender_logger.info('Sender logger ended.')
+        connection.close()
+        connection.ioloop.stop()
         quit(e)
 

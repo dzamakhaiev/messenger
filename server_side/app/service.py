@@ -139,6 +139,7 @@ class Service:
         if not address_list:
             address_list = self.hdd_db_handler.get_user_address(user_id)
 
+        service_logger.debug(f'Address list: {address_list}')
         return address_list
 
     def get_messages(self, user_id):
