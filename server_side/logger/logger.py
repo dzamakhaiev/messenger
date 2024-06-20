@@ -10,9 +10,11 @@ class Logger:
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(level)
 
+        if os.environ.get('SERVICE_NAME') and logger_name in os.environ.get('SERVICE_NAME'):
+            logger_name = os.environ.get('SERVICE_NAME')
+
         formatter = logging.Formatter(settings.FORMAT)
         log_directory = os.path.abspath("../logs/")
-        logger_name = os.environ.get('SERVICE_NAME', logger_name)
         if not os.path.isdir(log_directory):
             os.mkdir(log_directory)
         log_file_path = os.path.join(log_directory, f"{logger_name}.log")
