@@ -102,6 +102,7 @@ services:
       - listener-1
       - listener-2
     ports:
+      - "443:443"
       - "5000:5000"
     networks:
       - backend
