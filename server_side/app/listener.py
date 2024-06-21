@@ -23,10 +23,7 @@ from server_side.database.postgres_handler import PostgresHandler
 
 # Set up listener and its logger
 app = Flask(__name__)
-private_key = os.path.abspath('../../cert/private_key.pem')  # do not use it on production
-certificate = os.path.abspath('../../cert/certificate.pem')  # do not use it on production
 app.config['SECRET_KEY'] = 'replace_that_secret_key'  # do not use it on production
-context = (certificate, private_key)
 listener_logger = Logger('listener')
 
 # Set up DB handlers
@@ -202,7 +199,7 @@ if __name__ == '__main__':
     listener_logger.info('Listener started.')
 
     try:
-        app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True, ssl_context=context)
+        app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True)
     except Exception as e:
         listener_logger.info(f'Listener failed with unexpected error:\n{e}.')
 
