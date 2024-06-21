@@ -36,7 +36,7 @@ def process_message(channel, method, properties, body):
     msg_json = message.get('msg_json')
     sender_logger.debug(f'Message to send:\n{msg_json}To user address list:\n{address_list}')
 
-    thread = Thread(target=service.send_message_by_list, args=(address_list, msg_json))
+    thread = Thread(target=service.send_message_by_list, args=(address_list, msg_json), daemon=True)
     sender_logger.debug(f'Thread "{thread.name}" created.')
     thread.start()
     sender_logger.debug(f'Thread "{thread.name}" started.')
