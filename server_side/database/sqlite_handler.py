@@ -67,7 +67,15 @@ class RAMDatabaseHandler:
                     username TEXT NOT NULL UNIQUE)
                     ''')
 
+    def create_tokens_table(self):
+        self.cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS tokens
+                    (user_id INTEGER UNIQUE,
+                    token TEXT NOT NULL)
+                    ''')
+
     def create_all_tables(self):
+        self.create_tokens_table()
         self.create_usernames_table()
         self.create_user_address_table()
 
@@ -83,6 +91,10 @@ class RAMDatabaseHandler:
     def insert_username(self, user_id, username):
         self.cursor_with_commit('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
                                 (user_id, username))
+
+    def insert_token(self, user_id, token):
+        self.cursor_with_commit('INSERT OR IGNORE INTO tokens ("user_id", "token") VALUES (?, ?)',
+                                (user_id, token))
 
     def get_user(self, user_id=None, username=None):
         if user_id:
@@ -104,6 +116,12 @@ class RAMDatabaseHandler:
         else:
             return ''
 
+    def get_user_token(self, user_id):
+        result = self.cursor_with_lock('SELECT token FROM tokens WHERE user_id = ?', (user_id,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+
     def get_user_id(self, username):
         result = self.cursor_with_lock('SELECT user_id FROM usernames WHERE username = ?', (username,))
         result = result.fetchone()
@@ -118,8 +136,11 @@ class RAMDatabaseHandler:
         elif username:
             self.cursor_with_commit('DELETE FROM usernames WHERE username = ?', (username,))
 
-    def delete_user_address(self, user_id=None):
+    def delete_user_address(self, user_id):
         self.cursor_with_commit('DELETE FROM user_address WHERE user_id = ?', (user_id,))
+
+    def delete_user_token(self, user_id):
+        self.cursor_with_commit('DELETE FROM tokens WHERE user_id = ?', (user_id,))
 
     def __del__(self):
         if self.conn and self.cursor:
