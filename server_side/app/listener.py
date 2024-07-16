@@ -135,8 +135,8 @@ def login():
         listener_logger.error(f'Login validation caused error: {e}')
         return settings.VALIDATION_ERROR, 400
 
-    exp_password = hdd_db_handler.get_user_password(user.username)
-    if exp_password and exp_password == user.password:
+    password_correct = service.check_password(user.username, user.password)
+    if password_correct:
         listener_logger.debug(f'Login successful for username: {user.username}')
 
         user_id = service.get_user_id_by_username(user.username)

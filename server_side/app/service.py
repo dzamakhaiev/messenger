@@ -1,4 +1,5 @@
 import socket
+import hashlib
 import requests
 from urllib.parse import urlparse
 
@@ -82,10 +83,11 @@ class Service:
 
     def create_user(self, user):
         service_logger.info('Create new user.')
-        self.hdd_db_handler.insert_user(user.username, user.phone_number, user.password)
+        password = hashlib.sha256(str(user.password).encode()).hexdigest()
+        self.hdd_db_handler.insert_user(user.username, user.phone_number, password)
         user_id = self.hdd_db_handler.get_user_id(user.username)
-        self.ram_db_handler.insert_username(user_id, user.username)
 
+        self.ram_db_handler.insert_username(user_id, user.username)
         service_logger.info(f'User with {user.username} created: user id "{user_id}".')
         return user_id
 
@@ -147,6 +149,19 @@ class Service:
         messages = self.hdd_db_handler.get_user_messages(user_id)
         service_logger.debug(f'Messages: {messages}')
         return messages
+
+    def check_password(self, username, password: str):
+        service_logger.info(f'Check "{username}" password.')
+        exp_hashed_password = self.hdd_db_handler.get_user_password(username)
+
+        if exp_hashed_password:
+            service_logger.debug(f'"{username}" has password in database.')
+            act_hashed_password = hashlib.sha256(password.encode()).hexdigest()
+            return exp_hashed_password == act_hashed_password
+
+        else:
+            service_logger.error(f'"{username}" has no password in database.')
+            return False
 
     def check_user_id(self, user_id):
         service_logger.info(f'Check user id "{user_id}".')
