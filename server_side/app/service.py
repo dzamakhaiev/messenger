@@ -104,6 +104,11 @@ class Service:
         self.ram_db_handler.insert_user_address(user_id, user_address)
         self.hdd_db_handler.insert_user_address(user_id, user_address)
 
+    def store_user_token(self, user_id, token):
+        service_logger.info('Store user token.')
+        service_logger.debug(token)
+        self.hdd_db_handler.insert_user_token(user_id, token)
+
     def put_message_in_queue(self, address_list, msg_json):
         service_logger.info(f'Put message in {settings.MQ_MSG_QUEUE_NAME} queue.')
         queue_json = {'address_list': address_list, 'msg_json': msg_json}
@@ -163,6 +168,17 @@ class Service:
             service_logger.error(f'"{username}" has no password in database.')
             return False
 
+    def check_user_token(self, user_id, token):
+        service_logger.info(f'Check user token for user_id "{user_id}".')
+        exp_token = self.hdd_db_handler.get_user_token(user_id)
+
+        if token:
+            service_logger.debug('User token found.')
+            return token == exp_token
+        else:
+            service_logger.error('User token not found.')
+            return False
+
     def check_user_id(self, user_id):
         service_logger.info(f'Check user id "{user_id}".')
         result = self.ram_db_handler.get_user(user_id=user_id)
@@ -182,6 +198,11 @@ class Service:
             self.ram_db_handler.delete_user_address(user_id)
             self.hdd_db_handler.delete_user_address(user_id)
             self.hdd_db_handler.delete_user_messages(user_id)
+            self.delete_user_token(user_id)
+
+    def delete_user_token(self, user_id):
+        service_logger.info(f'Check user token for user_id "{user_id}".')
+        self.hdd_db_handler.delete_user_token(user_id)
 
     def __del__(self):
         service_logger.info('Service logger ended.')

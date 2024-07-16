@@ -51,22 +51,32 @@ def check_token(headers: dict):
         return settings.NOT_AUTHORIZED, 401
 
     try:
-        jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        token_info = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
         listener_logger.info('Token decoded.')
+
+        listener_logger.info('Check token in database.')
+        username = token_info.get('user')
+        user_id = service.get_user_id_by_username(username)
+        result = service.check_user_token(user_id=user_id, token=token)
+
+        if not result:
+            return settings.NOT_AUTHORIZED, 401
 
     except jwt.exceptions.ExpiredSignatureError:
         listener_logger.error('Token expired.')
         return settings.INVALID_TOKEN, 401
 
     except jwt.exceptions.InvalidTokenError:
-        listener_logger.error('Invalid expired.')
+        listener_logger.error('Invalid token.')
         return settings.INVALID_TOKEN, 401
 
 
-def create_token(username):
+def create_token(username, user_id):
     listener_logger.info('Create authorization token.')
     token = jwt.encode({'user': username, 'exp': datetime.now() + timedelta(minutes=settings.TOKEN_EXP_MINUTES)},
                        app.config['SECRET_KEY'], algorithm='HS256')
+
+    service.store_user_token(user_id, token)
     listener_logger.debug('Token created.')
     return token
 
@@ -144,7 +154,7 @@ def login():
 
         service.store_user_address(user_id, user.user_address)
         service.put_login_in_queue(user_id, user.user_address)
-        token = create_token(user.username)
+        token = create_token(user.username, user_id)
 
         listener_logger.debug(f'User id "{user_id}" logged in with token "{token}".')
         listener_logger.debug(f'User id "{user_id}" logged in with address "{user.user_address}".')
