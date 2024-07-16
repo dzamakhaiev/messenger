@@ -89,10 +89,6 @@ class PostgresHandler:
         self.create_user_address_table()
         self.create_messages_table()
 
-        database_logger.info('Create test users.')
-        self.insert_user('user_1', '123456789')
-        self.insert_user('user_2', '987654321')
-
     def get_user(self, user_id=None, username=None):
         if user_id:
             result = self.cursor_execute('SELECT id, username FROM users WHERE id = %s', (user_id,))
