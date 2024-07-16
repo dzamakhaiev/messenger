@@ -165,6 +165,30 @@ def login():
         return 'Incorrect username or password.', 401
 
 
+@app.route(routes.LOGOUT, methods=['POST'])
+def logout():
+    listener_logger.info('Logout request.')
+    listener_logger.debug(f'Request: {request.json}')
+
+    if username := request.json.get('username'):
+        listener_logger.info(f'Delete token for "{username}".')
+
+        user_id = service.get_user_id_by_username(username)
+        if not user_id:
+            listener_logger.error(f'User "{username}" not found.')
+            return settings.VALIDATION_ERROR, 400  # Hide real reason for other side
+
+        error = check_token(request.headers)
+        if error:
+            return error
+        service.delete_user_token(user_id)
+        listener_logger.debug('Token deleted. User logged out.')
+
+    else:
+        listener_logger.error('Field "username" is missing.')
+        return settings.VALIDATION_ERROR, 400
+
+
 @app.route(routes.MESSAGES, methods=['POST'])
 def process_messages():
     listener_logger.info('Messages request.')
