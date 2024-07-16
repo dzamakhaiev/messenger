@@ -181,8 +181,10 @@ def logout():
         error = check_token(request.headers)
         if error:
             return error
+
         service.delete_user_token(user_id)
         listener_logger.debug('Token deleted. User logged out.')
+        return jsonify({'msg': 'Logout successful.', 'username': username})
 
     else:
         listener_logger.error('Field "username" is missing.')
