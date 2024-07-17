@@ -127,7 +127,9 @@ def get_user():
 
     if user_id:
         listener_logger.debug(f'User found: {user_id}')
-        return jsonify({'user_id': user_id})
+        public_key = service.get_user_public_key(user_id)
+        return jsonify({'user_id': user_id, 'public_key': public_key})
+
     else:
         listener_logger.error(f'User "{username}" not found.')
         return f'User "{username}" not found.', 404
@@ -163,12 +165,14 @@ def login():
         listener_logger.debug(f'Login successful for username: {user.username}')
 
         user_id = service.get_user_id_by_username(user.username)
+        token = create_token(user.username, user_id)
         ram_db_handler.insert_username(user_id, user.username)
 
         service.store_user_address(user_id, user.user_address)
-        service.put_login_in_queue(user_id, user.user_address)
-        token = create_token(user.username, user_id)
+        service.store_user_public_key(user_id, user.public_key)
+        service.store_user_token(user_id, token)
 
+        service.put_login_in_queue(user_id, user.user_address)
         listener_logger.debug(f'User id "{user_id}" logged in with token "{token}".')
         listener_logger.debug(f'User id "{user_id}" logged in with address "{user.user_address}".')
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'token': token})

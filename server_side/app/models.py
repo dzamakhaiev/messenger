@@ -12,6 +12,7 @@ class UserLogin(BaseModel):
     username: str
     password: str
     user_address: str
+    public_key: str
 
 
 class UserAddress(BaseModel):
