@@ -116,6 +116,7 @@ def create_user():
 
 
 @app.route(f'{routes.USERS}', methods=['GET'])
+@token_required
 def get_user():
     listener_logger.info('Get user.')
     if username := request.args.get('username'):
