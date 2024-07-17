@@ -2,6 +2,7 @@ import os
 import sys
 import jwt
 import routes
+from functools import wraps
 from datetime import datetime, timedelta
 from pydantic import ValidationError
 from flask import Flask, request, jsonify
@@ -40,9 +41,20 @@ mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHA
 service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
 
-def check_token(headers: dict):
+def token_required(f):
+    @wraps(f)
+    def decorated_func(*args, **kwargs):
+        error = check_token()
+        if error:
+            return error
+        else:
+            return f(*args, **kwargs)
+    return decorated_func
+
+
+def check_token():
     listener_logger.info('Check authorization token.')
-    auth_header = headers.get('Authorization')
+    auth_header = request.headers.get('Authorization')
 
     if auth_header:
         token = auth_header.split(' ')[-1]
@@ -166,6 +178,7 @@ def login():
 
 
 @app.route(routes.LOGOUT, methods=['POST'])
+@token_required
 def logout():
     listener_logger.info('Logout request.')
     listener_logger.debug(f'Request: {request.json}')
@@ -178,10 +191,6 @@ def logout():
             listener_logger.error(f'User "{username}" not found.')
             return settings.VALIDATION_ERROR, 400  # Hide real reason for other side
 
-        error = check_token(request.headers)
-        if error:
-            return error
-
         service.delete_user_token(user_id)
         listener_logger.debug('Token deleted. User logged out.')
         return jsonify({'msg': 'Logout successful.', 'username': username})
@@ -192,6 +201,7 @@ def logout():
 
 
 @app.route(routes.MESSAGES, methods=['POST'])
+@token_required
 def process_messages():
     listener_logger.info('Messages request.')
     listener_logger.debug(f'Request: {request.json}')
@@ -201,10 +211,6 @@ def process_messages():
     except ValidationError as e:
         listener_logger.error(f'Message validation caused error: {e}')
         return settings.VALIDATION_ERROR, 400
-
-    error = check_token(request.headers)
-    if error:
-        return error
 
     if not service.check_user_id(msg.receiver_id):
         listener_logger.error(f'User id "{msg.receiver_id}" not found.')
