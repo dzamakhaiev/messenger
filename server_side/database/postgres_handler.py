@@ -90,13 +90,23 @@ class PostgresHandler:
             FOREIGN KEY (user_id) REFERENCES users (id))
             ''')
 
+    def create_public_keys_table(self):
+        self.cursor_with_commit('''
+            CREATE TABLE IF NOT EXISTS public_keys
+            (user_id INTEGER NOT NULL UNIQUE,
+            public_key TEXT NOT NULL,
+            create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+            FOREIGN KEY (user_id) REFERENCES users (id))
+            ''')
+
     def create_all_tables(self):
         database_logger.info('Create tables.')
         self.create_users_table()
         self.create_tokens_table()
         self.create_address_table()
-        self.create_user_address_table()
         self.create_messages_table()
+        self.create_public_keys_table()
+        self.create_user_address_table()
 
     def get_user(self, user_id=None, username=None):
         if user_id:
@@ -154,6 +164,12 @@ class PostgresHandler:
         if result:
             return result[0]
 
+    def get_user_public_key(self, user_id):
+        result = self.cursor_execute('SELECT public_key FROM public_keys WHERE user_id = %s', (user_id,))
+        result = result.fetchone()
+        if result:
+            return result[0]
+
     def get_all_messages(self):
         result = self.cursor_execute('SELECT user_sender_id, user_receiver_id, '
                                      'sender_username, message, receive_date '        
@@ -189,6 +205,11 @@ class PostgresHandler:
             self.cursor_with_commit('INSERT INTO tokens ("user_id", "token") VALUES (%s, %s)',
                                     (user_id, token))
 
+    def insert_user_public_key(self, user_id, public_key):
+        if self.get_user_public_key(user_id) is None:
+            self.cursor_with_commit('INSERT INTO public_keys ("user_id", "public_key") VALUES (%s, %s)',
+                                    (user_id, public_key))
+
     def insert_message(self, sender_id, receiver_id, sender_username, message):
         self.cursor_with_commit('INSERT INTO messages '
                                 '("user_sender_id", "user_receiver_id", "sender_username", "message") '
@@ -217,6 +238,9 @@ class PostgresHandler:
 
     def delete_user_token(self, user_id):
         self.cursor_with_commit('DELETE FROM tokens WHERE user_id = %s', (user_id,))
+
+    def delete_user_public_key(self, user_id):
+        self.cursor_with_commit('DELETE FROM public_keys WHERE user_id = %s', (user_id,))
 
     def delete_user_address(self, user_id):
         self.cursor_with_commit('DELETE FROM user_address WHERE user_id = %s', (user_id,))

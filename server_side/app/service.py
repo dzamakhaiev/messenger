@@ -108,7 +108,13 @@ class Service:
         service_logger.info('Store user token.')
         service_logger.debug(token)
         self.hdd_db_handler.insert_user_token(user_id, token)
-        self.ram_db_handler.insert_token(user_id, token)
+        self.ram_db_handler.insert_user_token(user_id, token)
+
+    def store_user_public_key(self, user_id, public_key):
+        service_logger.info('Store user public key.')
+        service_logger.debug(public_key)
+        self.hdd_db_handler.insert_user_public_key(user_id, public_key)
+        self.ram_db_handler.insert_user_public_key(user_id, public_key)
 
     def put_message_in_queue(self, address_list, msg_json):
         service_logger.info(f'Put message in {settings.MQ_MSG_QUEUE_NAME} queue.')
@@ -150,6 +156,22 @@ class Service:
         service_logger.debug(f'Address list: {address_list}')
         return address_list
 
+    def get_user_public_key(self, user_id):
+        service_logger.info(f'Get public key for user_id "{user_id}".')
+
+        public_key = self.ram_db_handler.get_user_public_key(user_id)
+        if public_key is None:
+            public_key = self.hdd_db_handler.get_user_public_key(user_id)
+
+        if public_key:
+            service_logger.debug('User public key found.')
+            self.ram_db_handler.insert_user_public_key(user_id, public_key)  # store in RAM to cache it
+            return public_key
+
+        else:
+            service_logger.error('User public key not found.')
+            return None
+
     def get_messages(self, user_id):
         service_logger.info(f'Get messages for user id "{user_id}" from DB.')
         messages = self.hdd_db_handler.get_user_messages(user_id)
@@ -177,7 +199,7 @@ class Service:
 
         if token:
             service_logger.debug('User token found.')
-            self.ram_db_handler.insert_token(user_id, token)  # store in RAM to cache it
+            self.ram_db_handler.insert_user_token(user_id, token)  # store in RAM to cache it
             return token == exp_token
 
         else:
@@ -199,6 +221,8 @@ class Service:
         service_logger.info(f'Delete user id "{user_id}".')
         if self.check_user_id(user_id):
             self.delete_user_token(user_id)
+            self.delete_user_public_key(user_id)
+
             self.hdd_db_handler.delete_user_messages(user_id)
             self.ram_db_handler.delete_user_address(user_id)
             self.hdd_db_handler.delete_user_address(user_id)
@@ -209,6 +233,11 @@ class Service:
         service_logger.info(f'Check user token for user_id "{user_id}".')
         self.hdd_db_handler.delete_user_token(user_id)
         self.ram_db_handler.delete_user_token(user_id)
+
+    def delete_user_public_key(self, user_id):
+        service_logger.info(f'Check user public key for user_id "{user_id}".')
+        self.hdd_db_handler.delete_user_public_key(user_id)
+        self.ram_db_handler.delete_user_public_key(user_id)
 
     def __del__(self):
         service_logger.info('Service logger ended.')
