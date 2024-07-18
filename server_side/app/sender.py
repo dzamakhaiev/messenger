@@ -36,6 +36,8 @@ def process_message(channel, method, properties, body):
     to ip address in separated thread.
     """
     sender_logger.info('Message received.')
+    sender_logger.debug(f'Properties: "{properties}"')
+
     channel.basic_ack(delivery_tag=method.delivery_tag)
     message = body.decode()
     message = json.loads(message)
@@ -57,6 +59,7 @@ def process_login(channel, method, properties, body):
     for defined user and try it send one more time after user logged in.
     """
     sender_logger.info('Login event received.')
+    sender_logger.debug(f'Properties: "{properties}"')
 
     channel.basic_ack(delivery_tag=method.delivery_tag)
     login_msg = body.decode()
