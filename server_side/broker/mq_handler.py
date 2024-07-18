@@ -1,3 +1,6 @@
+"""
+This is a handler for RabbitMQ instance in docker container.
+"""
 import json
 import pika
 from server_side.broker import settings
@@ -37,15 +40,23 @@ class RabbitMQHandler:
         self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
 
     def send_message(self, exchange_name, queue_name, body):
+        """
+        That recursive method tries to put message in queue.
+        If it fails, method will reconnect and try it one more time.
+        """
+
         broker_logger.info(f'Put message in queue {queue_name}.')
         if isinstance(body, dict):
             body = json.dumps(body)
 
         if self.channel.is_closed or self.connection.is_closed:
             self.reconnect()
+
         try:
-            properties = pika.BasicProperties(content_type='text/plain', delivery_mode=settings.MQ_DELIVERY_MODE)
-            self.channel.basic_publish(exchange=exchange_name, routing_key=queue_name, body=body, properties=properties)
+            properties = pika.BasicProperties(content_type='text/plain',
+                                              delivery_mode=settings.MQ_DELIVERY_MODE)
+            self.channel.basic_publish(exchange=exchange_name, routing_key=queue_name,
+                                       body=body, properties=properties)
 
         except (pika.exceptions.StreamLostError, ):
             self.reconnect()
@@ -65,6 +76,10 @@ class RabbitMQHandler:
         return queue.method.message_count
 
     def connect_and_consume_from_multiple_queues(self, queue_dict: dict):
+        """
+        That method creates constant connection to RabbitMQ instance and allows
+        to receive messages from several queues from queue_dict.
+        """
         broker_logger.info('Connect consumer to RabbitMQ.')
 
         def on_open(connection):
