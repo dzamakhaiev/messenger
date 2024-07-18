@@ -3,7 +3,7 @@ That module contains data model class to validate and deserialize data from requ
 """
 
 from datetime import datetime
-from pydantic import BaseModel  # pylint: disable=import-error
+from pydantic import BaseModel
 
 
 class User(BaseModel):

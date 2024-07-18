@@ -5,12 +5,12 @@ That module processes client's requests using Flask framework.
 
 import os
 import sys
-import jwt  # pylint: disable=import-error
+import jwt
 import routes  # pylint: disable=import-error
 from functools import wraps
 from datetime import datetime, timedelta
-from pydantic import ValidationError  # pylint: disable=import-error
-from flask import Flask, request, jsonify  # pylint: disable=import-error
+from pydantic import ValidationError
+from flask import Flask, request, jsonify
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)

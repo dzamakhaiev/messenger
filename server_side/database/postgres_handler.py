@@ -1,4 +1,4 @@
-import psycopg2  # pylint: disable=import-error
+import psycopg2
 from server_side.database import settings
 from server_side.logger.logger import Logger
 

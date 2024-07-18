@@ -6,7 +6,7 @@ import os
 import sys
 import json
 from threading import Thread
-from pika.exceptions import AMQPConnectionError  # pylint: disable=import-error
+from pika.exceptions import AMQPConnectionError
 
 # Fix for run via cmd inside venv
 current_file = os.path.realpath(__file__)
