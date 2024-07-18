@@ -1,5 +1,5 @@
 import json
-import pika
+import pika  # pylint: disable=import-error
 from server_side.broker import settings
 from server_side.logger.logger import Logger
 

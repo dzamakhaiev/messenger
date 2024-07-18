@@ -1,6 +1,6 @@
 import socket
 import hashlib
-import requests
+import requests  # pylint: disable=import-error
 from urllib.parse import urlparse
 
 from server_side.app import settings
