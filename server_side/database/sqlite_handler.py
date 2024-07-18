@@ -89,31 +89,39 @@ class RAMDatabaseHandler:
         self.create_user_address_table()
 
     def get_user_address(self, user_id):
-        result = self.cursor_with_lock('SELECT user_address FROM user_address WHERE user_id = ?',
-                                       (user_id,))
+        result = self.cursor_with_lock(
+            'SELECT user_address FROM user_address WHERE user_id = ?',
+            (user_id,))
         return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def insert_user_address(self, user_id, user_address):
-        self.cursor_with_commit('INSERT OR IGNORE INTO user_address ("user_id", "user_address") VALUES (?, ?)',
-                                (user_id, user_address))
+        self.cursor_with_commit(
+            'INSERT OR IGNORE INTO user_address ("user_id", "user_address") VALUES (?, ?)',
+            (user_id, user_address))
 
     def insert_username(self, user_id, username):
-        self.cursor_with_commit('INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
-                                (user_id, username))
+        self.cursor_with_commit(
+            'INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
+            (user_id, username))
 
     def insert_user_token(self, user_id, token):
-        self.cursor_with_commit('INSERT OR IGNORE INTO tokens ("user_id", "token") VALUES (?, ?)',
-                                (user_id, token))
+        self.cursor_with_commit(
+            'INSERT OR IGNORE INTO tokens ("user_id", "token") VALUES (?, ?)',
+            (user_id, token))
 
     def insert_user_public_key(self, user_id, public_key):
-        self.cursor_with_commit('INSERT OR IGNORE INTO public_keys ("user_id", "public_key") VALUES (?, ?)',
-                                (user_id, public_key))
+        self.cursor_with_commit(
+            'INSERT OR IGNORE INTO public_keys ("user_id", "public_key") VALUES (?, ?)',
+            (user_id, public_key))
 
     def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor_with_lock('SELECT * FROM usernames WHERE user_id = ?', (user_id,))
+            result = self.cursor_with_lock(
+                'SELECT * FROM usernames WHERE user_id = ?', (user_id,))
+
         elif username:
-            result = self.cursor_with_lock('SELECT * FROM usernames WHERE username = ?', (username,))
+            result = self.cursor_with_lock(
+                'SELECT * FROM usernames WHERE username = ?', (username,))
         else:
             return
 
@@ -122,47 +130,53 @@ class RAMDatabaseHandler:
             return result
 
     def get_username(self, user_id):
-        result = self.cursor_with_lock('SELECT username FROM usernames WHERE user_id = ?', (user_id,))
+        result = self.cursor_with_lock(
+            'SELECT username FROM usernames WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
-        else:
-            return ''
+        return ''
 
     def get_user_token(self, user_id):
-        result = self.cursor_with_lock('SELECT token FROM tokens WHERE user_id = ?', (user_id,))
+        result = self.cursor_with_lock(
+            'SELECT token FROM tokens WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_user_public_key(self, user_id):
-        result = self.cursor_with_lock('SELECT public_key FROM public_keys WHERE user_id = ?', (user_id,))
+        result = self.cursor_with_lock(
+            'SELECT public_key FROM public_keys WHERE user_id = ?', (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_user_id(self, username):
-        result = self.cursor_with_lock('SELECT user_id FROM usernames WHERE username = ?', (username,))
+        result = self.cursor_with_lock(
+            'SELECT user_id FROM usernames WHERE username = ?', (username,))
         result = result.fetchone()
         if result:
             return result[0]
-        else:
-            return
 
     def delete_user(self, user_id=None, username=None):
         if user_id:
-            self.cursor_with_commit('DELETE FROM usernames WHERE user_id = ?', (user_id,))
+            self.cursor_with_commit(
+                'DELETE FROM usernames WHERE user_id = ?', (user_id,))
         elif username:
-            self.cursor_with_commit('DELETE FROM usernames WHERE username = ?', (username,))
+            self.cursor_with_commit(
+                'DELETE FROM usernames WHERE username = ?', (username,))
 
     def delete_user_address(self, user_id):
-        self.cursor_with_commit('DELETE FROM user_address WHERE user_id = ?', (user_id,))
+        self.cursor_with_commit(
+            'DELETE FROM user_address WHERE user_id = ?', (user_id,))
 
     def delete_user_token(self, user_id):
-        self.cursor_with_commit('DELETE FROM tokens WHERE user_id = ?', (user_id,))
+        self.cursor_with_commit(
+            'DELETE FROM tokens WHERE user_id = ?', (user_id,))
 
     def delete_user_public_key(self, user_id):
-        self.cursor_with_commit('DELETE FROM public_keys WHERE user_id = ?', (user_id,))
+        self.cursor_with_commit(
+            'DELETE FROM public_keys WHERE user_id = ?', (user_id,))
 
     def __del__(self):
         if self.conn and self.cursor:
