@@ -41,3 +41,71 @@ the maximum request rate (default is 100 requests per second).
 - `zone=limit burst=1000`: The length of the queue for extra requests that exceed 
 the current maximum rate.
 
+### List of endpoints
+- `/api/health/`: Simple application availability check.
+- `/api/users/`: Main endpoint for manipulating User instances (create, get, delete for now).
+- `/api/login/`: Endpoint for user authentication.
+- `/api/logout/`: Endpoint for user logging out.
+- `/api/messages/`: Main endpoint for message exchange. 
+
+### Endpoints schema
+1. Health Check  
+     Request:
+     ```
+     HEAD https://localhost:5000/api/health/
+     ```
+     Response: STATUS_CODE 200. TEXT: OK.  
+
+2. Create User  
+     Request:
+     ```
+     POST https://localhost:5000/api/users/
+     HEADERS = {"Content-type": "application/json"}
+     JSON: {"username": "unique username", "phone_number": "unique phone number", "password": "some password"}
+     ```
+     Response: STATUS_CODE 201. JSON: {"user_id": "unique user integer id"}.  
+
+3. Get User Details  
+     Request:
+     ```
+     GET https://localhost:5000/api/users/
+     HEADERS = {"Content-type": "application/json", "Authorization": "Bearer token"}
+     JSON: {"username": "username of needed user"}
+     ```
+     Response: STATUS_CODE 200. JSON: {"user_id": "unique user integer id", "public_key": "public key to encrypt messages"}.
+
+4. Delete User  
+     Request:
+     ```
+     DELETE https://localhost:5000/api/users/
+     HEADERS = {"Content-type": "application/json"}
+     JSON: {"user_id": "unique user id"}
+     ```
+     Response: STATUS_CODE 200. TEXT: User deleted.  
+
+5. User Login  
+     Request:
+     ```
+     POST https://localhost:5000/api/login/
+     HEADERS = {"Content-type": "application/json"}
+     JSON: {"username": "unique username", "password": "some password", "user_address": "ip address to send messages", "public_key": "public key to encrypt messages for that user"}
+     ```
+     Response: STATUS_CODE 200. JSON: {"user_id": "unique user integer id", "token": "token access to protected endpoints"}.
+
+6. User Logout  
+     Request:
+     ```
+     POST https://localhost:5000/api/logout/
+     HEADERS = {"Content-type": "application/json", "Authorization": "Bearer token"}
+     JSON: {"username": "unique username"}
+     ```
+     Response: STATUS_CODE 200. JSON: {"msg": "Logout successful.", "username": "unique username"}.  
+
+7. Send Encrypted Message
+     Request:
+     ```
+     POST https://localhost:5000/api/messages/
+     HEADERS = {"Content-type": "application/json", "Authorization": "Bearer token"}
+     JSON: {"message": "encrypted message itself", "sender_id": "unique user integer id", "sender_username": "unique username", "receiver_id": "unique user integer id", "send_date": "when message sent in datetime format"}
+     ```
+     Response: STATUS_CODE 200. TEXT: Message processed.
