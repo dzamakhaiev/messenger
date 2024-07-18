@@ -1,3 +1,7 @@
+"""
+Module for generating self-signed certificate.
+"""
+
 import datetime
 import ipaddress
 from cryptography import x509
@@ -7,11 +11,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
 from cryptography.hazmat.backends import default_backend
 
-"""
-Module for generating self-signed certificate.
-"""
 
-private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
+private_key = rsa.generate_private_key(
+    public_exponent=65537, key_size=2048, backend=default_backend())
 
 csr = x509.CertificateSigningRequestBuilder().subject_name(x509.Name([
     x509.NameAttribute(NameOID.COUNTRY_NAME, "UA"),
