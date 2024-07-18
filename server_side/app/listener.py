@@ -1,3 +1,8 @@
+"""
+Main entry point for python REST API application.
+That module processes client's requests using Flask framework.
+"""
+
 import os
 import sys
 import jwt
@@ -42,6 +47,9 @@ service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
 
 def token_required(f):
+    """
+    Decorator for check_token function to wrap Flask protected endpoints.
+    """
     @wraps(f)
     def decorated_func(*args, **kwargs):
         error = check_token()
@@ -53,6 +61,10 @@ def token_required(f):
 
 
 def check_token():
+    """
+    Check client's token for access to protected endpoints.
+    :return: http error code and message or None if no error
+    """
     listener_logger.info('Check authorization token.')
     auth_header = request.headers.get('Authorization')
 
@@ -84,9 +96,14 @@ def check_token():
 
 
 def create_token(username, user_id):
+    """
+    Create jwt token for client.
+    :return: token
+    """
     listener_logger.info('Create authorization token.')
-    token = jwt.encode({'user': username, 'exp': datetime.now() + timedelta(minutes=settings.TOKEN_EXP_MINUTES)},
-                       app.config['SECRET_KEY'], algorithm='HS256')
+    token = jwt.encode(
+        {'user': username, 'exp': datetime.now() + timedelta(minutes=settings.TOKEN_EXP_MINUTES)},
+        app.config['SECRET_KEY'], algorithm='HS256')
 
     service.store_user_token(user_id, token)
     listener_logger.debug('Token created.')
@@ -95,6 +112,10 @@ def create_token(username, user_id):
 
 @app.route(f'{routes.USERS}', methods=['POST'])
 def create_user():
+    """
+    Create new user.
+    :return: user_id or http error
+    """
     listener_logger.info('Create user.')
     try:
         user = User(**request.json)
@@ -118,6 +139,10 @@ def create_user():
 @app.route(f'{routes.USERS}', methods=['GET'])
 @token_required
 def get_user():
+    """
+    Provide user information for authorized users.
+    :return: user_id and public_key or http error
+    """
     listener_logger.info('Get user.')
     if username := request.args.get('username'):
         user_id = service.get_user_id_by_username(username)
@@ -137,6 +162,10 @@ def get_user():
 
 @app.route(f'{routes.USERS}', methods=['DELETE'])
 def delete_user():
+    """
+    Delete user by user_id without any checks (for now).
+    :return: confirmation message or http error
+    """
     listener_logger.info('Delete user.')
 
     if user_id := request.json.get('user_id'):
@@ -151,6 +180,15 @@ def delete_user():
 
 @app.route(routes.LOGIN, methods=['POST'])
 def login():
+    """
+    Complex function that:
+    - check user credentials
+    - create token for client if client has no token
+    - cache frequently used data: username, user_id, token, public_key
+    - send event to check not sent messages for current user_id and send one more time
+
+    :return: user_id and token or http error
+    """
     listener_logger.info('Login request.')
     listener_logger.debug(f'Request: {request.json}')
 
@@ -165,14 +203,17 @@ def login():
         listener_logger.debug(f'Login successful for username: {user.username}')
 
         user_id = service.get_user_id_by_username(user.username)
-        token = create_token(user.username, user_id)
         ram_db_handler.insert_username(user_id, user.username)
+
+        token = service.get_user_token(user_id)
+        if token is None:
+            token = create_token(user.username, user_id)
+            service.store_user_token(user_id, token)
 
         service.store_user_address(user_id, user.user_address)
         service.store_user_public_key(user_id, user.public_key)
-        service.store_user_token(user_id, token)
-
         service.put_login_in_queue(user_id, user.user_address)
+
         listener_logger.debug(f'User id "{user_id}" logged in with token "{token}".')
         listener_logger.debug(f'User id "{user_id}" logged in with address "{user.user_address}".')
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'token': token})
@@ -185,6 +226,10 @@ def login():
 @app.route(routes.LOGOUT, methods=['POST'])
 @token_required
 def logout():
+    """
+    Remove client's token from databases.
+    :return: confirmation message and username or http error
+    """
     listener_logger.info('Logout request.')
     listener_logger.debug(f'Request: {request.json}')
 
@@ -208,6 +253,11 @@ def logout():
 @app.route(routes.MESSAGES, methods=['POST'])
 @token_required
 def process_messages():
+    """
+    Process message and put it into RabbitMQ queue to pass it to sender.py
+    For authorized(with valid token) clients only.
+    :return: confirmation message or http error
+    """
     listener_logger.info('Messages request.')
     listener_logger.debug(f'Request: {request.json}')
 
@@ -238,6 +288,10 @@ def process_messages():
 
 @app.route(routes.HEALTH, methods=['HEAD'])
 def health_check():
+    """
+    Simple health check for listener service.
+    :return: http OK status
+    """
     listener_logger.info('Health checked for other services.')
     return 'OK', 200
 

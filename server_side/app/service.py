@@ -156,6 +156,16 @@ class Service:
         service_logger.debug(f'Address list: {address_list}')
         return address_list
 
+    def get_user_token(self, user_id):
+        service_logger.info(f'Get user token for user id "{user_id}".')
+        token = self.ram_db_handler.get_user_token(user_id)
+
+        if not token:
+            token = self.hdd_db_handler.get_user_token(user_id)
+
+        service_logger.debug(f'User token: "{token}"')
+        return token
+
     def get_user_public_key(self, user_id):
         service_logger.info(f'Get public key for user_id "{user_id}".')
 
