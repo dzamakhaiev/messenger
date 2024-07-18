@@ -1,3 +1,7 @@
+"""
+This module contains class Srvice that provide logical layer
+between listener, sender services and databases, broker handlers.
+"""
 import socket
 import hashlib
 import requests
@@ -55,8 +59,8 @@ class Service:
                 if response and response.status_code == 200:
                     message_received = True
 
-            except Exception as e:  # debug only
-                print(e)
+            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
+                service_logger.error(e)
 
         if not message_received:
             service_logger.info('Message not sent. Store it into DB.')
@@ -70,7 +74,7 @@ class Service:
         for message in messages:
             msg_id, sender_id, receiver_id, sender_username, msg, msg_date = message
             msg_json = {'message': msg, 'sender_id': sender_id, 'sender_username': sender_username,
-                        'receiver_id': receiver_id}
+                        'receiver_id': receiver_id, 'send_date': msg_date}
             msg_received = self.send_message_by_list(address_list, msg_json)
 
             if msg_received:
