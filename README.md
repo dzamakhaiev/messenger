@@ -101,7 +101,7 @@ the current maximum rate.
      ```
      Response: STATUS_CODE 200. JSON: {"msg": "Logout successful.", "username": "unique username"}.  
 
-7. Send Encrypted Message
+7. Send Encrypted Message  
      Request:
      ```
      POST https://localhost:5000/api/messages/
