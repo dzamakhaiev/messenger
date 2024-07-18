@@ -52,11 +52,11 @@ def token_required(f):
     """
     @wraps(f)
     def decorated_func(*args, **kwargs):
-        error = check_token()
-        if error:
-            return error
-        else:
-            return f(*args, **kwargs)
+        error_tuple = check_token()
+        if error_tuple[0] is not None:
+            return error_tuple
+
+        return f(*args, **kwargs)
     return decorated_func
 
 
@@ -85,6 +85,7 @@ def check_token():
 
         if not result:
             return settings.NOT_AUTHORIZED, 401
+        return None, None  # To pass pylint check
 
     except jwt.exceptions.ExpiredSignatureError:
         listener_logger.error('Token expired.')
@@ -130,10 +131,9 @@ def create_user():
         listener_logger.error(f'Username "{username}" already exists.')
         return 'Username already exists.', 400
 
-    else:
-        user_id = service.create_user(user)
-        listener_logger.info(f'User "{user.username}" created with id {user_id}')
-        return jsonify({'user_id': user_id}), 201
+    user_id = service.create_user(user)
+    listener_logger.info(f'User "{user.username}" created with id {user_id}')
+    return jsonify({'user_id': user_id}), 201
 
 
 @app.route(f'{routes.USERS}', methods=['GET'])
@@ -155,9 +155,8 @@ def get_user():
         public_key = service.get_user_public_key(user_id)
         return jsonify({'user_id': user_id, 'public_key': public_key})
 
-    else:
-        listener_logger.error(f'User "{username}" not found.')
-        return f'User "{username}" not found.', 404
+    listener_logger.error(f'User "{username}" not found.')
+    return f'User "{username}" not found.', 404
 
 
 @app.route(f'{routes.USERS}', methods=['DELETE'])
@@ -173,9 +172,8 @@ def delete_user():
         listener_logger.debug(f'User deleted: {user_id}')
         return 'User deleted.', 200
 
-    else:
-        listener_logger.error('Field "user_id" is missing.')
-        return settings.VALIDATION_ERROR, 400
+    listener_logger.error('Field "user_id" is missing.')
+    return settings.VALIDATION_ERROR, 400
 
 
 @app.route(routes.LOGIN, methods=['POST'])
@@ -218,9 +216,8 @@ def login():
         listener_logger.debug(f'User id "{user_id}" logged in with address "{user.user_address}".')
         return jsonify({'msg': 'Login successful.', 'user_id': user_id, 'token': token})
 
-    else:
-        listener_logger.error('Incorrect username or password.')
-        return 'Incorrect username or password.', 401
+    listener_logger.error('Incorrect username or password.')
+    return 'Incorrect username or password.', 401
 
 
 @app.route(routes.LOGOUT, methods=['POST'])
@@ -245,9 +242,8 @@ def logout():
         listener_logger.debug('Token deleted. User logged out.')
         return jsonify({'msg': 'Logout successful.', 'username': username})
 
-    else:
-        listener_logger.error('Field "username" is missing.')
-        return settings.VALIDATION_ERROR, 400
+    listener_logger.error('Field "username" is missing.')
+    return settings.VALIDATION_ERROR, 400
 
 
 @app.route(routes.MESSAGES, methods=['POST'])
@@ -281,9 +277,8 @@ def process_messages():
         service.put_message_in_queue(address_list, request.json)
         return 'Message processed.', 200
 
-    else:
-        listener_logger.error('Invalid username.')
-        return settings.NOT_AUTHORIZED, 401
+    listener_logger.error('Invalid username.')
+    return settings.NOT_AUTHORIZED, 401
 
 
 @app.route(routes.HEALTH, methods=['HEAD'])
