@@ -1,6 +1,6 @@
 import socket
 import hashlib
-import requests  # pylint: disable=import-error
+import requests
 from urllib.parse import urlparse
 
 from server_side.app import settings
@@ -119,13 +119,15 @@ class Service:
     def put_message_in_queue(self, address_list, msg_json):
         service_logger.info(f'Put message in {settings.MQ_MSG_QUEUE_NAME} queue.')
         queue_json = {'address_list': address_list, 'msg_json': msg_json}
-        self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME, queue_name=settings.MQ_MSG_QUEUE_NAME,
+        self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME,
+                                     queue_name=settings.MQ_MSG_QUEUE_NAME,
                                      body=queue_json)
 
     def put_login_in_queue(self, user_id, user_address):
         service_logger.info(f'Put message in {settings.MQ_LOGIN_QUEUE_NAME} queue.')
         queue_json = {'user_id': user_id, 'user_address': user_address}
-        self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME, queue_name=settings.MQ_LOGIN_QUEUE_NAME,
+        self.mq_handler.send_message(exchange_name=settings.MQ_EXCHANGE_NAME,
+                                     queue_name=settings.MQ_LOGIN_QUEUE_NAME,
                                      body=queue_json)
 
     def get_user_id_by_username(self, username):
@@ -175,7 +177,7 @@ class Service:
 
         if public_key:
             service_logger.debug('User public key found.')
-            self.ram_db_handler.insert_user_public_key(user_id, public_key)  # store in RAM to cache it
+            self.ram_db_handler.insert_user_public_key(user_id, public_key)
             return public_key
 
         else:
@@ -209,7 +211,7 @@ class Service:
 
         if token:
             service_logger.debug('User token found.')
-            self.ram_db_handler.insert_user_token(user_id, token)  # store in RAM to cache it
+            self.ram_db_handler.insert_user_token(user_id, token)
             return token == exp_token
 
         else:
