@@ -1,5 +1,3 @@
-!PyLint  <!-- Test-->
-
 This is a simple REST API messenger application.
 
 
