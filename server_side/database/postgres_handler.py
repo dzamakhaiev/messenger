@@ -10,7 +10,8 @@ class PostgresHandler:
     def __init__(self):
         try:
             database_logger.info('Connecting to PostgreSQL.')
-            self.connection = psycopg2.connect(database=settings.DB_NAME, user=settings.DB_USER, port=settings.DB_PORT,
+            self.connection = psycopg2.connect(database=settings.DB_NAME, user=settings.DB_USER,
+                                               port=settings.DB_PORT,
                                                password=settings.DB_PASSWORD, host=settings.DB_HOST)
             self.cursor = self.connection.cursor()
         except (psycopg2.DatabaseError, Exception) as e:
@@ -37,7 +38,8 @@ class PostgresHandler:
                 self.cursor.execute(query, args)
             self.connection.commit()
 
-        except (psycopg2.OperationalError, psycopg2.errors.UniqueViolation, psycopg2.DatabaseError) as e:
+        except (psycopg2.OperationalError, psycopg2.errors.UniqueViolation,
+                psycopg2.DatabaseError) as e:
             database_logger.debug(f'Query caused an error: {e}\n Query: {query, args}')
             self.connection.rollback()
 
@@ -110,9 +112,11 @@ class PostgresHandler:
 
     def get_user(self, user_id=None, username=None):
         if user_id:
-            result = self.cursor_execute('SELECT id, username FROM users WHERE id = %s', (user_id,))
+            result = self.cursor_execute(
+                'SELECT id, username FROM users WHERE id = %s', (user_id,))
         elif username:
-            result = self.cursor_execute('SELECT id, username FROM users WHERE username = %s', (username,))
+            result = self.cursor_execute(
+                'SELECT id, username FROM users WHERE username = %s', (username,))
         else:
             return
 
@@ -125,15 +129,14 @@ class PostgresHandler:
                                      (user_id,))
         if self.cursor.rowcount != 0:
             return [item[0] for item in result.fetchall()]  # convert tuple to string
-        else:
-            return []
+        return []
 
     def get_user_messages(self, receiver_id):
-        result = self.cursor_execute('SELECT * FROM messages WHERE user_receiver_id = %s', (receiver_id,))
+        result = self.cursor_execute('SELECT * FROM messages WHERE user_receiver_id = %s',
+                                     (receiver_id,))
         if self.cursor.rowcount != 0:
             return result.fetchall()
-        else:
-            return []
+        return []
 
     def get_user_password(self, username):
         result = self.cursor_execute('SELECT password FROM users WHERE username = %s',
@@ -143,83 +146,90 @@ class PostgresHandler:
             return result[0]
 
     def get_username(self, user_id):
-        result = self.cursor_execute('SELECT username FROM users WHERE id = %s', (user_id,))
+        result = self.cursor_execute('SELECT username FROM users WHERE id = %s',
+                                     (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
-        else:
-            return ''
+        return ''
 
     def get_user_id(self, username):
-        result = self.cursor_execute('SELECT id FROM users WHERE username = %s', (username,))
+        result = self.cursor_execute('SELECT id FROM users WHERE username = %s',
+                                     (username,))
         result = result.fetchone()
         if result:
             return result[0]
-        else:
-            return None
 
     def get_user_token(self, user_id):
-        result = self.cursor_execute('SELECT token FROM tokens WHERE user_id = %s', (user_id,))
+        result = self.cursor_execute('SELECT token FROM tokens WHERE user_id = %s',
+                                     (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_user_public_key(self, user_id):
-        result = self.cursor_execute('SELECT public_key FROM public_keys WHERE user_id = %s', (user_id,))
+        result = self.cursor_execute('SELECT public_key FROM public_keys WHERE user_id = %s',
+                                     (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
     def get_all_messages(self):
         result = self.cursor_execute('SELECT user_sender_id, user_receiver_id, '
-                                     'sender_username, message, receive_date '        
+                                     'sender_username, message, receive_date '
                                      'FROM messages;', ())
         if self.cursor.rowcount != 0:
             return result.fetchall()
-        else:
-            return []
+        return []
 
     def check_user_address(self, user_id, user_address):
-        result = self.cursor_execute('SELECT user_id FROM user_address WHERE user_id=%s AND user_address=%s',
-                                     (user_id, user_address))
+        result = self.cursor_execute(
+            'SELECT user_id FROM user_address WHERE user_id=%s AND user_address=%s',
+            (user_id, user_address))
         result = result.fetchone()
         if result:
             return True
-        else:
-            return False
+        return False
 
     def insert_user(self, username, phone_number, password='qwerty'):
-        self.cursor_with_commit('INSERT INTO users ("username", "phone", "password") VALUES (%s, %s, %s)',
-                                (username, phone_number, password))
+        self.cursor_with_commit(
+            'INSERT INTO users ("username", "phone", "password") VALUES (%s, %s, %s)',
+            (username, phone_number, password))
 
     def insert_address(self, user_address):
-        self.cursor_with_commit('INSERT INTO address ("user_address") VALUES (%s)', (user_address,))
+        self.cursor_with_commit('INSERT INTO address ("user_address") VALUES (%s)',
+                                (user_address,))
 
     def insert_user_address(self, user_id, user_address):
         if not self.check_user_address(user_id, user_address):
-            self.cursor_with_commit('INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
-                                    (user_id, user_address))
+            self.cursor_with_commit(
+                'INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
+                (user_id, user_address))
 
     def insert_user_token(self, user_id, token):
         if self.get_user_token(user_id) is None:
-            self.cursor_with_commit('INSERT INTO tokens ("user_id", "token") VALUES (%s, %s)',
-                                    (user_id, token))
+            self.cursor_with_commit(
+                'INSERT INTO tokens ("user_id", "token") VALUES (%s, %s)',
+                (user_id, token))
 
     def insert_user_public_key(self, user_id, public_key):
         if self.get_user_public_key(user_id) is None:
-            self.cursor_with_commit('INSERT INTO public_keys ("user_id", "public_key") VALUES (%s, %s)',
-                                    (user_id, public_key))
+            self.cursor_with_commit(
+                'INSERT INTO public_keys ("user_id", "public_key") VALUES (%s, %s)',
+                (user_id, public_key))
 
     def insert_message(self, sender_id, receiver_id, sender_username, message):
-        self.cursor_with_commit('INSERT INTO messages '
-                                '("user_sender_id", "user_receiver_id", "sender_username", "message") '
-                                'VALUES (%s, %s, %s, %s)',
-                                (sender_id, receiver_id, sender_username, message))
+        self.cursor_with_commit(
+            'INSERT INTO messages '
+            '("user_sender_id", "user_receiver_id", "sender_username", "message") '
+            'VALUES (%s, %s, %s, %s)',
+            (sender_id, receiver_id, sender_username, message))
 
     def insert_messages(self, messages):
-        self.cursor_with_commit('INSERT INTO messages ('
-                                '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
-                                'VALUES (%s, %s, %s, %s, %s)', messages, many=True)
+        self.cursor_with_commit(
+            'INSERT INTO messages ('
+            '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
+            'VALUES (%s, %s, %s, %s, %s)', messages, many=True)
 
     def delete_all_messages(self):
         self.cursor_with_commit('DELETE FROM messages')
@@ -228,7 +238,8 @@ class PostgresHandler:
         self.cursor_with_commit('DELETE FROM messages WHERE id IN (%s)', (message_ids,))
 
     def delete_user_messages(self, receiver_id):
-        self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = %s', (receiver_id,))
+        self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = %s',
+                                (receiver_id,))
 
     def delete_user(self, user_id=None, username=None):
         if user_id:
