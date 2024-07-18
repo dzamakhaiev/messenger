@@ -1,4 +1,4 @@
-HEALTH = '/health'
+HEALTH = '/health/'
 API = '/api'
 LOGIN = API + '/login/'
 LOGOUT = API + '/logout/'
