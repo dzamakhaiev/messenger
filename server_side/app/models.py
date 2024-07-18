@@ -1,3 +1,7 @@
+"""
+That module contains data model class to validate and deserialize data from requests.
+"""
+
 from datetime import datetime
 from pydantic import BaseModel
 
