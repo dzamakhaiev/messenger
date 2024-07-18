@@ -32,7 +32,8 @@ service = Service(hdd_db_handler, ram_db_handler, msg_broker)
 
 def process_message(channel, method, properties, body):
     """
-    This function process message from RabbitMQ queue and send message to ip address in separated thread.
+    This function process message from RabbitMQ queue and send message
+    to ip address in separated thread.
     """
     sender_logger.info('Message received.')
     channel.basic_ack(delivery_tag=method.delivery_tag)
