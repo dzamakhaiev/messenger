@@ -32,27 +32,18 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'replace_that_secret_key'  # do not use it on production
 listener_logger = Logger('listener')
 
-# To avoid initializing db connections while importing functions for unit tests
-hdd_db_handler = None
-ram_db_handler = None
-mq_handler = None
-service = None
+# Set up DB handlers
+hdd_db_handler = PostgresHandler()
+ram_db_handler = RAMDatabaseHandler()
+mq_handler = RabbitMQHandler()
 
+hdd_db_handler.create_all_tables()
+ram_db_handler.create_all_tables()
+mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
+mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
 
-def initialize_database_connections(hdd_db_handler, ram_db_handler, mq_handler, service):
-    # Set up DB handlers in separate function
-    hdd_db_handler = PostgresHandler()
-    ram_db_handler = RAMDatabaseHandler()
-    mq_handler = RabbitMQHandler()
-    service = Service(hdd_db_handler, ram_db_handler, mq_handler)
-
-    hdd_db_handler.create_all_tables()
-    ram_db_handler.create_all_tables()
-    mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
-    mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-    mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-
-    return hdd_db_handler, ram_db_handler, mq_handler, service
+service = Service(hdd_db_handler, ram_db_handler, mq_handler)
 
 
 def token_required(f):
@@ -304,11 +295,6 @@ if __name__ == '__main__':
     listener_logger.info('Listener started.')
 
     try:
-        # To import functions for unit tests without initializing databases connections
-        global hdd_db_handler, ram_db_handler, mq_handler, service
-        hdd_db_handler, ram_db_handler, mq_handler, service = initialize_database_connections(
-            hdd_db_handler, ram_db_handler, mq_handler, service)
-
         app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True)
     except Exception as e:
         listener_logger.info(f'Listener failed with unexpected error:\n{e}.')
