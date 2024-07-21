@@ -305,6 +305,7 @@ if __name__ == '__main__':
 
     try:
         # To import functions for unit tests without initializing databases connections
+        global hdd_db_handler, ram_db_handler, mq_handler, service
         hdd_db_handler, ram_db_handler, mq_handler, service = initialize_database_connections(
             hdd_db_handler, ram_db_handler, mq_handler, service)
 
