@@ -4,7 +4,7 @@ This is a simple REST API messenger application.
 ### Hardware requirements
 - 2 or more CPU cores
 - 1 GB or more free disk space
-- 1 GB or more free RAM space
+- 500 MB or more free RAM space
 
 
 ### Software requirements
