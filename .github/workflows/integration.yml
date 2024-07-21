@@ -24,7 +24,7 @@ jobs:
 
     - name: Run messenger application
       run: |
-        docker compose -d -f ./messenger.yaml up
+        docker compose -f ./messenger.yaml up -d
 
     - name: Run integration tests
       run: |
