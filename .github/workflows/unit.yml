@@ -6,11 +6,13 @@ on:
       - master
 
 jobs:
-  build:
+  unit:
     runs-on: self-hosted
     strategy:
       matrix:
         python-version: ["3.12"]
+    needs:
+      - pylint
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}

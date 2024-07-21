@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build:
+  pylint:
     runs-on: self-hosted
     strategy:
       matrix:
