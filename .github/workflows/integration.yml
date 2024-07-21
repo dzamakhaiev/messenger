@@ -32,5 +32,4 @@ jobs:
 
     - name: Close messenger application
       run: |
-        docker compose down
-        docker system prune -a --volumes
+        docker compose -f ./messenger.yaml down
