@@ -40,6 +40,8 @@ jobs:
       matrix:
         python-version: [ "3.12" ]
 
+    needs: pylint
+
     steps:
       - uses: actions/checkout@v4
 
@@ -62,6 +64,8 @@ jobs:
     strategy:
       matrix:
         python-version: [ "3.12" ]
+
+    needs: unit
 
     steps:
       - uses: actions/checkout@v4
