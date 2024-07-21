@@ -23,8 +23,8 @@ from server_side.app.service import Service
 from server_side.logger.logger import Logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.app.models import UserLogin, User, Message
-from server_side.database.sqlite_handler import RAMDatabaseHandler
 from server_side.database.postgres_handler import PostgresHandler
+from server_side.database.sqlite_handler import RAMDatabaseHandler
 
 
 # Set up listener and its logger
