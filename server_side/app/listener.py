@@ -6,7 +6,6 @@ That module processes client's requests using Flask framework.
 import os
 import sys
 import jwt
-import routes  # pylint: disable=import-error
 from functools import wraps
 from datetime import datetime, timedelta
 from pydantic import ValidationError
@@ -18,13 +17,14 @@ current_dir = os.path.dirname(current_file)
 repo_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
 sys.path.insert(0, repo_dir)
 
+from server_side.app import routes  # pylint: disable=import-error
 from server_side.app import settings
 from server_side.app.service import Service
 from server_side.logger.logger import Logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.app.models import UserLogin, User, Message
-from server_side.database.sqlite_handler import RAMDatabaseHandler
 from server_side.database.postgres_handler import PostgresHandler
+from server_side.database.sqlite_handler import RAMDatabaseHandler
 
 
 # Set up listener and its logger
@@ -32,18 +32,27 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'replace_that_secret_key'  # do not use it on production
 listener_logger = Logger('listener')
 
-# Set up DB handlers
-hdd_db_handler = PostgresHandler()
-ram_db_handler = RAMDatabaseHandler()
-mq_handler = RabbitMQHandler()
+# To avoid initializing db connections while importing functions for unit tests
+hdd_db_handler = None
+ram_db_handler = None
+mq_handler = None
+service = None
 
-hdd_db_handler.create_all_tables()
-ram_db_handler.create_all_tables()
-mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
-mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
 
-service = Service(hdd_db_handler, ram_db_handler, mq_handler)
+def initialize_database_connections(hdd_db_handler, ram_db_handler, mq_handler, service):
+    # Set up DB handlers in separate function
+    hdd_db_handler = PostgresHandler()
+    ram_db_handler = RAMDatabaseHandler()
+    mq_handler = RabbitMQHandler()
+    service = Service(hdd_db_handler, ram_db_handler, mq_handler)
+
+    hdd_db_handler.create_all_tables()
+    ram_db_handler.create_all_tables()
+    mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
+    mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+    mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
+
+    return hdd_db_handler, ram_db_handler, mq_handler, service
 
 
 def token_required(f):
@@ -295,6 +304,10 @@ if __name__ == '__main__':
     listener_logger.info('Listener started.')
 
     try:
+        # To import functions for unit tests without initializing databases connections
+        hdd_db_handler, ram_db_handler, mq_handler, service = initialize_database_connections(
+            hdd_db_handler, ram_db_handler, mq_handler, service)
+
         app.run(host=settings.REST_API_HOST, port=settings.REST_API_PORT, debug=True)
     except Exception as e:
         listener_logger.info(f'Listener failed with unexpected error:\n{e}.')
