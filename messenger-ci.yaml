@@ -5,8 +5,6 @@ services:
     container_name: rabbitmq-ci
     image: "rabbitmq:alpine"
     restart: on-failure
-    ports:
-      - "5672:5672"
     networks:
       - backend-ci
 
@@ -14,8 +12,6 @@ services:
     container_name: postgres-ci
     image: "postgres:alpine"
     restart: on-failure
-    ports:
-      - "5432:5432"
     networks:
       - backend-ci
     environment:
@@ -78,8 +74,6 @@ services:
     depends_on:
       - listener-1-ci
       - listener-2-ci
-    ports:
-      - "5000:5000"
     networks:
       - backend-ci
     command: sh -c "sleep 15 && nginx -g 'daemon off;'"
