@@ -1,4 +1,4 @@
-name: Pylint
+name: Messenger CI pipeline
 
 on:
   pull_request:
