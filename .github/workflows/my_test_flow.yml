@@ -84,6 +84,10 @@ jobs:
         run: |
           docker compose -f ./messenger-ci.yaml up -d
 
+      - name: Clone messenger-tests repository
+        run: |
+          git clone --depth 1 https://github.com/dzamakhaiev/messenger-tests.git
+
       - name: Run integration tests
         run: |
           python3 -m unittest discover
