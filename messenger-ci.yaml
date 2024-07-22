@@ -2,7 +2,7 @@ version: "3"
 services:
 
   rabbitmq-ci:
-    container_name: rabbitmq
+    container_name: rabbitmq-ci
     image: "rabbitmq:alpine"
     restart: on-failure
     ports:
@@ -11,7 +11,7 @@ services:
       - backend-ci
 
   postgres-ci:
-    container_name: postgres
+    container_name: postgres-ci
     image: "postgres:alpine"
     restart: on-failure
     ports:
@@ -19,12 +19,12 @@ services:
     networks:
       - backend-ci
     environment:
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: postgres-ci
     volumes:
       - ./server_side/database:/var/lib/postgresql
 
   listener-1-ci:
-    container_name: listener-1
+    container_name: listener-1-ci
     image: "dzamakhaiev/messenger"
     restart: on-failure
     depends_on:
@@ -33,13 +33,14 @@ services:
     networks:
       - backend-ci
     environment:
-      SERVICE_NAME: listener-1
+      CI_RUN: 1
+      SERVICE_NAME: listener-1-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   listener-2-ci:
-    container_name: listener-2
+    container_name: listener-2-ci
     image: "dzamakhaiev/messenger"
     restart: on-failure
     depends_on:
@@ -48,6 +49,7 @@ services:
     networks:
       - backend-ci
     environment:
+      CI_RUN: 1
       SERVICE_NAME: listener-2
     volumes:
       - logs-ci:/messenger/server_side/logs
@@ -63,13 +65,14 @@ services:
     networks:
       - backend-ci
     environment:
-      SERVICE_NAME: sender-1
+      CI_RUN: 1
+      SERVICE_NAME: sender-1-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
 
   nginx-ci:
-    container_name: nginx
+    container_name: nginx-ci
     image: "dzamakhaiev/messenger-nginx"
     restart: on-failure
     depends_on:
