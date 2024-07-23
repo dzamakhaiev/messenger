@@ -67,6 +67,9 @@ jobs:
 
     needs: unit
 
+    env:
+      CI_RUN: 1
+
     steps:
       - uses: actions/checkout@v4
 
@@ -82,7 +85,7 @@ jobs:
 
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d
+          docker compose -f ./messenger-ci.yaml up -d && sleep 45
 
       - name: Clone messenger-tests repository
         run: |
@@ -94,7 +97,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          python3 -m unittest discover tests
+          cd messenger-tests && python3 -m unittest discover integration
 
       - name: Close messenger application
         run: |
