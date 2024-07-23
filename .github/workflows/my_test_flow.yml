@@ -98,7 +98,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          cd messenger-tests && python3 -m unittest discover integration && sleep 45
+          cd messenger-tests && python3 -m unittest discover integration
 
       - name: Close messenger application
         if: always()
