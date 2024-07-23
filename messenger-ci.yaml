@@ -32,7 +32,7 @@ services:
       SERVICE_NAME: listener-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
+    command: sh -c "sleep 15 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-ci:
     container_name: sender-ci
@@ -48,7 +48,7 @@ services:
       SERVICE_NAME: sender-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && python sender.py"
+    command: sh -c "sleep 15 && python sender.py"
 
   nginx-ci:
     container_name: nginx-ci
@@ -60,7 +60,7 @@ services:
       - listener-ci
     networks:
       - backend-ci
-    command: sh -c "sleep 15 && nginx -g 'daemon off;'"
+    command: sh -c "sleep 20 && nginx -g 'daemon off;'"
 
 networks:
   backend-ci:
