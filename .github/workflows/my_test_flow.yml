@@ -85,7 +85,7 @@ jobs:
 
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d && sleep 45
+          docker compose -f ./messenger-ci.yaml -p messenger-ci up -d && sleep 45
 
       - name: Clone messenger-tests repository
         run: |
