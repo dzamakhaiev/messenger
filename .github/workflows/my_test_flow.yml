@@ -106,7 +106,7 @@ jobs:
           docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci
 
       - name: Force stop and delete containers
-        if: echo $(docker ps -a -q --filter "name=ci")
+        if: ${{(docker ps -a -q --filter "name=ci")}}
         run: |
           docker stop $(docker ps -a -q --filter "name=ci")
           docker rm $(docker ps -a -q --filter "name=ci"
