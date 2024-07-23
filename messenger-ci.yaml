@@ -28,7 +28,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./server_side/database:/var/lib/postgresql
+      - database-ci:/var/lib/postgresql
 
   listener-ci:
     container_name: listener-ci
@@ -100,3 +100,4 @@ networks:
 
 volumes:
   logs-ci:
+  database-ci:
