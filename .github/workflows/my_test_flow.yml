@@ -102,4 +102,4 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down rabbitmq-ci postgres-ci listener-ci sender-ci nginx-ci
+          sleep 45 && docker compose -f ./messenger-ci.yaml down rabbitmq-ci postgres-ci listener-ci sender-ci nginx-ci
