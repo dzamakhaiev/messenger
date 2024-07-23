@@ -29,10 +29,11 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
+      BRANCH_NAME: $BRANCH_NAME
       SERVICE_NAME: listener-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 15 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
+    command: sh -c "sleep 15 && git checkout $BRANCH_NAME && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-ci:
     container_name: sender-ci
@@ -45,10 +46,11 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
+      BRANCH_NAME: $BRANCH_NAME
       SERVICE_NAME: sender-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 15 && python sender.py"
+    command: sh -c "sleep 15 && git checkout $BRANCH_NAME && python sender.py"
 
   nginx-ci:
     container_name: nginx-ci

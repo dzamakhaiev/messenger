@@ -83,6 +83,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Set branch name
+        run: |
+          echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
       - name: Run messenger application
         run: |
           docker compose -f ./messenger-ci.yaml -p messenger-ci up -d && sleep 45
