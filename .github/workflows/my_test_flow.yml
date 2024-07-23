@@ -99,6 +99,6 @@ jobs:
         run: |
           cd messenger-tests && python3 -m unittest discover integration
 
-      - name: Close messenger application
+      - name: Always close messenger application
         run: |
           docker compose -f ./messenger-ci.yaml down rabbitmq-ci postgres-ci listener-1-ci listener-2-ci sender-ci nginx-ci
