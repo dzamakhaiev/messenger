@@ -14,6 +14,7 @@ class PostgresHandler:
                                                port=settings.DB_PORT,
                                                password=settings.DB_PASSWORD, host=settings.DB_HOST)
             self.cursor = self.connection.cursor()
+            database_logger.info('PostgreSQL connection established.')
         except (psycopg2.DatabaseError, Exception) as e:
             database_logger.error(e)
             quit()

@@ -19,6 +19,7 @@ class RabbitMQHandler:
             self.parameters = pika.URLParameters(settings.CONNECT_URI)
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
+            broker_logger.info('RabbitMQ connection established.')
 
         except (pika.exceptions.AMQPConnectionError, AttributeError, Exception) as e:
             broker_logger.error(e)
