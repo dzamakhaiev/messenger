@@ -96,7 +96,7 @@ services:
 
 networks:
   backend-ci:
-    driver: host
+    driver: bridge
 
 volumes:
   logs-ci:
