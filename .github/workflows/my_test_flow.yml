@@ -31,9 +31,6 @@ jobs:
       run: |
         pylint --fail-under=8.0 $(git ls-files '*.py')
 
-    - name: Update README badge
-      run: echo '!PyLint' > README.md
-
   unit:
     runs-on: self-hosted
     strategy:
@@ -67,6 +64,9 @@ jobs:
 
     needs: unit
 
+    env:
+      CI_RUN: 1
+
     steps:
       - uses: actions/checkout@v4
 
@@ -80,9 +80,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Set branch name
+        run: |
+          echo "BRANCH_NAME=${{ github.ref }}" >> $GITHUB_ENV
+
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d
+          docker compose -f ./messenger-ci.yaml up -d && sleep 45
 
       - name: Clone messenger-tests repository
         run: |
@@ -94,8 +98,9 @@ jobs:
 
       - name: Run integration tests
         run: |
-          python3 -m unittest discover tests
+          cd messenger-tests && python3 -m unittest discover integration
 
       - name: Close messenger application
+        if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down rabbitmq-ci postgres-ci listener-1-ci listener-2-ci sender-ci nginx-ci
+          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci

@@ -15,11 +15,13 @@ class RabbitMQHandler:
     def __init__(self):
         try:
             broker_logger.info('Connect to RabbitMQ.')
+            broker_logger.debug(f'RabbitMQ URL: {settings.CONNECT_URI}')
             self.parameters = pika.URLParameters(settings.CONNECT_URI)
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
 
-        except (pika.exceptions.AMQPConnectionError, AttributeError):
+        except (pika.exceptions.AMQPConnectionError, AttributeError, Exception) as e:
+            broker_logger.error(e)
             quit('Cannot connect to RabbitMQ.')
 
     def reconnect(self):
@@ -27,7 +29,8 @@ class RabbitMQHandler:
             broker_logger.info('Reconnect to RabbitMQ.')
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
-        except (pika.exceptions.AMQPConnectionError, AttributeError):
+        except (pika.exceptions.AMQPConnectionError, AttributeError, Exception) as e:
+            broker_logger.error(e)
             quit('Cannot connect to RabbitMQ.')
 
     def create_exchange(self, exchange_name='TestExchange'):

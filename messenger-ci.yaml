@@ -1,10 +1,15 @@
-version: "3"
 services:
 
   rabbitmq-ci:
     container_name: rabbitmq-ci
     image: "rabbitmq:alpine"
     restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 30s
     networks:
       - backend-ci
 
@@ -12,17 +17,29 @@ services:
     container_name: postgres-ci
     image: "postgres:alpine"
     restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 30s
     networks:
       - backend-ci
     environment:
-      POSTGRES_PASSWORD: postgres-ci
+      POSTGRES_PASSWORD: postgres
     volumes:
       - ./server_side/database:/var/lib/postgresql
 
-  listener-1-ci:
-    container_name: listener-1-ci
+  listener-ci:
+    container_name: listener-ci
     image: "dzamakhaiev/messenger"
     restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 30s
     depends_on:
       - rabbitmq-ci
       - postgres-ci
@@ -30,31 +47,22 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-      SERVICE_NAME: listener-1-ci
+      BRANCH_NAME: $BRANCH_NAME
+      SERVICE_NAME: listener-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
-
-  listener-2-ci:
-    container_name: listener-2-ci
-    image: "dzamakhaiev/messenger"
-    restart: on-failure
-    depends_on:
-      - rabbitmq-ci
-      - postgres-ci
-    networks:
-      - backend-ci
-    environment:
-      CI_RUN: 1
-      SERVICE_NAME: listener-2
-    volumes:
-      - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
+    command: sh -c "sleep 10 && git checkout $BRANCH_NAME && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-ci:
     container_name: sender-ci
     image: "dzamakhaiev/messenger"
     restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 30s
     depends_on:
       - rabbitmq-ci
       - postgres-ci
@@ -62,20 +70,26 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
+      BRANCH_NAME: $BRANCH_NAME
       SERVICE_NAME: sender-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && python sender.py"
+    command: sh -c "sleep 10 && git checkout $BRANCH_NAME && python sender.py"
 
   nginx-ci:
     container_name: nginx-ci
-    image: "dzamakhaiev/messenger-nginx"
+    image: "dzamakhaiev/messenger-nginx-ci"
     restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 30s
     ports:
       - "5001:5000"
     depends_on:
-      - listener-1-ci
-      - listener-2-ci
+      - listener-ci
     networks:
       - backend-ci
     command: sh -c "sleep 15 && nginx -g 'daemon off;'"
