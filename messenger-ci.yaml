@@ -15,7 +15,7 @@ services:
     networks:
       - backend-ci
     environment:
-      POSTGRES_PASSWORD: postgres-ci
+      POSTGRES_PASSWORD: postgres
     volumes:
       - ./server_side/database:/var/lib/postgresql
 
