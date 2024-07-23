@@ -9,10 +9,11 @@ global_lock = Lock()
 class RAMDatabaseHandler:
 
     def __init__(self):
-        database_logger.info('SQLite in-memory connection opened.')
         try:
+            database_logger.info('Connecting to SQLite.')
             self.conn = sqlite3.connect(':memory:', check_same_thread=False)
             self.cursor = self.conn.cursor()
+            database_logger.info('SQLite in-memory connection opened.')
         except sqlite3.Error as e:
             quit(e)
 
