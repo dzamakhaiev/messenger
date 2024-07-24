@@ -87,7 +87,7 @@ services:
         max_attempts: 3
         window: 30s
     ports:
-      - "5000:5000"
+      - "5001:5000"
     depends_on:
       - listener-ci
     networks:
