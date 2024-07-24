@@ -99,6 +99,10 @@ jobs:
       - name: Run integration tests
         run: |
           docker compose -f ./messenger-ci.yaml up integration-ci
+          if [ $? -ne 0 ]; then
+            echo "Integration tests failed!"
+            exit 1
+          fi
 
       - name: Close messenger application
         if: always()
