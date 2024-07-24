@@ -66,6 +66,7 @@ jobs:
 
     env:
       CI_RUN: 1
+      BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
       - uses: actions/checkout@v4
@@ -80,9 +81,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Set branch name
+      - name: Show branch name
         run: |
-          echo "BRANCH_NAME=${{ github.ref }}" >> $GITHUB_ENV
+          echo $BRANCH_NAME
 
       - name: Create docker network
         run: |
@@ -97,8 +98,11 @@ jobs:
           sleep 45
 
       - name: Run integration tests
+        shell: bash
         run: |
-          docker compose -f ./messenger-ci.yaml up integration-ci
+          echo $BRANCH_NAME
+          docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
+          sh scripts/check_exit_code.sh
 
       - name: Close messenger application
         if: always()
