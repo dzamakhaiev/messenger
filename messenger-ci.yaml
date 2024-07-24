@@ -101,7 +101,7 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-    command: sleep 45 && python3 -m unittest --verbose discover integration
+    command: sh -c "sleep 45 && python3 -m unittest --verbose discover integration"
 
 networks:
   backend-ci:
