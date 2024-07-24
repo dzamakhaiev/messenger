@@ -88,6 +88,10 @@ jobs:
         run: |
           docker compose -f ./messenger-ci.yaml up -d
 
+      - name: Run integration tests
+        run: |
+          docker compose -f ./messenger-ci.yaml up integration-ci
+
       - name: Close messenger application
         if: always()
         run: |
