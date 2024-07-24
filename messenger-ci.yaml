@@ -47,11 +47,11 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-      BRANCH_NAME: $BRANCH_NAME
+      BRANCH_NAME: { $BRANCH_NAME:master }
       SERVICE_NAME: listener-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "git pull && sleep 10 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
+    command: sh -c "git pull && git checkout $BRANCH_NAME && sleep 10 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-ci:
     container_name: sender-ci
@@ -71,10 +71,10 @@ services:
     environment:
       CI_RUN: 1
       SERVICE_NAME: sender-ci
-      BRANCH_NAME: $BRANCH_NAME
+      BRANCH_NAME: { $BRANCH_NAME:master }
     volumes:
       - logs-ci:/messenger/server_side/logs
-    command: sh -c "git pull && sleep 10 && python sender.py"
+    command: sh -c "git pull && git checkout $BRANCH_NAME && sleep 10 && python sender.py"
 
   nginx-ci:
     container_name: nginx-ci
