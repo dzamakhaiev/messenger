@@ -66,7 +66,7 @@ jobs:
 
     env:
       CI_RUN: 1
-      BRANCH_NAME: 'master'
+      BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
       - uses: actions/checkout@v4
@@ -81,14 +81,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Get branch name
+      - name: Show branch name
         shell: bash
         run: |
           echo $BRANCH_NAME
-          echo $GITHUB_REF
-          echo ${{ github.ref }}
-          echo ${{ github.head_ref }}
-          echo ${{ github.base_ref }}
 
       - name: Create docker network
         run: |
