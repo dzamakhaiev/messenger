@@ -47,7 +47,6 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-      BRANCH_NAME: $BRANCH_NAME
       SERVICE_NAME: listener-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
@@ -70,7 +69,6 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-      BRANCH_NAME: $BRANCH_NAME
       SERVICE_NAME: sender-ci
     volumes:
       - logs-ci:/messenger/server_side/logs
