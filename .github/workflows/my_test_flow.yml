@@ -96,7 +96,7 @@ jobs:
 
       - name: Wait until all services are started
         run: |
-          sleep 30
+          sleep 45
 
       - name: Run integration tests
         run: |
