@@ -94,6 +94,15 @@ services:
       - backend-ci
     command: sh -c "sleep 15 && nginx -g 'daemon off;'"
 
+  integration-ci:
+    container_name: integration-ci
+    image: "dzamakhaiev/messenger-tests"
+    networks:
+      - backend-ci
+    environment:
+      CI_RUN: 1
+    command: sleep 45 && python3 -m unittest --verbose discover integration
+
 networks:
   backend-ci:
     driver: bridge

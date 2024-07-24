@@ -86,19 +86,7 @@ jobs:
 
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d && sleep 45
-
-      - name: Clone messenger-tests repository
-        run: |
-          git clone --depth 1 https://github.com/dzamakhaiev/messenger-tests.git
-
-      - name: Get container status
-        run: |
-          docker ps -a
-
-#      - name: Run integration tests
-#        run: |
-#          cd messenger-tests && python3 -m unittest discover integration
+          docker compose -f ./messenger-ci.yaml up -d
 
       - name: Close messenger application
         if: always()
