@@ -87,7 +87,7 @@ jobs:
 
       - name: Create docker network
         run: |
-          docker network create --subnet=172.29.152.0/16 backend-ci
+          docker network create --subnet=172.29.152.0/24 backend-ci
 
       - name: Run messenger application
         run: |
