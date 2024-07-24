@@ -86,6 +86,8 @@ jobs:
         run: |
           echo "$BRANCH_NAME=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
           echo $BRANCH_NAME
+          echo $GITHUB_REF
+          echo ${{ github.ref }}
 
       - name: Create docker network
         run: |
