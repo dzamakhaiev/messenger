@@ -100,7 +100,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci
+          docker compose -f ./messenger-ci.yaml up integration-ci
           echo $?
           if [ $? -ne 0 ]; then
             echo "Integration tests failed!"
