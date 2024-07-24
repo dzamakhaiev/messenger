@@ -89,7 +89,6 @@ jobs:
           echo ${{ github.ref }}
           echo ${{ github.head_ref }}
           echo ${{ github.base_ref }}
-          echo ${{ toJson(github) }}
 
       - name: Create docker network
         run: |
