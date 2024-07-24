@@ -86,7 +86,11 @@ jobs:
 
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d
+          docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
+
+      - name: Wait until all services are started
+        run: |
+          sleep 45
 
       - name: Run integration tests
         run: |
@@ -95,4 +99,4 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci
+          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
