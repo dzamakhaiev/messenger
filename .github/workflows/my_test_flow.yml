@@ -82,7 +82,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Show branch name
-        shell: bash
         run: |
           echo $BRANCH_NAME
 
@@ -99,13 +98,10 @@ jobs:
           sleep 45
 
       - name: Run integration tests
+        shell: bash
         run: |
-          docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci
-          echo $?
-          if [ $? -ne 0 ]; then
-            echo "Integration tests failed!"
-            exit 1
-          fi
+          docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
+          sh scripts/check_exit_code.sh
 
       - name: Close messenger application
         if: always()
