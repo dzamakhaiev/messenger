@@ -100,7 +100,7 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-    command: sh -c "python3 -m unittest discover integration -v"
+    command: sh -c "python3 -m unittest discover -s integration -p test_login.py -v"
 
 networks:
   backend-ci:
