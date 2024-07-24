@@ -100,6 +100,7 @@ jobs:
       - name: Run integration tests
         shell: bash
         run: |
+          echo $BRANCH_NAME
           docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
           sh scripts/check_exit_code.sh
 
