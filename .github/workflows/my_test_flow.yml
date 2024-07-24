@@ -84,23 +84,28 @@ jobs:
         run: |
           echo "BRANCH_NAME=${{ github.ref }}" >> $GITHUB_ENV
 
+      - name: Create docker network
+        run: |
+          docker network create --subnet=172.29.152.0/16 backend-ci
+
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d && sleep 45
+          docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
 
-      - name: Clone messenger-tests repository
+      - name: Wait until all services are started
         run: |
-          git clone --depth 1 https://github.com/dzamakhaiev/messenger-tests.git
+          sleep 45
 
-      - name: Get container status
+      - name: Run integration tests
         run: |
-          docker ps -a
-
-#      - name: Run integration tests
-#        run: |
-#          cd messenger-tests && python3 -m unittest discover integration
+          docker compose -f ./messenger-ci.yaml up integration-ci
 
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci
+          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
+
+      - name: Remove docker network
+        if: always()
+        run: |
+          docker network rm backend-ci

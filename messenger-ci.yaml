@@ -28,7 +28,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./server_side/database:/var/lib/postgresql
+      - database-ci:/var/lib/postgresql
 
   listener-ci:
     container_name: listener-ci
@@ -86,17 +86,26 @@ services:
         delay: 5s
         max_attempts: 3
         window: 30s
-    ports:
-      - "5001:5000"
     depends_on:
       - listener-ci
     networks:
-      - backend-ci
+      backend-ci:
+        ipv4_address: 172.29.152.100
     command: sh -c "sleep 15 && nginx -g 'daemon off;'"
+
+  integration-ci:
+    container_name: integration-ci
+    image: "dzamakhaiev/messenger-tests"
+    networks:
+      - backend-ci
+    environment:
+      CI_RUN: 1
+    command: sh -c "python3 -m unittest discover integration -v"
 
 networks:
   backend-ci:
-    driver: bridge
+    external: true
 
 volumes:
   logs-ci:
+  database-ci:
