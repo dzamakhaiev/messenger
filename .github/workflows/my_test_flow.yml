@@ -88,6 +88,10 @@ jobs:
           echo $BRANCH_NAME
           echo $GITHUB_REF
           echo ${{ github.ref }}
+          echo ${{ github.head_ref }}
+          echo ${{ github.base_ref }}
+          echo ${{ github.event.pull_request.base.ref }}
+          echo ${{ toJson(github) }}
 
       - name: Create docker network
         run: |
