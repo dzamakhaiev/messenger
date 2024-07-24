@@ -102,6 +102,9 @@ services:
       CI_RUN: 1
     command: sh -c "python3 -m unittest discover integration -v"
 
+networks:
+  backend-ci:
+    external: true
 
 volumes:
   logs-ci:
