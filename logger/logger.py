@@ -1,6 +1,6 @@
 import os
 import logging
-import settings
+from logger import settings
 
 
 class Logger:
