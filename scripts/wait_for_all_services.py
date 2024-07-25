@@ -1,6 +1,7 @@
 """
 That module checks all containers for 'ready to work' state.
 """
+import sys
 from time import sleep
 import add_messenger_to_sys_path
 import docker
@@ -11,6 +12,7 @@ from logger.logger import Logger
 
 listener_logger = Logger('docker_handler')
 TIMEOUT = 60
+SLEEP_INTERVAL = 10
 READY_TO_WORK_MARKERS = {
     'nginx-ci': ['start worker processes', 'start worker process'],
     'rabbitmq-ci': ['Ready to start client connection listeners', 'Time to start RabbitMQ:1'],
@@ -57,7 +59,7 @@ def get_containers_logs(containers: list[Container]):
 
 
 def check_containers_logs_for_markers(containers_logs: dict):
-    listener_logger.info('Check containers logs for markers.')
+    listener_logger.info('Checking container logs for specific markers.')
     containers_statuses = {}
 
     for container_name, container_logs in containers_logs.items():
@@ -90,8 +92,33 @@ def check_containers_logs_for_markers(containers_logs: dict):
     return containers_statuses
 
 
+def main_loop():
+    listener_logger.info('Check containers logs for "ready to work" markers.')
+    time_spent = 0
+
+    while time_spent <= TIMEOUT:
+        listener_logger.info('Start new check in loop.')
+        running_containers = get_all_containers()
+        running_containers_logs = get_containers_logs(running_containers)
+        statuses = check_containers_logs_for_markers(running_containers_logs)
+
+        if len(statuses) == len(READY_TO_WORK_MARKERS) and all(statuses.values()):
+            listener_logger.info('All containers are ready to work.')
+            break
+
+        elif len(statuses) == len(READY_TO_WORK_MARKERS) and not all(statuses.values()):
+            listener_logger.debug('Not all containers are ready to work.')
+            sleep(SLEEP_INTERVAL)
+
+        else:
+            listener_logger.debug('Not all containers are running.')
+            sleep(SLEEP_INTERVAL)
+
+    else:
+        listener_logger.error(f'Script could not found all "ready to work" '
+                              f'markers during {TIMEOUT} seconds.')
+        sys.exit(1)
+
+
 if __name__ == '__main__':
-    running_containers = get_all_containers()
-    running_containers_logs = get_containers_logs(running_containers)
-    statuses = check_containers_logs_for_markers(running_containers_logs)
-    print(statuses)
+    main_loop()
