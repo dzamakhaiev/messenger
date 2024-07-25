@@ -10,7 +10,7 @@ services:
     networks:
       - backend
     volumes:
-      - rabbitmq-prod:/var/lib/postgresql
+      - rabbitmq-prod:/var/lib/rabbitmq
 
   postgres:
     container_name: postgres
