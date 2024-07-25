@@ -9,6 +9,8 @@ services:
       - "5672:5672"
     networks:
       - backend
+    volumes:
+      - rabbitmq-prod:/var/lib/rabbitmq
 
   postgres:
     container_name: postgres
@@ -21,7 +23,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
-      - database:/var/lib/postgresql
+      - postgres-prod:/var/lib/postgresql
 
   listener-1:
     container_name: listener-1
@@ -35,7 +37,7 @@ services:
     environment:
       SERVICE_NAME: listener-1
     volumes:
-      - logs:/messenger/server_side/logs
+      - logs-prod:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   listener-2:
@@ -50,7 +52,7 @@ services:
     environment:
       SERVICE_NAME: listener-2
     volumes:
-      - logs:/messenger/server_side/logs
+      - logs-prod:/messenger/server_side/logs
     command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-1:
@@ -65,7 +67,7 @@ services:
     environment:
       SERVICE_NAME: sender-1
     volumes:
-      - logs:/messenger/logs
+      - logs-prod:/messenger/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
 
   sender-2:
@@ -80,7 +82,7 @@ services:
     environment:
       SERVICE_NAME: sender-2
     volumes:
-      - logs:/messenger/logs
+      - logs-prod:/messenger/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
 
   nginx:
@@ -101,5 +103,6 @@ networks:
     driver: bridge
 
 volumes:
-  logs:
-  database:
+  logs-prod:
+  postgres-prod:
+  rabbitmq-prod:
