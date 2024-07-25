@@ -17,7 +17,10 @@ class Logger:
             logger_name += f'-{n}'
 
         formatter = logging.Formatter(settings.FORMAT)
-        log_directory = os.path.abspath("../logs/")
+        current_dir = os.path.dirname(__file__)
+        repo_dir = os.path.abspath(os.path.join(current_dir, '..'))
+        log_directory = os.path.abspath(os.path.join(repo_dir, "logs"))
+
         if not os.path.isdir(log_directory):
             os.mkdir(log_directory)
         log_file_path = os.path.join(log_directory, f"{logger_name}.log")
