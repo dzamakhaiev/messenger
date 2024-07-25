@@ -84,6 +84,7 @@ def check_containers_logs_for_markers(containers_logs: dict):
                 if all(preliminary_flags):
                     listener_logger.debug(f'All markers are found for "{container_name}".')
                     containers_statuses[container_name] = True
+                    break
                 else:
                     listener_logger.debug(f'Not all markers are found for "{container_name}".')
                     containers_statuses[container_name] = False
@@ -108,10 +109,12 @@ def main_loop():
 
         elif len(statuses) == len(READY_TO_WORK_MARKERS) and not all(statuses.values()):
             listener_logger.debug('Not all containers are ready to work.')
+            time_spent += SLEEP_INTERVAL
             sleep(SLEEP_INTERVAL)
 
         else:
             listener_logger.debug('Not all containers are running.')
+            time_spent += SLEEP_INTERVAL
             sleep(SLEEP_INTERVAL)
 
     else:
