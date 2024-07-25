@@ -76,6 +76,7 @@ def check_containers_logs_for_markers(containers_logs: dict):
             if container_markers:
                 for log_marker in container_markers:
 
+                    # If marker has found in log, delete marker from the list
                     if log_marker in log_line:
                         docker_logger.debug(f'Log marker "{log_marker}" found in "{container_name}" log.')
                         preliminary_flags.append(True)
