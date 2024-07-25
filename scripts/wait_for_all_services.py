@@ -97,7 +97,7 @@ def check_containers_logs_for_markers(containers_logs: dict):
 def main_loop():
     docker_logger.info('Check containers logs for "ready to work" markers.')
     time_spent = 0
-    statuses = []
+    statuses = {}
     running_containers_logs = {}
 
     while time_spent <= TIMEOUT:
@@ -123,13 +123,14 @@ def main_loop():
 
     else:
         docker_logger.error(f'Script could not found all "ready to work" '
-                              f'markers during {TIMEOUT} seconds.')
+                            f'markers during {TIMEOUT} seconds.')
 
-        failed_list = [container_name for container_name, status in statuses if status is False]
+        failed_list = [container_name for container_name, status in statuses.items()
+                       if status is False]
         not_working_containers = {name: logs for name, logs in running_containers_logs.items()
                                   if name in failed_list}
 
-        docker_logger.info(f'No working containers are: {not_working_containers}')
+        docker_logger.info(f'Not working containers are: {not_working_containers}')
         for name, logs in not_working_containers.items():
             logs = '\n'.join([line for line in logs])
             docker_logger.info(f'Container "{name}" logs:\n{logs}')
