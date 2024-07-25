@@ -15,7 +15,7 @@ TIMEOUT = 60
 SLEEP_INTERVAL = 10
 READY_TO_WORK_MARKERS = {
     'nginx-ci': ['start worker processes', 'start worker process'],
-    'rabbitmq-ci': ['Ready to start client connection listeners', 'Time to start RabbitMQ:1'],
+    'rabbitmq-ci': ['Ready to start client connection listeners', 'Time to start RabbitMQ:'],
     'postgres-ci': ['PostgreSQL init process complete; ready for start up.',
                     'database system is ready to accept connections'],
     'listener-ci': ['PostgreSQL connection established.', 'SQLite in-memory connection opened.',
@@ -106,6 +106,7 @@ def main_loop():
 
         if len(statuses) == len(READY_TO_WORK_MARKERS) and all(statuses.values()):
             listener_logger.info('All containers are ready to work.')
+            listener_logger.info(f'Time spent: {time_spent} seconds.')
             break
 
         elif len(statuses) == len(READY_TO_WORK_MARKERS) and not all(statuses.values()):
