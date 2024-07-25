@@ -65,7 +65,7 @@ services:
     environment:
       SERVICE_NAME: sender-1
     volumes:
-      - logs:/messenger/server_side/logs
+      - logs:/messenger/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
 
   sender-2:
@@ -80,7 +80,7 @@ services:
     environment:
       SERVICE_NAME: sender-2
     volumes:
-      - logs:/messenger/server_side/logs
+      - logs:/messenger/logs
     command: sh -c "sleep 10 && git pull && python sender.py"
 
   nginx:
