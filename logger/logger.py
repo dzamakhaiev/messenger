@@ -1,6 +1,6 @@
 import os
 import logging
-from server_side.logger import settings
+from logger import settings
 
 
 class Logger:

@@ -1,6 +1,6 @@
 import sqlite3
 from threading import Lock
-from server_side.logger.logger import Logger
+from logger.logger import Logger
 
 database_logger = Logger('sqlite')
 global_lock = Lock()

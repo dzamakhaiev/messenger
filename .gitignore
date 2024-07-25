@@ -1,3 +1,4 @@
 .idea
 venv
-server_side/logs
+logs
+server_side/database/data

@@ -20,7 +20,7 @@ sys.path.insert(0, repo_dir)
 from server_side.app import routes  # pylint: disable=import-error
 from server_side.app import settings
 from server_side.app.service import Service
-from server_side.logger.logger import Logger
+from logger.logger import Logger
 from server_side.broker.mq_handler import RabbitMQHandler
 from server_side.app.models import UserLogin, User, Message
 from server_side.database.postgres_handler import PostgresHandler

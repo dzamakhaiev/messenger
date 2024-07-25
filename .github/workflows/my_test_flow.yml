@@ -95,7 +95,7 @@ jobs:
 
       - name: Wait until all services are started
         run: |
-          sleep 45
+          python scripts/wait_for_all_services.py
 
       - name: Run integration tests
         shell: bash

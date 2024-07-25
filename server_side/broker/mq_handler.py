@@ -4,7 +4,7 @@ This is a handler for RabbitMQ instance in docker container.
 import json
 import pika
 from server_side.broker import settings
-from server_side.logger.logger import Logger
+from logger.logger import Logger
 
 
 broker_logger = Logger('broker')
