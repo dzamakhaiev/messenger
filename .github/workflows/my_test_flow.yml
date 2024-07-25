@@ -104,6 +104,11 @@ jobs:
           docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
           sh scripts/check_exit_code.sh
 
+      - name: Collect docker containers logs
+        run: |
+          docker cp listener-ci:/messenger/logs ./logs
+          docker cp sender-ci:/messenger/logs ./logs
+
       - name: Close messenger application
         if: always()
         run: |
