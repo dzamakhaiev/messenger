@@ -1,5 +1,5 @@
 """
-Than module adds /messenger directory to system PATH
+That module adds /messenger directory to system PATH
 that allows to find needed packages in this repository.
 """
 

@@ -1,3 +1,4 @@
+import add_messenger_to_sys_path
 import docker
 from docker.models.containers import Container
 from docker.errors import DockerException
