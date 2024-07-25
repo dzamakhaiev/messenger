@@ -44,6 +44,7 @@ def get_all_containers(partial_name='ci'):
         containers = docker_handler.containers.list()
         containers = [container for container in containers if partial_name in container.name]
         listener_logger.debug(f'Running containers found: {len(containers)}')
+        listener_logger.debug(f'Running containers: {[container.name for container in containers]}')
         return containers
 
     return []
