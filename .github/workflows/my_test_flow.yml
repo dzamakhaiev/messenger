@@ -109,6 +109,12 @@ jobs:
           docker cp listener-ci:/messenger/logs ./logs
           docker cp sender-ci:/messenger/logs ./logs
 
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: messenger-logs-ci
+          path: ./logs
+
       - name: Close messenger application
         if: always()
         run: |
