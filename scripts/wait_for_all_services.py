@@ -57,8 +57,11 @@ def get_containers_logs(containers: list[Container]):
 
 
 def check_containers_logs_for_markers(containers_logs: dict):
+    listener_logger.info('Check containers logs for markers.')
     containers_statuses = {}
+
     for container_name, container_logs in containers_logs.items():
+        listener_logger.debug(f'Container "{container_name}" log length: {len(container_logs)}')
 
         # Copy markers to remove found markers from log
         container_markers = READY_TO_WORK_MARKERS[container_name][:]
@@ -71,15 +74,19 @@ def check_containers_logs_for_markers(containers_logs: dict):
                 for log_marker in container_markers:
 
                     if log_marker in log_line:
+                        listener_logger.debug(f'Log marker "{log_marker}" found in "{container_name}" log.')
                         preliminary_flags.append(True)
                         container_markers.remove(log_marker)
 
             else:
                 if all(preliminary_flags):
+                    listener_logger.debug(f'All markers are found for "{container_name}".')
                     containers_statuses[container_name] = True
                 else:
+                    listener_logger.debug(f'Not all markers are found for "{container_name}".')
                     containers_statuses[container_name] = False
 
+    listener_logger.info('Check containers logs completed.')
     return containers_statuses
 
 
