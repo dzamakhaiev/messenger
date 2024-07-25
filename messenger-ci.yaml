@@ -12,9 +12,6 @@ services:
         window: 30s
     networks:
       - backend-ci
-    volumes:
-      - ./server_side/database:/var/lib/rabbitmq/mnesia
-      - ./logs:/var/log/rabbitmq
 
   postgres-ci:
     container_name: postgres-ci
