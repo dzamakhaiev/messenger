@@ -13,7 +13,7 @@ services:
     networks:
       - backend-ci
     volumes:
-      - database-ci/rabbitmq:/var/lib/rabbitmq
+      - rabbitmq-ci:/var/lib/rabbitmq
 
   postgres-ci:
     container_name: postgres-ci
@@ -30,7 +30,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
-      - database-ci/postgresql:/var/lib/postgresql
+      - postgres-ci:/var/lib/postgresql
 
   listener-ci:
     container_name: listener-ci
@@ -110,4 +110,5 @@ networks:
 
 volumes:
   logs-ci:
-  database-ci:
+  postgres-ci:
+  rabbitmq-ci:
