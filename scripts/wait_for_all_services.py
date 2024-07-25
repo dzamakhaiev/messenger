@@ -117,7 +117,7 @@ def main_loop():
             sleep(SLEEP_INTERVAL)
 
         else:
-            docker_logger.debug('Not all containers are running.')
+            docker_logger.debug(f'Not all containers are running:\n{statuses}')
             time_spent += SLEEP_INTERVAL
             sleep(SLEEP_INTERVAL)
 
