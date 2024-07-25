@@ -50,7 +50,7 @@ services:
       BRANCH_NAME: $BRANCH_NAME
       SERVICE_NAME: listener-ci
     volumes:
-      - logs-ci:/messenger/server_side/logs
+      - logs-ci:/messenger/logs
     command: sh -c "git fetch && git pull && git checkout $BRANCH_NAME && sleep 10 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-ci:
@@ -73,7 +73,7 @@ services:
       SERVICE_NAME: sender-ci
       BRANCH_NAME: $BRANCH_NAME
     volumes:
-      - logs-ci:/messenger/server_side/logs
+      - logs-ci:/messenger/logs
     command: sh -c "git fetch && git pull && git checkout $BRANCH_NAME && sleep 10 && python sender.py"
 
   nginx-ci:
