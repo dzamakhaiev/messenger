@@ -99,6 +99,7 @@ def main_loop():
     docker_logger.info('Check containers logs for "ready to work" markers.')
     time_spent = 0
     statuses = {}
+    running_containers = []
     running_containers_logs = {}
 
     while time_spent <= TIMEOUT:
@@ -131,6 +132,7 @@ def main_loop():
         not_working_containers = {name: logs for name, logs in running_containers_logs.items()
                                   if name in failed_list}
 
+        docker_logger.info(f'Running containers: {[container.name for container in running_containers]}')
         docker_logger.info(f'Not working containers are: {not_working_containers}')
         for name, logs in not_working_containers.items():
             logs = '\n'.join([line for line in logs])
