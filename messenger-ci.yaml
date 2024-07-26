@@ -102,6 +102,8 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
+    volumes:
+      - logs-ci:/logs
     command: sh -c "git pull &&  nose2 -s integration -vv"
 
 networks:
