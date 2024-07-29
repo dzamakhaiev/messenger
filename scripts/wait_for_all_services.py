@@ -16,8 +16,7 @@ SLEEP_INTERVAL = 10
 READY_TO_WORK_MARKERS = {
     'nginx-ci': ['start worker processes', 'start worker process'],
     'rabbitmq-ci': ['Ready to start client connection listeners', 'Time to start RabbitMQ:'],
-    'postgres-ci': ['PostgreSQL init process complete; ready for start up.',
-                    'database system is ready to accept connections'],
+    'postgres-ci': ['database system is ready to accept connections'],
     'listener-ci': ['PostgreSQL connection established.', 'SQLite in-memory connection opened.',
                     'RabbitMQ connection established.', 'Service logger started.'],
     'sender-ci': ['Sender logger started.', 'Service logger started.', 'RabbitMQ connection established.',
