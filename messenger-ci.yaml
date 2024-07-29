@@ -102,7 +102,9 @@ services:
       - backend-ci
     environment:
       CI_RUN: 1
-    command: sh -c "git pull && python3 -m unittest discover integration -v"
+    volumes:
+      - logs-ci:/logs
+    command: sh -c "git pull && python3 -m unittest discover integration -vv"
 
 networks:
   backend-ci:

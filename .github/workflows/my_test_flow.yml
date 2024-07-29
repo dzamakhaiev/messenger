@@ -88,6 +88,9 @@ jobs:
       - name: Create docker network
         run: |
           docker network create --subnet=172.29.152.0/24 backend-ci
+      
+      - name: Force pull Docker images
+        run: docker compose -f ./messenger-ci.yaml pull
 
       - name: Run messenger application
         run: |
