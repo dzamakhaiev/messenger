@@ -1,3 +1,4 @@
+[![codecov.io](https://codecov.io/gh/)](https://codecov.io/gh/dzamakhaiev/messenger)
 This is a simple REST API messenger application.
 
 
@@ -23,7 +24,6 @@ adjusted in the docker-compose YAML file.
 - **postgres**: The main SQL database for the application.
 - **rabbitmq**: A message/events broker that passes messages to the "sender" container(s).
 - **sender**: Listens to the RabbitMQ container and sends messages to clients.
-- **dozzle**: Collects logs from all containers.
  
 ### Entry point setup
 The Nginx HTTPS server requires a valid certificate. For demonstration purposes, 
