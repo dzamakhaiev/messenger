@@ -54,7 +54,7 @@ jobs:
 
       - name: Run unit tests with coverage
         run: |
-          coverage run --source=./server_side/  -m unittest discover -vv
+          coverage run -m unittest discover -vv
 
       - name: Generate coverage report
         run: |
