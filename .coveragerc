@@ -1,4 +1,5 @@
 [run]
+command = python -m unittest discover -vv
 data_file = .coverage
 source =
     server_side
