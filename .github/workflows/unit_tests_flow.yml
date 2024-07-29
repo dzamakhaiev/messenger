@@ -62,7 +62,7 @@ jobs:
 
       - name: Save coverage report
         run: |
-          coverage report xml --omit=venv/*
+          coverage report xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
