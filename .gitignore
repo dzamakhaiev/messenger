@@ -2,4 +2,5 @@
 .coverage
 venv
 logs
+coverage.xml
 server_side/database/data
