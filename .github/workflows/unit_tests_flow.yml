@@ -62,7 +62,7 @@ jobs:
 
       - name: Save coverage report
         run: |
-          coverage report xml
+          coverage report xml -i
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
