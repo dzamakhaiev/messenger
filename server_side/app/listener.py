@@ -168,7 +168,7 @@ def delete_user():
     listener_logger.info('Delete user.')
 
     if user_id := request.json.get('user_id'):
-        service.delete_user(user_id)  # TODO: user not found or ?
+        user_deleted = service.delete_user(user_id)  # TODO: user not found or ?
         listener_logger.debug(f'User deleted: {user_id}')
         return 'User deleted.', 200
 
