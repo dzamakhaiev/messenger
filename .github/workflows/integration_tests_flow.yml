@@ -1,4 +1,4 @@
-name: Messenger CI pipeline
+name: Integration tests workflow
 
 on:
   pull_request:
