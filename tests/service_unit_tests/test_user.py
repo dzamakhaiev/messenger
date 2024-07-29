@@ -58,6 +58,24 @@ class TestUser(TestCase):
         user_id = self.service.check_user_id(test_data.USER_ID)
         self.assertTrue(user_id is False)
 
+    def test_get_username(self):
+        # First case: get data from RAM database
+        self.service.ram_db_handler.get_username.return_value = test_data.USERNAME
+        username = self.service.get_username_by_user_id(test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Second case: get data from HDD database
+        self.service.ram_db_handler.get_username.return_value = None
+        self.service.hdd_db_handler.get_username.return_value = test_data.USERNAME
+        username = self.service.get_username_by_user_id(test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Third case: no user data in both databases
+        self.service.ram_db_handler.get_username.return_value = None
+        self.service.hdd_db_handler.get_username.return_value = None
+        username = self.service.get_username_by_user_id(test_data.USER_ID)
+        self.assertEqual(username, '')
+
     def test_user_delete(self):
         # First case: user exists in RAM database
         self.service.ram_db_handler.get_user.return_value = test_data.USER_ID
