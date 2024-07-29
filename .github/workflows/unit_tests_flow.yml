@@ -59,4 +59,4 @@ jobs:
       - name: Generate coverage report for debug
         run: |
           coverage run --source=server_side -m unittest discover -vv
-          coverage report
+          coverage report --skip-empty

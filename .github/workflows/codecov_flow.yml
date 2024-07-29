@@ -33,7 +33,7 @@ jobs:
       - name: Generate coverage report
         run: |
           coverage run --source=server_side -m unittest discover -vv
-          coverage report
+          coverage report --skip-empty
           python generate_coverage_report.py
 
       - name: Upload coverage reports to Codecov
