@@ -59,3 +59,13 @@ jobs:
       - name: Generate coverage report
         run: |
           coverage report
+
+      - name: Save coverage report
+        run: |
+          coverage report xml --omit=venv/*
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: coverage.xml
+          flags: unittests
