@@ -1,4 +1,5 @@
 .idea
+.coverage
 venv
 logs
 server_side/database/data
