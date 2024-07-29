@@ -11,7 +11,7 @@ from logger.logger import Logger
 
 
 docker_logger = Logger('docker_handler')
-TIMEOUT = 60
+TIMEOUT = 90
 SLEEP_INTERVAL = 10
 READY_TO_WORK_MARKERS = {
     'nginx-ci': ['start worker processes', 'start worker process'],
