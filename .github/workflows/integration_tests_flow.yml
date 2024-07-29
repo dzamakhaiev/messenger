@@ -54,7 +54,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python3 -m unittest discover -vv
+          python -m unittest discover -vv
 
   integration:
     runs-on: self-hosted
