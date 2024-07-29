@@ -55,3 +55,8 @@ jobs:
       - name: Run unit tests
         run: |
           python -m unittest discover -vv
+
+      - name: Generate coverage report for debug
+        run: |
+          coverage run --source=server_side -m unittest discover -vv
+          coverage report
