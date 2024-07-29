@@ -32,6 +32,8 @@ jobs:
 
       - name: Generate coverage report
         run: |
+          coverage run --source=server_side -m unittest discover -vv
+          coverage report --skip-empty
           python generate_coverage_report.py
 
       - name: Upload coverage reports to Codecov
@@ -40,3 +42,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
           flags: unittests
+
+      - name: Remove coverage report
+        run: |
+          rm coverage.xml && rm .coverage

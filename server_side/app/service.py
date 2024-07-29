@@ -235,6 +235,7 @@ class Service:
 
     def delete_user(self, user_id):
         service_logger.info(f'Delete user id "{user_id}".')
+
         if self.check_user_id(user_id):
             self.delete_user_token(user_id)
             self.delete_user_public_key(user_id)
@@ -244,6 +245,12 @@ class Service:
             self.hdd_db_handler.delete_user_address(user_id)
             self.ram_db_handler.delete_user(user_id=user_id)
             self.hdd_db_handler.delete_user(user_id=user_id)
+
+            service_logger.info(f'User "{user_id}" deleted.')
+            return True
+
+        service_logger.error(f'User "{user_id}" not found.')
+        return False
 
     def delete_user_token(self, user_id):
         service_logger.info(f'Check user token for user_id "{user_id}".')
