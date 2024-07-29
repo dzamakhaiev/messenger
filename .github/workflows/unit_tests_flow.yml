@@ -58,7 +58,7 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          python generate_coverage_report.py
+          python scripts/generate_coverage_report.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
