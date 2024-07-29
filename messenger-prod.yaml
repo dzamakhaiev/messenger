@@ -23,7 +23,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
-      - postgres-prod:/var/lib/postgresql
+      - postgres-prod:/var/lib/postgresql/data
 
   listener-1:
     container_name: listener-1
