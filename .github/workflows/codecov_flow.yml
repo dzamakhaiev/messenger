@@ -34,7 +34,7 @@ jobs:
         run: |
           coverage run --source=server_side -m unittest discover -vv
           coverage report --skip-empty
-          python generate_coverage_report.py
+          python generate_xml_report.py
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
