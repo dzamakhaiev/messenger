@@ -52,13 +52,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run unit tests with coverage
+      - name: Run unit tests
         run: |
-          coverage run --source=./server_side/ -m unittest discover -vv
+          python -m unittest discover -vv
 
       - name: Generate coverage report
         run: |
-          coverage report
+          python generate_coverage_report.py
 
       - name: Save coverage report
         run: |
