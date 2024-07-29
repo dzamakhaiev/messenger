@@ -104,7 +104,7 @@ services:
       CI_RUN: 1
     volumes:
       - logs-ci:/logs
-    command: sh -c "git pull &&  nose2 -s integration -vv"
+    command: sh -c "git pull && python3 -m unittest discover integration -vv"
 
 networks:
   backend-ci:
