@@ -32,6 +32,34 @@ class TestUser(TestCase):
         self.service.ram_db_handler.insert_username.assert_called_once_with(
             test_data.USER_ID, test_data.USERNAME)
 
+    def test_store_user_address(self):
+        self.service.store_user_address(test_data.USER_ID, test_data.USER_ADDRESS)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.insert_address.assert_called_once_with(test_data.USER_ADDRESS)
+        self.service.hdd_db_handler.insert_user_address.assert_called_once_with(test_data.USER_ID,
+                                                                                test_data.USER_ADDRESS)
+        self.service.ram_db_handler.insert_user_address.assert_called_once_with(test_data.USER_ID,
+                                                                                test_data.USER_ADDRESS)
+
+    def test_store_user_token(self):
+        self.service.store_user_token(test_data.USER_ID, test_data.USER_TOKEN)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.insert_user_token.assert_called_once_with(
+            test_data.USER_ID, test_data.USER_TOKEN)
+        self.service.ram_db_handler.insert_user_token.assert_called_once_with(
+            test_data.USER_ID, test_data.USER_TOKEN)
+
+    def test_store_user_public_key(self):
+        self.service.store_user_public_key(test_data.USER_ID, test_data.USER_PUBLIC_KEY)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.insert_user_public_key.assert_called_once_with(
+            test_data.USER_ID, test_data.USER_PUBLIC_KEY)
+        self.service.ram_db_handler.insert_user_public_key.assert_called_once_with(
+            test_data.USER_ID, test_data.USER_PUBLIC_KEY)
+
     def test_get_user_id_by_username(self):
         # First case: get data from RAM database
         self.service.ram_db_handler.get_user_id.return_value = test_data.USER_ID
@@ -76,24 +104,27 @@ class TestUser(TestCase):
         self.service.hdd_db_handler.get_username.assert_any_call(test_data.USER_ID)
         self.service.ram_db_handler.get_username.assert_any_call(test_data.USER_ID)
 
-    def test_store_user_address(self):
-        self.service.store_user_address(test_data.USER_ID, test_data.USER_ADDRESS)
+    def test_get_user_address(self):
+        # First case: get data from RAM database
+        self.service.ram_db_handler.get_user_address.return_value = [test_data.USER_ADDRESS]
+        user_addresses = self.service.get_user_address(test_data.USER_ID)
+        self.assertEqual(user_addresses, [test_data.USER_ADDRESS])
+
+        # Second case: get data from HDD database
+        self.service.ram_db_handler.get_user_address.return_value = []
+        self.service.hdd_db_handler.get_user_address.return_value = [test_data.USER_ADDRESS]
+        user_addresses = self.service.get_user_address(test_data.USER_ID)
+        self.assertEqual(user_addresses, [test_data.USER_ADDRESS])
+
+        # Third case: no user data in both databases
+        self.service.ram_db_handler.get_user_address.return_value = []
+        self.service.hdd_db_handler.get_user_address.return_value = []
+        user_addresses = self.service.get_user_address(test_data.USER_ID)
+        self.assertEqual(user_addresses, [])
 
         # Check that internal mocked methods were called once with expected args
-        self.service.hdd_db_handler.insert_address.assert_called_once_with(test_data.USER_ADDRESS)
-        self.service.hdd_db_handler.insert_user_address.assert_called_once_with(test_data.USER_ID,
-                                                                                test_data.USER_ADDRESS)
-        self.service.ram_db_handler.insert_user_address.assert_called_once_with(test_data.USER_ID,
-                                                                                test_data.USER_ADDRESS)
-
-    def test_store_user_token(self):
-        self.service.store_user_token(test_data.USER_ID, test_data.USER_TOKEN)
-
-        # Check that internal mocked methods were called once with expected args
-        self.service.hdd_db_handler.insert_user_token.assert_called_once_with(
-            test_data.USER_ID, test_data.USER_TOKEN)
-        self.service.ram_db_handler.insert_user_token.assert_called_once_with(
-            test_data.USER_ID, test_data.USER_TOKEN)
+        self.service.hdd_db_handler.get_username.get_user_address(test_data.USER_ID)
+        self.service.ram_db_handler.get_username.get_user_address(test_data.USER_ID)
 
     def test_check_user_id(self):
         # First case: get data from RAM database
