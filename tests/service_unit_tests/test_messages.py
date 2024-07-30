@@ -19,6 +19,15 @@ class TestUser(TestCase):
         self.user = User(**test_data.USER_CREATE_JSON)
         self.mock_response = mock.Mock()
 
+    @staticmethod
+    def create_message_from_db_like():
+        return (test_data.MESSAGE_ID,
+                test_data.USER_MESSAGE_JSON.get('sender_id'),
+                test_data.USER_MESSAGE_JSON.get('receiver_id'),
+                test_data.USER_MESSAGE_JSON.get('sender_username'),
+                test_data.USER_MESSAGE_JSON.get('message'),
+                test_data.USER_MESSAGE_JSON.get('send_date'))
+
     def test_check_url(self):
         # First case: URL with local IP in host
         port = 5000
@@ -49,3 +58,26 @@ class TestUser(TestCase):
         response = self.service.send_message(url, msg_json=msg_json)
         mock_post.assert_called_once_with(url, json=msg_json, timeout=5)
         self.assertEqual(response.status_code, 201)
+
+    def test_store_message_to_db(self):
+        self.service.store_message_to_db(test_data.USER_MESSAGE_JSON)
+        self.service.hdd_db_handler.insert_message.assert_called_once_with(
+            test_data.USER_MESSAGE_JSON.get('sender_id'),
+            test_data.USER_MESSAGE_JSON.get('receiver_id'),
+            test_data.USER_MESSAGE_JSON.get('sender_username'),
+            test_data.USER_MESSAGE_JSON.get('message'))
+
+    def test_get_messages(self):
+        # First case: database has messages
+        message = self.create_message_from_db_like()
+        self.service.hdd_db_handler.get_user_messages.return_value = [message]
+        messages = self.service.get_messages(test_data.USER_ID)
+        self.assertEqual(messages, [message])
+
+        # Second case: database has no messages
+        self.service.hdd_db_handler.get_user_messages.return_value = []
+        messages = self.service.get_messages(test_data.USER_ID)
+        self.assertEqual(messages, [])
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.get_user_messages.assert_any_call(test_data.USER_ID)
