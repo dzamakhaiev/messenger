@@ -3,6 +3,7 @@ from unittest import TestCase, mock
 from tests.database_mocks import get_hdd_db_handler, get_ram_db_handler, get_mq_handler
 from server_side.app.service import Service
 from server_side.app.models import User
+from server_side.app import settings
 from tests import test_data
 
 
@@ -63,7 +64,7 @@ class TestUser(TestCase):
     @mock.patch('server_side.app.service.requests.post')
     def test_send_message_by_list(self, mock_post):
         # Test data and preconditions
-        address_list = [f'https://{'192.168.0.1'}:{5000}']
+        address_list = [test_data.USER_ADDRESS]
         self.mock_response.status_code = OK_CODE
         mock_post.return_value = self.mock_response
 
@@ -87,7 +88,7 @@ class TestUser(TestCase):
     @mock.patch('server_side.app.service.requests.post')
     def test_send_messages_by_list(self, mock_post):
         # Test data and preconditions
-        address_list = [f'https://{'192.168.0.1'}:{5000}']
+        address_list = [test_data.USER_ADDRESS]
         messages = [self.create_message_from_db_like()]
         self.mock_response.status_code = OK_CODE
         mock_post.return_value = self.mock_response
@@ -123,3 +124,24 @@ class TestUser(TestCase):
 
         # Check that internal mocked methods were called once with expected args
         self.service.hdd_db_handler.get_user_messages.assert_any_call(test_data.USER_ID)
+
+    def test_put_message_in_queue(self):
+        address_list = [test_data.USER_ADDRESS]
+        self.service.put_message_in_queue(address_list, test_data.USER_MESSAGE_JSON)
+
+        # Check that internal mocked methods were called once with expected args
+        queue_json = {'address_list': address_list, 'msg_json': test_data.USER_MESSAGE_JSON}
+        self.service.mq_handler.send_message.assert_called_once_with(
+            exchange_name=settings.MQ_EXCHANGE_NAME,
+            queue_name=settings.MQ_MSG_QUEUE_NAME,
+            body=queue_json)
+
+    def test_put_login_in_queue(self):
+        self.service.put_login_in_queue(test_data.USER_ID, test_data.USER_ADDRESS)
+
+        # Check that internal mocked methods were called once with expected args
+        queue_json = {'user_id': test_data.USER_ID, 'user_address': test_data.USER_ADDRESS}
+        self.service.mq_handler.send_message.assert_called_once_with(
+            exchange_name=settings.MQ_EXCHANGE_NAME,
+            queue_name=settings.MQ_LOGIN_QUEUE_NAME,
+            body=queue_json)
