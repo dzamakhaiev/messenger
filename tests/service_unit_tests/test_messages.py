@@ -7,6 +7,7 @@ from tests import test_data
 
 
 LOCAL_IP = socket.gethostbyname(socket.gethostname())
+OK_CODE = 200
 
 
 class TestUser(TestCase):
@@ -49,7 +50,7 @@ class TestUser(TestCase):
 
     @mock.patch('server_side.app.service.requests.post')
     def test_send_message(self, mock_post):
-        self.mock_response.status_code = 201
+        self.mock_response.status_code = OK_CODE
         mock_post.return_value = self.mock_response
 
         url = f'https://{'192.168.0.1'}:{5000}'
@@ -57,10 +58,51 @@ class TestUser(TestCase):
 
         response = self.service.send_message(url, msg_json=msg_json)
         mock_post.assert_called_once_with(url, json=msg_json, timeout=5)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, OK_CODE)
+
+    @mock.patch('server_side.app.service.requests.post')
+    def test_send_message_by_list(self, mock_post):
+        # Test data and preconditions
+        address_list = [f'https://{'192.168.0.1'}:{5000}']
+        self.mock_response.status_code = OK_CODE
+        mock_post.return_value = self.mock_response
+
+        # Post request with correct response. Returns message sent status
+        result = self.service.send_message_by_list(address_list, test_data.USER_MESSAGE_JSON)
+        self.assertTrue(result)
+
+        # Post request with incorrect response. Not sent message stored in database
+        self.mock_response.status_code = 666
+        mock_post.return_value = self.mock_response
+        result = self.service.send_message_by_list(address_list, test_data.USER_MESSAGE_JSON)
+        self.assertFalse(result)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.insert_message.assert_called_once_with(
+            test_data.USER_MESSAGE_JSON.get('sender_id'),
+            test_data.USER_MESSAGE_JSON.get('receiver_id'),
+            test_data.USER_MESSAGE_JSON.get('sender_username'),
+            test_data.USER_MESSAGE_JSON.get('message'))
+
+    @mock.patch('server_side.app.service.requests.post')
+    def test_send_messages_by_list(self, mock_post):
+        # Test data and preconditions
+        address_list = [f'https://{'192.168.0.1'}:{5000}']
+        messages = [self.create_message_from_db_like()]
+        self.mock_response.status_code = OK_CODE
+        mock_post.return_value = self.mock_response
+
+        # Send messages
+        self.service.send_messages_by_list(address_list, messages)
+
+        # Check that internal mocked methods were called once with expected args
+        # Sent messages will be deleted from database(if they exist) by message id
+        self.service.hdd_db_handler.delete_messages.assert_called_once_with(str(test_data.MESSAGE_ID))
 
     def test_store_message_to_db(self):
         self.service.store_message_to_db(test_data.USER_MESSAGE_JSON)
+
+        # Check that internal mocked methods were called once with expected args
         self.service.hdd_db_handler.insert_message.assert_called_once_with(
             test_data.USER_MESSAGE_JSON.get('sender_id'),
             test_data.USER_MESSAGE_JSON.get('receiver_id'),
