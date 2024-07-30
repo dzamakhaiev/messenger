@@ -17,6 +17,7 @@ class TestUser(TestCase):
                                mq_handler=get_mq_handler())
 
         self.user = User(**test_data.USER_CREATE_JSON)
+        self.mock_response = mock.Mock()
 
     def test_check_url(self):
         # First case: URL with local IP in host
@@ -39,9 +40,8 @@ class TestUser(TestCase):
 
     @mock.patch('server_side.app.service.requests.post')
     def test_send_message(self, mock_post):
-        mock_response = mock.Mock()
-        mock_response.status_code = 201
-        mock_post.return_value = mock_response
+        self.mock_response.status_code = 201
+        mock_post.return_value = self.mock_response
 
         url = f'https://{'192.168.0.1'}:{5000}'
         msg_json = {'key': 'value'}
