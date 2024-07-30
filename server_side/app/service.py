@@ -33,8 +33,8 @@ class Service:
     @staticmethod
     def check_url(url: str):
         parsed_url = urlparse(url)
-        if parsed_url.hostname == LOCAL_IP:
-            url.replace(parsed_url.hostname, 'localhost')
+        if parsed_url.hostname == LOCAL_IP or parsed_url.hostname == '127.0.0.1':
+            url = url.replace(parsed_url.hostname, 'localhost')
 
         return url
 
@@ -210,12 +210,14 @@ class Service:
     def check_user_token(self, user_id, token):
         service_logger.info(f'Check user token for user_id "{user_id}".')
         exp_token = self.ram_db_handler.get_user_token(user_id)
+
         if exp_token is None:
             exp_token = self.hdd_db_handler.get_user_token(user_id)
+            if exp_token:
+                self.ram_db_handler.insert_user_token(user_id, token)
 
-        if token:
+        if exp_token:
             service_logger.debug('User token found.')
-            self.ram_db_handler.insert_user_token(user_id, token)
             return token == exp_token
 
         else:
