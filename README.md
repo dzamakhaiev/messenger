@@ -14,7 +14,7 @@ This is a simple REST API messenger application.
 
 ### How to run
 Execute the following command:
-- docker-compose -f .\messenger.yaml up
+- docker-compose -f .\messenger-prod.yaml up
 
 ### Containers structure
 - **nginx**: The entry point for the entire application. Also serves as a balancer, redirecting HTTPS requests 
