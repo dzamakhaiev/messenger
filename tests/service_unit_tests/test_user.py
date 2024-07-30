@@ -262,3 +262,17 @@ class TestUser(TestCase):
 
         self.service.ram_db_handler.delete_user_address.assert_called_once_with(test_data.USER_ID)
         self.service.hdd_db_handler.delete_user.assert_called_once_with(user_id=test_data.USER_ID)
+
+    def test_delete_user_token(self):
+        self.service.delete_user_token(test_data.USER_ID)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.delete_user_token.assert_called_once_with(test_data.USER_ID)
+        self.service.ram_db_handler.delete_user_token.assert_called_once_with(test_data.USER_ID)
+
+    def test_delete_user_public_key(self):
+        self.service.delete_user_public_key(test_data.USER_ID)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.delete_user_public_key.assert_called_once_with(test_data.USER_ID)
+        self.service.ram_db_handler.delete_user_public_key.assert_called_once_with(test_data.USER_ID)
