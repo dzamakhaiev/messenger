@@ -86,6 +86,15 @@ class TestUser(TestCase):
         self.service.ram_db_handler.insert_user_address.assert_called_once_with(test_data.USER_ID,
                                                                                 test_data.USER_ADDRESS)
 
+    def test_store_user_token(self):
+        self.service.store_user_token(test_data.USER_ID, test_data.USER_TOKEN)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.insert_user_token.assert_called_once_with(
+            test_data.USER_ID, test_data.USER_TOKEN)
+        self.service.ram_db_handler.insert_user_token.assert_called_once_with(
+            test_data.USER_ID, test_data.USER_TOKEN)
+
     def test_check_user_id(self):
         # First case: get data from RAM database
         self.service.ram_db_handler.get_user.return_value = test_data.USER_ID
@@ -103,6 +112,10 @@ class TestUser(TestCase):
         self.service.hdd_db_handler.get_user.return_value = None
         user_id = self.service.check_user_id(test_data.USER_ID)
         self.assertTrue(user_id is False)
+
+        # Check that internal mocked methods were called once with expected args
+        self.service.hdd_db_handler.get_user.assert_any_call(user_id=test_data.USER_ID)
+        self.service.ram_db_handler.get_user.assert_any_call(user_id=test_data.USER_ID)
 
     def test_user_delete(self):
         # First case: user exists in RAM database
