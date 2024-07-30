@@ -1,4 +1,5 @@
 USER_ID = 1
+PASSWORD = 'qwerty'
 USERNAME = 'username'
 USER_TOKEN = 'some_token'
 USER_ADDRESS = 'some_ip_address'
