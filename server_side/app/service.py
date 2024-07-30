@@ -33,7 +33,7 @@ class Service:
     @staticmethod
     def check_url(url: str):
         parsed_url = urlparse(url)
-        if parsed_url.hostname == LOCAL_IP:
+        if parsed_url.hostname == LOCAL_IP or parsed_url.hostname == '127.0.0.1':
             url = url.replace(parsed_url.hostname, 'localhost')
 
         return url
