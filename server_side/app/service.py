@@ -34,7 +34,7 @@ class Service:
     def check_url(url: str):
         parsed_url = urlparse(url)
         if parsed_url.hostname == LOCAL_IP:
-            url.replace(parsed_url.hostname, 'localhost')
+            url = url.replace(parsed_url.hostname, 'localhost')
 
         return url
 
