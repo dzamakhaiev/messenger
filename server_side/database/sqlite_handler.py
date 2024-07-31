@@ -89,23 +89,17 @@ class RAMDatabaseHandler:
         self.create_public_keys_table()
         self.create_user_address_table()
 
-    def get_user_address(self, user_id):
-        result = self.cursor_with_lock(
-            'SELECT user_address FROM user_address WHERE user_id = ?',
-            (user_id,))
-        return [item[0] for item in result.fetchall()]  # convert tuple to string
-
-    def insert_user_address(self, user_id, user_address):
+    def insert_user_address(self, user_id: int, user_address: str):
         self.cursor_with_commit(
             'INSERT OR IGNORE INTO user_address ("user_id", "user_address") VALUES (?, ?)',
             (user_id, user_address))
 
-    def insert_username(self, user_id, username):
+    def insert_username(self, user_id: int, username: str):
         self.cursor_with_commit(
             'INSERT OR IGNORE INTO usernames ("user_id", "username") VALUES (?, ?)',
             (user_id, username))
 
-    def insert_user_token(self, user_id, token):
+    def insert_user_token(self, user_id: int, token: str):
         self.cursor_with_commit(
             'INSERT OR IGNORE INTO tokens ("user_id", "token") VALUES (?, ?)',
             (user_id, token))
@@ -129,6 +123,12 @@ class RAMDatabaseHandler:
         result = result.fetchone()
         if result:
             return result
+
+    def get_user_address(self, user_id):
+        result = self.cursor_with_lock(
+            'SELECT user_address FROM user_address WHERE user_id = ?',
+            (user_id,))
+        return [item[0] for item in result.fetchall()]  # convert tuple to string
 
     def get_username(self, user_id):
         result = self.cursor_with_lock(
