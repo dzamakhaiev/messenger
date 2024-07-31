@@ -44,7 +44,7 @@ class RabbitMQHandler:
         bind = self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
         return queue, bind
 
-    def send_message(self, exchange_name, queue_name, body):
+    def send_message(self, exchange_name, queue_name, body: (str, dict)):
         """
         That recursive method tries to put message in queue.
         If it fails, method will reconnect and try it one more time.
