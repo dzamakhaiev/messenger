@@ -56,3 +56,17 @@ class TestUser(TestCase):
 
         except sqlite3.DatabaseError as e:
             self.assertFalse(f"no such table: {RAM_TABLES['public_keys']}" in e.args[0])
+
+    def test_create_all_tables(self):
+        self.ram_db_handler.create_all_tables()
+
+        for table in RAM_TABLES:
+            with self.subTest(f"Check '{table}' table", table=table):
+
+                table_query = f"SELECT * FROM {table}"
+                try:
+                    self.ram_db_handler.cursor.execute(table_query)
+                    self.assertTrue(True)
+
+                except sqlite3.DatabaseError as e:
+                    self.assertFalse(f"no such table: {table}" in e.args[0])
