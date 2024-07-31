@@ -40,7 +40,7 @@ WAIT_MESSAGE_TIME = 0.3
 rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'
                           f'Run inside docker: {RUN_INSIDE_DOCKER}\n'
                           f'Continuous Integration: {CI_RUN}\n'
-                          f'Condition for run tests: {CONDITION}')
+                          f'Condition for skip tests: {CONDITION}')
 
 
 class TestUser(TestCase):
