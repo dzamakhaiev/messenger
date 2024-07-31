@@ -51,8 +51,8 @@ class TestUser(TestCase):
             cls.rabbitmq_host = 'localhost'
 
     def setUp(self):
-        connection_uri = f'amqp://guest:guest@{self.rabbitmq_host}:{5672}/%2F'
-        self.mq_handler = RabbitMQHandler(connection_uri)
+        connect_uri = f'amqp://guest:guest@{self.rabbitmq_host}:{5672}/%2F'
+        self.mq_handler = RabbitMQHandler(connect_uri=connect_uri)
         self.exchange_name = 'TestExchange'
         self.queue_name = 'TestQueue'
 
