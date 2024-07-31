@@ -39,6 +39,9 @@ jobs:
 
     needs: pylint
 
+    env:
+      CI_RUN: 1
+
     steps:
       - uses: actions/checkout@v4
 
