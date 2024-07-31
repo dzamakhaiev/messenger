@@ -36,12 +36,13 @@ class RabbitMQHandler:
 
     def create_exchange(self, exchange_name='TestExchange'):
         broker_logger.info(f'Create an exchange: {exchange_name}.')
-        self.channel.exchange_declare(exchange_name, durable=True)
+        return self.channel.exchange_declare(exchange_name, durable=True)
 
     def create_and_bind_queue(self, queue_name='TestQueue', exchange_name='TestExchange'):
         broker_logger.info(f'Create a queue: {queue_name} for {exchange_name}.')
-        self.channel.queue_declare(queue_name, durable=True)
-        self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
+        queue = self.channel.queue_declare(queue_name, durable=True)
+        bind = self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
+        return queue, bind
 
     def send_message(self, exchange_name, queue_name, body):
         """
