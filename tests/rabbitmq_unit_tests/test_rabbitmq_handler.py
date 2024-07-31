@@ -20,6 +20,7 @@ try:
     containers = [container.name for container in containers]
     if 'rabbitmq' in containers or 'rabbitmq-ci' in containers:
         rabbitmq_running = True
+        print(f'PORTS: {containers[0].ports}')
 
 except DockerException as e:
     docker_running = False
