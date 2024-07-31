@@ -56,7 +56,6 @@ def get_containers_logs(containers: list[Container]):
     containers_logs = {}
 
     for container in containers:
-        docker_logger.debug(f'Container name "{container.name}"\nContainer ports: {container.ports}')
         containers_logs[container.name] = str(container.logs(), encoding='utf-8', errors='ignore').split('\n')
 
     return containers_logs

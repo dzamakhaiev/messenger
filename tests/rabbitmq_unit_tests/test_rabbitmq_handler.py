@@ -1,3 +1,4 @@
+import os
 import json
 from time import sleep
 from threading import Thread
@@ -20,7 +21,6 @@ try:
     containers = [container.name for container in containers]
     if 'rabbitmq' in containers or 'rabbitmq-ci' in containers:
         rabbitmq_running = True
-        print(f'PORTS: {containers[0].ports}')
 
 except DockerException as e:
     docker_running = False
@@ -34,8 +34,25 @@ WAIT_MESSAGE_TIME = 0.3
 
 class TestUser(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+
+        if int(os.environ.get('RUN_INSIDE_DOCKER', 0)) and int(os.environ.get('CI_RUN', 0)):
+            client = docker.from_env()
+            container = client.containers.get('rabbitmq-ci')
+            container_info = container.attrs
+
+            networks = container_info.get('NetworkSettings', {}).get('Networks', {})
+            network_name, network_info = networks.popitem()
+            ip_address = network_info.get('IPAddress')
+            cls.rabbitmq_host = ip_address
+
+        else:
+            cls.rabbitmq_host = 'localhost'
+
     def setUp(self):
-        self.mq_handler = RabbitMQHandler()
+        connection_uri = f'amqp://guest:guest@{self.rabbitmq_host}:{5672}/%2F'
+        self.mq_handler = RabbitMQHandler(connection_uri)
         self.exchange_name = 'TestExchange'
         self.queue_name = 'TestQueue'
 
