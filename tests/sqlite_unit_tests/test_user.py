@@ -140,8 +140,12 @@ class TestUser(TestCase):
         self.assertEqual(user_id, test_data.USER_ID)
         self.assertEqual(username, test_data.USERNAME)
 
-        # Third case: get non-exits username data
+        # Third case: get non-exits username
         result = self.ram_db_handler.get_user(username='Max Payne')
+        self.assertTrue(result is None)
+
+        # Fourth case: get non-exits user_id
+        result = self.ram_db_handler.get_user(user_id=-1)
         self.assertTrue(result is None)
 
     def test_get_username(self):
@@ -209,4 +213,44 @@ class TestUser(TestCase):
         public_key = self.ram_db_handler.get_user_public_key(user_id=-1)
         self.assertTrue(public_key is None)
 
+    def test_delete_user(self):
+        self.ram_db_handler.create_usernames_table()
+        self.ram_db_handler.insert_username(user_id=test_data.USER_ID,
+                                            username=test_data.USERNAME)
 
+        # First case: delete by user_id
+        self.ram_db_handler.delete_user(user_id=test_data.USER_ID)
+        user_id = self.ram_db_handler.get_user(user_id=test_data.USER_ID)
+        self.assertTrue(user_id is None)
+
+        # Second case: delete by username
+        self.ram_db_handler.delete_user(username=test_data.USERNAME)
+        user_id = self.ram_db_handler.get_user(username=test_data.USERNAME)
+        self.assertTrue(user_id is None)
+
+    def test_delete_user_address(self):
+        self.ram_db_handler.create_user_address_table()
+        self.ram_db_handler.insert_user_address(user_id=test_data.USER_ID,
+                                                user_address=test_data.USER_ADDRESS)
+
+        self.ram_db_handler.delete_user_address(user_id=test_data.USER_ID)
+        user_address_list = self.ram_db_handler.get_user_address(user_id=test_data.USER_ID)
+        self.assertEqual(user_address_list, [])
+
+    def test_delete_user_token(self):
+        self.ram_db_handler.create_tokens_table()
+        self.ram_db_handler.insert_user_token(user_id=test_data.USER_ID,
+                                              token=test_data.USER_TOKEN)
+
+        self.ram_db_handler.delete_user_token(user_id=test_data.USER_ID)
+        user_token = self.ram_db_handler.get_user_token(user_id=test_data.USER_ID)
+        self.assertTrue(user_token is None)
+
+    def test_delete_user_public_key(self):
+        self.ram_db_handler.create_public_keys_table()
+        self.ram_db_handler.insert_user_public_key(user_id=test_data.USER_ID,
+                                                   public_key=test_data.USER_PUBLIC_KEY)
+
+        self.ram_db_handler.delete_user_public_key(user_id=test_data.USER_ID)
+        public_key = self.ram_db_handler.get_user_public_key(user_id=test_data.USER_ID)
+        self.assertTrue(public_key is None)
