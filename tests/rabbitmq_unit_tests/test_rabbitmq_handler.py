@@ -1,31 +1,61 @@
 import json
 from time import sleep
 from threading import Thread
-from unittest import TestCase
+from unittest import TestCase, skipIf
+from docker import from_env
+from docker.errors import DockerException
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from server_side.broker.mq_handler import RabbitMQHandler
 
 
 WAIT_MESSAGE_TIME = 0.3
+docker_running = False
+rabbitmq_running = False
+REASON = 'Docker/rabbitmq container is not running'
 
 
 class TestUser(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Check docker and RabbitMQ container are running before run tests.
+        """
+
+        try:
+            # Check docker is running
+            docker = from_env()
+            global docker_running
+            docker_running = True
+
+            # Check RabbitMQ container is running
+            containers = docker.containers.list()
+            containers = [container.name for container in containers]
+            if 'rabbitmq' in containers or 'rabbitmq-ci' in containers:
+                global rabbitmq_running
+                rabbitmq_running = True
+
+        except DockerException as e:
+            print(e)
 
     def setUp(self):
         self.mq_handler = RabbitMQHandler()
         self.exchange_name = 'TestExchange'
         self.queue_name = 'TestQueue'
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_reconnect(self):
         self.mq_handler.reconnect()
         self.assertTrue(isinstance(self.mq_handler.connection, BlockingConnection))
         self.assertTrue(isinstance(self.mq_handler.channel, BlockingChannel))
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_create_exchange(self):
         exchange_confirm = self.mq_handler.create_exchange(exchange_name=self.exchange_name)
         self.assertEqual('Exchange.DeclareOk', exchange_confirm.method.NAME)
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_create_and_bind_queue(self):
         self.mq_handler.create_exchange(exchange_name=self.exchange_name)
         queue, bind = self.mq_handler.create_and_bind_queue(queue_name=self.queue_name,
@@ -34,6 +64,7 @@ class TestUser(TestCase):
         self.assertEqual('Queue.DeclareOk', queue.method.NAME)
         self.assertEqual('Queue.BindOk', bind.method.NAME)
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_send_message(self):
         # Preconditions: test exchange and test queue
         self.mq_handler.create_exchange(exchange_name=self.exchange_name)
@@ -54,6 +85,7 @@ class TestUser(TestCase):
         _, _, body = self.mq_handler.channel.basic_get(queue=self.queue_name, auto_ack=True)
         self.assertEqual(message, json.loads(body.decode()))
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_receive_message(self):
         # Preconditions: test exchange and test queue
         self.mq_handler.create_exchange(exchange_name=self.exchange_name)
@@ -70,6 +102,7 @@ class TestUser(TestCase):
         body = self.mq_handler.receive_message(queue_name=self.queue_name)
         self.assertEqual(message, body)
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_get_queue_len(self):
         # Preconditions: test exchange and test queue
         self.mq_handler.create_exchange(exchange_name=self.exchange_name)
@@ -86,6 +119,7 @@ class TestUser(TestCase):
         queue_len = self.mq_handler.get_queue_len(queue_name=self.queue_name)
         self.assertEqual(queue_len, 1)
 
+    @skipIf(not docker_running and not rabbitmq_running, REASON)
     def test_connect_and_consume_from_multiple_queues(self):
         # Preconditions
         self.mq_handler.create_exchange(exchange_name=self.exchange_name)
