@@ -41,6 +41,7 @@ jobs:
 
     env:
       CI_RUN: 1
+      RUN_INSIDE_DOCKER: 1
 
     steps:
       - uses: actions/checkout@v4
