@@ -12,11 +12,11 @@ broker_logger = Logger('broker')
 
 class RabbitMQHandler:
 
-    def __init__(self):
+    def __init__(self, connect_uri=settings.CONNECT_URI):
         try:
             broker_logger.info('Connect to RabbitMQ.')
-            broker_logger.debug(f'RabbitMQ URL: {settings.CONNECT_URI}')
-            self.parameters = pika.URLParameters(settings.CONNECT_URI)
+            broker_logger.debug(f'RabbitMQ URL: {connect_uri}')
+            self.parameters = pika.URLParameters(connect_uri)
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
             broker_logger.info('RabbitMQ connection established.')
