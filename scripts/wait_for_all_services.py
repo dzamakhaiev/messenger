@@ -22,6 +22,9 @@ READY_TO_WORK_MARKERS = {
     'sender-ci': ['Sender logger started.', 'Service logger started.', 'RabbitMQ connection established.',
                   'SQLite in-memory connection opened.', 'PostgreSQL connection established.']}
 
+CONTAINERS_TO_WAIT = [arg for arg in sys.argv if arg in READY_TO_WORK_MARKERS]
+CONTAINERS_TO_WAIT = CONTAINERS_TO_WAIT if len(CONTAINERS_TO_WAIT) else READY_TO_WORK_MARKERS
+
 
 def is_docker_running():
     try:
@@ -107,12 +110,12 @@ def main_loop():
         running_containers_logs = get_containers_logs(running_containers)
         statuses = check_containers_logs_for_markers(running_containers_logs)
 
-        if len(statuses) == len(READY_TO_WORK_MARKERS) and all(statuses.values()):
+        if len(statuses) == len(CONTAINERS_TO_WAIT) and all(statuses.values()):
             docker_logger.info('All containers are ready to work.')
             docker_logger.info(f'Time spent: {time_spent} seconds.')
             break
 
-        elif len(statuses) == len(READY_TO_WORK_MARKERS) and not all(statuses.values()):
+        elif len(statuses) == len(CONTAINERS_TO_WAIT) and not all(statuses.values()):
             docker_logger.debug('Not all containers are ready to work.')
             time_spent += SLEEP_INTERVAL
             sleep(SLEEP_INTERVAL)
