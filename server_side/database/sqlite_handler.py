@@ -159,7 +159,7 @@ class RAMDatabaseHandler:
         if result:
             return result[0]
 
-    def delete_user(self, user_id=None, username=None):
+    def delete_user(self, user_id: int = None, username: str = None):
         if user_id:
             self.cursor_with_commit(
                 'DELETE FROM usernames WHERE user_id = ?', (user_id,))
@@ -167,15 +167,15 @@ class RAMDatabaseHandler:
             self.cursor_with_commit(
                 'DELETE FROM usernames WHERE username = ?', (username,))
 
-    def delete_user_address(self, user_id):
+    def delete_user_address(self, user_id: int):
         self.cursor_with_commit(
             'DELETE FROM user_address WHERE user_id = ?', (user_id,))
 
-    def delete_user_token(self, user_id):
+    def delete_user_token(self, user_id: int):
         self.cursor_with_commit(
             'DELETE FROM tokens WHERE user_id = ?', (user_id,))
 
-    def delete_user_public_key(self, user_id):
+    def delete_user_public_key(self, user_id: int):
         self.cursor_with_commit(
             'DELETE FROM public_keys WHERE user_id = ?', (user_id,))
 
