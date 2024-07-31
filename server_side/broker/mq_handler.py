@@ -12,11 +12,11 @@ broker_logger = Logger('broker')
 
 class RabbitMQHandler:
 
-    def __init__(self):
+    def __init__(self, connect_uri=settings.CONNECT_URI):
         try:
             broker_logger.info('Connect to RabbitMQ.')
-            broker_logger.debug(f'RabbitMQ URL: {settings.CONNECT_URI}')
-            self.parameters = pika.URLParameters(settings.CONNECT_URI)
+            broker_logger.debug(f'RabbitMQ URL: {connect_uri}')
+            self.parameters = pika.URLParameters(connect_uri)
             self.connection = pika.BlockingConnection(self.parameters)
             self.channel = self.connection.channel()
             broker_logger.info('RabbitMQ connection established.')
@@ -36,14 +36,15 @@ class RabbitMQHandler:
 
     def create_exchange(self, exchange_name='TestExchange'):
         broker_logger.info(f'Create an exchange: {exchange_name}.')
-        self.channel.exchange_declare(exchange_name, durable=True)
+        return self.channel.exchange_declare(exchange_name, durable=True)
 
     def create_and_bind_queue(self, queue_name='TestQueue', exchange_name='TestExchange'):
         broker_logger.info(f'Create a queue: {queue_name} for {exchange_name}.')
-        self.channel.queue_declare(queue_name, durable=True)
-        self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
+        queue = self.channel.queue_declare(queue_name, durable=True)
+        bind = self.channel.queue_bind(queue=queue_name, exchange=exchange_name)
+        return queue, bind
 
-    def send_message(self, exchange_name, queue_name, body):
+    def send_message(self, exchange_name, queue_name, body: (str, dict)):
         """
         That recursive method tries to put message in queue.
         If it fails, method will reconnect and try it one more time.
