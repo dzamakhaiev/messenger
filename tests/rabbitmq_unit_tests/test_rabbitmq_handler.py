@@ -53,9 +53,9 @@ class TestUser(TestCase):
             container = client.containers.get('rabbitmq-ci')
             container_info = container.attrs
 
-            networks = container_info.get('NetworkSettings', {}).get('Networks', {})
-            network_name, network_info = networks.get('bridge')
-            ip_address = network_info.get('IPAddress')
+            networks = container_info.get('NetworkSettings').get('Networks')
+            bridge_network = networks.get('bridge')
+            ip_address = bridge_network.get('IPAddress')
             cls.rabbitmq_host = ip_address
 
         else:
