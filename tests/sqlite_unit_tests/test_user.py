@@ -123,3 +123,90 @@ class TestUser(TestCase):
         except sqlite3.DatabaseError as e:
             self.fail(e)
 
+    def test_get_user(self):
+        self.ram_db_handler.create_usernames_table()
+        self.ram_db_handler.insert_username(user_id=test_data.USER_ID,
+                                            username=test_data.USERNAME)
+
+        # First case: get username data by user_id
+        result = self.ram_db_handler.get_user(user_id=test_data.USER_ID)
+        user_id, username = result
+        self.assertEqual(user_id, test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Second case: get username data by username
+        result = self.ram_db_handler.get_user(username=test_data.USERNAME)
+        user_id, username = result
+        self.assertEqual(user_id, test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Third case: get non-exits username data
+        result = self.ram_db_handler.get_user(username='Max Payne')
+        self.assertTrue(result is None)
+
+    def test_get_username(self):
+        self.ram_db_handler.create_usernames_table()
+        self.ram_db_handler.insert_username(user_id=test_data.USER_ID,
+                                            username=test_data.USERNAME)
+
+        # First case: get data by user_id
+        username = self.ram_db_handler.get_username(user_id=test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Second case: get non-exits username data
+        username = self.ram_db_handler.get_username(user_id=-1)
+        self.assertEqual(username, '')
+
+    def test_get_user_id(self):
+        self.ram_db_handler.create_usernames_table()
+        self.ram_db_handler.insert_username(user_id=test_data.USER_ID,
+                                            username=test_data.USERNAME)
+
+        # First case: get username data by user_id
+        user_id = self.ram_db_handler.get_user_id(username=test_data.USERNAME)
+        self.assertEqual(user_id, test_data.USER_ID)
+
+        # Second case: get username data by non-exists user_id
+        user_id = self.ram_db_handler.get_user_id(username='Max Payne')
+        self.assertTrue(user_id is None)
+
+    def test_get_user_address(self):
+        self.ram_db_handler.create_user_address_table()
+        self.ram_db_handler.insert_user_address(user_id=test_data.USER_ID,
+                                                user_address=test_data.USER_ADDRESS)
+
+        # First case: get user address by user_id
+        user_address_list = self.ram_db_handler.get_user_address(user_id=test_data.USER_ID)
+        self.assertEqual(user_address_list, [test_data.USER_ADDRESS])
+
+        # Second case: get non-exits user_id
+        user_address_list = self.ram_db_handler.get_user_address(user_id=-1)
+        self.assertEqual(user_address_list, [])
+
+    def test_get_user_token(self):
+        self.ram_db_handler.create_tokens_table()
+        self.ram_db_handler.insert_user_token(user_id=test_data.USER_ID,
+                                              token=test_data.USER_TOKEN)
+
+        # First case: get user token by user_id
+        user_token = self.ram_db_handler.get_user_token(user_id=test_data.USER_ID)
+        self.assertEqual(user_token, test_data.USER_TOKEN)
+
+        # Second case: get user token by non-exists user_id
+        user_token = self.ram_db_handler.get_user_token(user_id=-1)
+        self.assertTrue(user_token is None)
+
+    def test_get_user_public_key(self):
+        self.ram_db_handler.create_public_keys_table()
+        self.ram_db_handler.insert_user_public_key(user_id=test_data.USER_ID,
+                                                   public_key=test_data.USER_PUBLIC_KEY)
+
+        # First case: get user public_key by user_id
+        public_key = self.ram_db_handler.get_user_public_key(user_id=test_data.USER_ID)
+        self.assertEqual(public_key, test_data.USER_PUBLIC_KEY)
+
+        # Second case: get user public_key by non-exists user_id
+        public_key = self.ram_db_handler.get_user_public_key(user_id=-1)
+        self.assertTrue(public_key is None)
+
+
