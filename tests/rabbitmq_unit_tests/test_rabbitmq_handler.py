@@ -8,6 +8,10 @@ from docker.errors import DockerException
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
 from server_side.broker.mq_handler import RabbitMQHandler
+from logger.logger import Logger
+
+
+rabbitmq_test_logger = Logger('rabbitmq_test_logger')
 
 
 try:
@@ -27,9 +31,16 @@ except DockerException as e:
     rabbitmq_running = False
 
 
+RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
+CI_RUN = int(os.environ.get('CI_RUN', 0))
 CONDITION = not (docker_running and rabbitmq_running)
 REASON = 'Docker/rabbitmq container is not running'
 WAIT_MESSAGE_TIME = 0.3
+
+rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'
+                          f'Run inside docker: {RUN_INSIDE_DOCKER}\n'
+                          f'Continuous Integration: {CI_RUN}\n'
+                          f'Condition for run tests: {CONDITION}')
 
 
 class TestUser(TestCase):
@@ -37,18 +48,20 @@ class TestUser(TestCase):
     @classmethod
     def setUpClass(cls):
 
-        if int(os.environ.get('RUN_INSIDE_DOCKER', 0)) and int(os.environ.get('CI_RUN', 0)):
+        if RUN_INSIDE_DOCKER and CI_RUN:
             client = docker.from_env()
             container = client.containers.get('rabbitmq-ci')
             container_info = container.attrs
 
             networks = container_info.get('NetworkSettings', {}).get('Networks', {})
-            network_name, network_info = networks.popitem()
+            network_name, network_info = networks.get('bridge')
             ip_address = network_info.get('IPAddress')
             cls.rabbitmq_host = ip_address
 
         else:
             cls.rabbitmq_host = 'localhost'
+
+        rabbitmq_test_logger.info(f'Container RabbitMQ runs on IP {cls.rabbitmq_host}')
 
     def setUp(self):
         connect_uri = f'amqp://guest:guest@{self.rabbitmq_host}:{5672}/%2F'
