@@ -58,3 +58,8 @@ jobs:
       - name: Remove coverage report
         run: |
           rm coverage.xml && rm .coverage
+
+      - name: Stop created containers
+        if: always()
+        run: |
+          docker stop rabbitmq-ci
