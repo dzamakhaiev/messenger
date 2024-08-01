@@ -11,7 +11,7 @@ LOCAL_IP = socket.gethostbyname(socket.gethostname())
 OK_CODE = 200
 
 
-class TestUser(TestCase):
+class TestMessages(TestCase):
 
     def setUp(self):
         self.service = Service(hdd_db_handler=get_hdd_db_handler(),

@@ -43,7 +43,7 @@ rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'
                           f'Condition for skip tests: {CONDITION}')
 
 
-class TestUser(TestCase):
+class TestRabbitMQ(TestCase):
 
     @classmethod
     def setUpClass(cls):
