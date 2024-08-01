@@ -1,10 +1,11 @@
 import os
+from datetime import datetime
 from unittest import TestCase, skipIf
-import psycopg2
 from docker import from_env
 from docker.errors import DockerException
 from server_side.database.postgres_handler import PostgresHandler
 from logger.logger import Logger
+from tests import test_data
 
 
 postgres_test_logger = Logger('postgres_test_logger')
@@ -128,6 +129,183 @@ class TestPostgres(TestCase):
                 result = self.hdd_db_handler.cursor_execute(query, (table,))
                 result = result.fetchone()
                 self.assertTrue(result[0])
+
+    @skipIf(CONDITION, REASON)
+    def test_insert_user(self):
+        # Create table and user
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+        # Get user from table
+        query = 'SELECT * FROM users WHERE username = %s;'
+        result = self.hdd_db_handler.cursor_execute(query, (test_data.USERNAME,))
+
+        # Check query result
+        if result:
+            result = result.fetchone()
+            user_id, username, phone, password = result
+
+            self.assertEqual(user_id, test_data.USER_ID)
+            self.assertEqual(username, test_data.USERNAME)
+            self.assertEqual(phone, test_data.PHONE_NUMBER)
+            self.assertEqual(password, test_data.PASSWORD)
+
+        else:
+            self.fail('User not found.')
+
+    @skipIf(CONDITION, REASON)
+    def test_insert_address(self):
+        # Create table and user address
+        self.hdd_db_handler.create_address_table()
+        self.hdd_db_handler.insert_address(user_address=test_data.USER_ADDRESS)
+
+        # Get address from table
+        query = 'SELECT * FROM address;'
+        result = self.hdd_db_handler.cursor_execute(query, ())
+
+        # Check query result
+        if result:
+            result = result.fetchone()
+            user_address, last_used = result
+
+            self.assertEqual(user_address, test_data.USER_ADDRESS)
+            self.assertTrue(isinstance(last_used, datetime))
+
+        else:
+            self.fail('User address not found.')
+
+    @skipIf(CONDITION, REASON)
+    def test_insert_user_address(self):
+        # Create user, address, user_address tables
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_address_table()
+        self.hdd_db_handler.create_user_address_table()
+
+        # Create user and address
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+        self.hdd_db_handler.insert_address(user_address=test_data.USER_ADDRESS)
+
+        # Create connection between user and address
+        self.hdd_db_handler.insert_user_address(user_id=test_data.USER_ID,
+                                                user_address=test_data.USER_ADDRESS)
+
+        # Get user address data
+        query = 'SELECT * FROM user_address;'
+        result = self.hdd_db_handler.cursor_execute(query, ())
+
+        # Check query result
+        if result:
+            result = result.fetchone()
+            user_id, user_address = result
+
+            self.assertEqual(user_id, test_data.USER_ID)
+            self.assertEqual(user_address, test_data.USER_ADDRESS)
+
+        else:
+            self.fail('User id and user address not found.')
+
+    @skipIf(CONDITION, REASON)
+    def test_insert_user_token(self):
+        # Create user, tokens tables
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_tokens_table()
+
+        # Create user
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+
+        # Create token for user
+        self.hdd_db_handler.insert_user_token(user_id=test_data.USER_ID,
+                                              token=test_data.USER_TOKEN)
+
+        # Get user token data
+        query = 'SELECT * FROM tokens;'
+        result = self.hdd_db_handler.cursor_execute(query, ())
+
+        # Check query result
+        if result:
+            result = result.fetchone()
+            user_id, token = result
+
+            self.assertEqual(user_id, test_data.USER_ID)
+            self.assertEqual(token, test_data.USER_TOKEN)
+
+        else:
+            self.fail('User id and user token not found.')
+
+    @skipIf(CONDITION, REASON)
+    def test_insert_user_public_key(self):
+        # Create user, public keys tables
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_public_keys_table()
+
+        # Create user
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+
+        # Create public key for user
+        self.hdd_db_handler.insert_user_public_key(user_id=test_data.USER_ID,
+                                                   public_key=test_data.USER_PUBLIC_KEY)
+
+        # Get user public key data
+        query = 'SELECT * FROM tokens;'
+        result = self.hdd_db_handler.cursor_execute(query, ())
+
+        # Check query result
+        if result:
+            result = result.fetchone()
+            user_id, token = result
+
+            self.assertEqual(user_id, test_data.USER_ID)
+            self.assertEqual(token, test_data.USER_TOKEN)
+
+        else:
+            self.fail('User id and user public key not found.')
+
+    @skipIf(CONDITION, REASON)
+    def test_insert_message(self):
+        # Create user, messages tables
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_messages_table()
+
+        # Create users
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME_2,
+                                        phone_number=test_data.PHONE_NUMBER_2,
+                                        password=test_data.PASSWORD)
+
+        # Create message for users
+        test_message = 'test message'
+        self.hdd_db_handler.insert_message(sender_id=test_data.USER_ID,
+                                           receiver_id=test_data.USER_ID_2,
+                                           sender_username=test_data.USERNAME,
+                                           message=test_message)
+
+        # Get message data
+        query = 'SELECT * FROM messages;'
+        result = self.hdd_db_handler.cursor_execute(query, ())
+
+        # Check query result
+        if result:
+            result = result.fetchone()
+            (message_id, user_sender_id, user_receiver_id, sender_username, message,
+             receive_date) = result
+
+            self.assertEqual(user_sender_id, test_data.USER_ID)
+            self.assertEqual(user_receiver_id, test_data.USER_ID_2)
+            self.assertEqual(sender_username, test_data.USERNAME)
+            self.assertEqual(message, test_message)
+            self.assertTrue(isinstance(receive_date, datetime))
+
+        else:
+            self.fail('Message data not found.')
 
     def tearDown(self):
         # Drop all tables in HDD database
