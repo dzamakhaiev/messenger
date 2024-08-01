@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extensions import cursor
 from server_side.database import settings
 from logger.logger import Logger
 
@@ -20,7 +21,7 @@ class PostgresHandler:
             database_logger.error(e)
             quit()
 
-    def cursor_execute(self, query, args=None):
+    def cursor_execute(self, query, args=None) -> cursor:
         if args is None:
             args = []
 
