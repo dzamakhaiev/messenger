@@ -67,7 +67,9 @@ class PostgresHandler:
             user_receiver_id INTEGER NOT NULL,
             sender_username TEXT NOT NULL,
             message TEXT NOT NULL,
-            receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_sender_id) REFERENCES users (id),
+            FOREIGN KEY (user_receiver_id) REFERENCES users (id))
             ''')
 
     def create_address_table(self):
