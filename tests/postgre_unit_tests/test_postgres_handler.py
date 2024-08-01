@@ -253,16 +253,17 @@ class TestPostgres(TestCase):
                                                    public_key=test_data.USER_PUBLIC_KEY)
 
         # Get user public key data
-        query = 'SELECT * FROM tokens;'
+        query = 'SELECT * FROM public_keys;'
         result = self.hdd_db_handler.cursor_execute(query, ())
 
         # Check query result
         if result:
             result = result.fetchone()
-            user_id, token = result
+            user_id, token, create_date = result
 
             self.assertEqual(user_id, test_data.USER_ID)
-            self.assertEqual(token, test_data.USER_TOKEN)
+            self.assertEqual(token, test_data.USER_PUBLIC_KEY)
+            self.assertTrue(isinstance(create_date, datetime))
 
         else:
             self.fail('User id and user public key not found.')
