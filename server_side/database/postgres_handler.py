@@ -7,12 +7,13 @@ database_logger = Logger('postgres_database')
 
 class PostgresHandler:
 
-    def __init__(self):
+    def __init__(self, host=settings.DB_HOST):
         try:
             database_logger.info('Connecting to PostgreSQL.')
             self.connection = psycopg2.connect(database=settings.DB_NAME, user=settings.DB_USER,
-                                               port=settings.DB_PORT,
-                                               password=settings.DB_PASSWORD, host=settings.DB_HOST)
+                                               port=settings.DB_PORT, host=host,
+                                               password=settings.DB_PASSWORD)
+
             self.cursor = self.connection.cursor()
             database_logger.info('PostgreSQL connection established.')
         except (psycopg2.DatabaseError, Exception) as e:
