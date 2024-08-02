@@ -63,6 +63,33 @@ class TestPostgres(TestCase):
     def setUp(self):
         self.hdd_db_handler = PostgresHandler(host=self.postgres_host)
 
+    def create_user_table_and_user(self, user_number=1):
+        # Create table and user
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+        if user_number == 2:
+            self.hdd_db_handler.insert_user(username=test_data.USERNAME_2,
+                                            phone_number=test_data.PHONE_NUMBER_2,
+                                            password=test_data.PASSWORD)
+
+    def create_address_table_and_address(self):
+        # Create address table and user address
+        self.hdd_db_handler.create_address_table()
+        self.hdd_db_handler.insert_address(user_address=test_data.USER_ADDRESS)
+
+    def check_message(self, result, test_message):
+        if result := result.fetchone():
+            (message_id, user_sender_id, user_receiver_id, sender_username, message,
+             receive_date) = result
+
+            self.assertEqual(user_sender_id, test_data.USER_ID)
+            self.assertEqual(user_receiver_id, test_data.USER_ID_2)
+            self.assertEqual(sender_username, test_data.USERNAME)
+            self.assertEqual(message, test_message)
+            self.assertTrue(isinstance(receive_date, datetime))
+
     @skipIf(CONDITION, REASON)
     def test_create_users_table(self):
         self.hdd_db_handler.create_users_table()
@@ -142,8 +169,7 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.cursor_execute(query, (test_data.USERNAME,))
 
         # Check query result
-        if result:
-            result = result.fetchone()
+        if result := result.fetchone():
             user_id, username, phone, password = result
 
             self.assertEqual(user_id, test_data.USER_ID)
@@ -165,8 +191,7 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.cursor_execute(query, ())
 
         # Check query result
-        if result:
-            result = result.fetchone()
+        if result := result.fetchone():
             user_address, last_used = result
 
             self.assertEqual(user_address, test_data.USER_ADDRESS)
@@ -178,15 +203,9 @@ class TestPostgres(TestCase):
     @skipIf(CONDITION, REASON)
     def test_insert_user_address(self):
         # Create user, address, user_address tables
-        self.hdd_db_handler.create_users_table()
-        self.hdd_db_handler.create_address_table()
+        self.create_user_table_and_user()
+        self.create_address_table_and_address()
         self.hdd_db_handler.create_user_address_table()
-
-        # Create user and address
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
-                                        phone_number=test_data.PHONE_NUMBER,
-                                        password=test_data.PASSWORD)
-        self.hdd_db_handler.insert_address(user_address=test_data.USER_ADDRESS)
 
         # Create connection between user and address
         self.hdd_db_handler.insert_user_address(user_id=test_data.USER_ID,
@@ -197,8 +216,7 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.cursor_execute(query, ())
 
         # Check query result
-        if result:
-            result = result.fetchone()
+        if result := result.fetchone():
             user_id, user_address = result
 
             self.assertEqual(user_id, test_data.USER_ID)
@@ -210,13 +228,8 @@ class TestPostgres(TestCase):
     @skipIf(CONDITION, REASON)
     def test_insert_user_token(self):
         # Create user, tokens tables
-        self.hdd_db_handler.create_users_table()
+        self.create_user_table_and_user()
         self.hdd_db_handler.create_tokens_table()
-
-        # Create user
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
-                                        phone_number=test_data.PHONE_NUMBER,
-                                        password=test_data.PASSWORD)
 
         # Create token for user
         self.hdd_db_handler.insert_user_token(user_id=test_data.USER_ID,
@@ -227,8 +240,7 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.cursor_execute(query, ())
 
         # Check query result
-        if result:
-            result = result.fetchone()
+        if result := result.fetchone():
             user_id, token = result
 
             self.assertEqual(user_id, test_data.USER_ID)
@@ -240,13 +252,8 @@ class TestPostgres(TestCase):
     @skipIf(CONDITION, REASON)
     def test_insert_user_public_key(self):
         # Create user, public keys tables
-        self.hdd_db_handler.create_users_table()
+        self.create_user_table_and_user()
         self.hdd_db_handler.create_public_keys_table()
-
-        # Create user
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
-                                        phone_number=test_data.PHONE_NUMBER,
-                                        password=test_data.PASSWORD)
 
         # Create public key for user
         self.hdd_db_handler.insert_user_public_key(user_id=test_data.USER_ID,
@@ -257,8 +264,7 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.cursor_execute(query, ())
 
         # Check query result
-        if result:
-            result = result.fetchone()
+        if result := result.fetchone():
             user_id, token, create_date = result
 
             self.assertEqual(user_id, test_data.USER_ID)
@@ -271,16 +277,8 @@ class TestPostgres(TestCase):
     @skipIf(CONDITION, REASON)
     def test_insert_message(self):
         # Create user, messages tables
-        self.hdd_db_handler.create_users_table()
+        self.create_user_table_and_user(user_number=2)
         self.hdd_db_handler.create_messages_table()
-
-        # Create users
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
-                                        phone_number=test_data.PHONE_NUMBER,
-                                        password=test_data.PASSWORD)
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME_2,
-                                        phone_number=test_data.PHONE_NUMBER_2,
-                                        password=test_data.PASSWORD)
 
         # Create message for users
         test_message = 'test message'
@@ -293,39 +291,20 @@ class TestPostgres(TestCase):
         query = 'SELECT * FROM messages;'
         result = self.hdd_db_handler.cursor_execute(query, ())
 
-        # Check query result
-        if result:
-            result = result.fetchone()
-            (message_id, user_sender_id, user_receiver_id, sender_username, message,
-             receive_date) = result
-
-            self.assertEqual(user_sender_id, test_data.USER_ID)
-            self.assertEqual(user_receiver_id, test_data.USER_ID_2)
-            self.assertEqual(sender_username, test_data.USERNAME)
-            self.assertEqual(message, test_message)
-            self.assertTrue(isinstance(receive_date, datetime))
-
-        else:
-            self.fail('Message data not found.')
+        # Check query resul
+        self.check_message(result, test_message)
 
     @skipIf(CONDITION, REASON)
     def test_insert_messages(self):
         # Create user, messages tables
-        self.hdd_db_handler.create_users_table()
+        self.create_user_table_and_user(user_number=2)
         self.hdd_db_handler.create_messages_table()
 
-        # Create users
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
-                                        phone_number=test_data.PHONE_NUMBER,
-                                        password=test_data.PASSWORD)
-        self.hdd_db_handler.insert_user(username=test_data.USERNAME_2,
-                                        phone_number=test_data.PHONE_NUMBER_2,
-                                        password=test_data.PASSWORD)
-
         # Create message list for users
-        test_message = [test_data.USER_ID, test_data.USER_ID_2, test_data.USERNAME,
-                        'test message', datetime.now()]
-        test_messages = [test_message]
+        test_message = 'test message'
+        message_item = [test_data.USER_ID, test_data.USER_ID_2, test_data.USERNAME,
+                        test_message, datetime.now()]
+        test_messages = [message_item]
         self.hdd_db_handler.insert_messages(messages=test_messages)
 
         # Get message data
@@ -333,18 +312,7 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.cursor_execute(query, ())
 
         # Check query result
-        if result := result.fetchall():
-            (message_id, user_sender_id, user_receiver_id, sender_username, message,
-             receive_date) = result[0]
-
-            self.assertEqual(user_sender_id, test_data.USER_ID)
-            self.assertEqual(user_receiver_id, test_data.USER_ID_2)
-            self.assertEqual(sender_username, test_data.USERNAME)
-            self.assertEqual(message, test_message[3])
-            self.assertTrue(isinstance(receive_date, datetime))
-
-        else:
-            self.fail('Message data not found.')
+        self.check_message(result, test_message)
 
     def tearDown(self):
         # Drop all tables in HDD database
