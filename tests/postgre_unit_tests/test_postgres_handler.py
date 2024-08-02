@@ -82,12 +82,28 @@ class TestPostgres(TestCase):
         self.hdd_db_handler.insert_address(user_address=test_data.USER_ADDRESS)
 
     def create_user_address_table_and_connection(self):
-        # Create user, address, user_address tables and
+        # Create users, address, user_address tables and
         # user, address items, and connection between them
         self.create_user_table_and_user()
         self.create_address_table_and_address()
         self.hdd_db_handler.insert_user_address(user_id=test_data.USER_ID,
                                                 user_address=test_data.USER_ADDRESS)
+
+    def create_user_token_table_and_connection(self):
+        # Create users, tokens tables and
+        # user, token, and connection between them
+        self.create_user_table_and_user()
+        self.hdd_db_handler.create_tokens_table()
+        self.hdd_db_handler.insert_user_token(user_id=test_data.USER_ID,
+                                              token=test_data.USER_TOKEN)
+
+    def create_user_public_keys_table_and_connection(self):
+        # Create users, public_keys tables and
+        # user, public_key, and connection between them
+        self.create_user_table_and_user()
+        self.hdd_db_handler.create_public_keys_table()
+        self.hdd_db_handler.insert_user_public_key(user_id=test_data.USER_ID,
+                                                   public_key=test_data.USER_PUBLIC_KEY)
 
     def create_messages_table_and_message(self, test_message='test message'):
         # Create user, messages tables and
@@ -427,6 +443,102 @@ class TestPostgres(TestCase):
         # Second case: message in table and correct user_id
         messages = self.hdd_db_handler.get_all_messages()
         self.check_message(messages[0], test_message)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_user_password(self):
+        self.hdd_db_handler.create_users_table()
+
+        # First case: no user in table
+        password = self.hdd_db_handler.get_user_password(test_data.USERNAME)
+        self.assertTrue(password is None)
+
+        # Create user
+        self.create_user_table_and_user()
+
+        # Second case: user in table
+        password = self.hdd_db_handler.get_user_password(test_data.USERNAME)
+        self.assertEqual(password, test_data.PASSWORD)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_username(self):
+        self.hdd_db_handler.create_users_table()
+
+        # First case: no user in table
+        username = self.hdd_db_handler.get_username(user_id=test_data.USER_ID)
+        self.assertEqual(username, '')
+
+        # Create user
+        self.create_user_table_and_user()
+
+        # Second case: user in table
+        username = self.hdd_db_handler.get_username(user_id=test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_user_id(self):
+        self.hdd_db_handler.create_users_table()
+
+        # First case: no user in table
+        user_id = self.hdd_db_handler.get_user_id(username=test_data.USERNAME)
+        self.assertTrue(user_id is None)
+
+        # Create user
+        self.create_user_table_and_user()
+
+        # Second case: user in table
+        user_id = self.hdd_db_handler.get_user_id(username=test_data.USERNAME)
+        self.assertEqual(user_id, test_data.USER_ID)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_user_token(self):
+        self.create_user_table_and_user()
+        self.hdd_db_handler.create_tokens_table()
+
+        # First case: no token in table
+        token = self.hdd_db_handler.get_user_token(user_id=test_data.USER_ID)
+        self.assertTrue(token is None)
+
+        # Create token for user
+        self.create_user_token_table_and_connection()
+
+        # Second case: user in table
+        token = self.hdd_db_handler.get_user_token(user_id=test_data.USER_ID)
+        self.assertEqual(token, test_data.USER_TOKEN)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_user_public_key(self):
+        self.create_user_table_and_user()
+        self.hdd_db_handler.create_public_keys_table()
+
+        # First case: no public_key in table
+        public_key = self.hdd_db_handler.get_user_public_key(user_id=test_data.USER_ID)
+        self.assertTrue(public_key is None)
+
+        # Create token for user
+        self.create_user_public_keys_table_and_connection()
+
+        # Second case: user in table
+        public_key = self.hdd_db_handler.get_user_public_key(user_id=test_data.USER_ID)
+        self.assertEqual(public_key, test_data.USER_PUBLIC_KEY)
+
+    @skipIf(CONDITION, REASON)
+    def test_check_user_address(self):
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_address_table()
+        self.hdd_db_handler.create_user_address_table()
+
+        # First case: no user address in table
+        result = self.hdd_db_handler.check_user_address(user_id=test_data.USER_ID,
+                                                        user_address=test_data.USER_ADDRESS)
+        self.assertFalse(result)
+
+        # Create user address connection
+        self.create_user_address_table_and_connection()
+
+        # Second case: user in table
+        result = self.hdd_db_handler.check_user_address(user_id=test_data.USER_ID,
+                                                        user_address=test_data.USER_ADDRESS)
+        self.assertTrue(result)
 
     def tearDown(self):
         # Drop all tables in HDD database
