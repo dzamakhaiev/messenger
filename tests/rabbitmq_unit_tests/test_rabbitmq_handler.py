@@ -23,7 +23,7 @@ try:
     # Check RabbitMQ container is running
     containers = docker.containers.list()
     containers = [container.name for container in containers]
-    if 'rabbitmq' in containers or 'rabbitmq-ci' in containers:
+    if 'rabbitmq-ci' in containers:
         rabbitmq_running = True
 
 except DockerException as e:
