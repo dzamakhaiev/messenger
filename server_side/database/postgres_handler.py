@@ -180,7 +180,7 @@ class PostgresHandler:
             return result[0]
 
     def get_all_messages(self):
-        result = self.cursor_execute('SELECT user_sender_id, user_receiver_id, '
+        result = self.cursor_execute('SELECT id, user_sender_id, user_receiver_id, '
                                      'sender_username, message, receive_date '
                                      'FROM messages;', ())
         if self.cursor.rowcount != 0:
