@@ -89,16 +89,33 @@ class TestPostgres(TestCase):
         self.hdd_db_handler.insert_user_address(user_id=test_data.USER_ID,
                                                 user_address=test_data.USER_ADDRESS)
 
+    def create_messages_table_and_message(self, test_message='test message'):
+        # Create user, messages tables and
+        # user, message, and connection between them
+        self.create_user_table_and_user(user_number=2)
+        self.hdd_db_handler.create_messages_table()
+        self.hdd_db_handler.insert_message(sender_id=test_data.USER_ID,
+                                           receiver_id=test_data.USER_ID_2,
+                                           sender_username=test_data.USERNAME,
+                                           message=test_message)
+
     def check_message(self, result, test_message):
-        if result := result.fetchone():
+        if result and isinstance(result, tuple):
             (message_id, user_sender_id, user_receiver_id, sender_username, message,
              receive_date) = result
 
-            self.assertEqual(user_sender_id, test_data.USER_ID)
-            self.assertEqual(user_receiver_id, test_data.USER_ID_2)
-            self.assertEqual(sender_username, test_data.USERNAME)
-            self.assertEqual(message, test_message)
-            self.assertTrue(isinstance(receive_date, datetime))
+        elif result := result.fetchone():
+            (message_id, user_sender_id, user_receiver_id, sender_username, message,
+             receive_date) = result
+
+        else:
+            self.fail(f'Incorrect message data: {result}')
+
+        self.assertEqual(user_sender_id, test_data.USER_ID)
+        self.assertEqual(user_receiver_id, test_data.USER_ID_2)
+        self.assertEqual(sender_username, test_data.USERNAME)
+        self.assertEqual(message, test_message)
+        self.assertTrue(isinstance(receive_date, datetime))
 
     @skipIf(CONDITION, REASON)
     def test_create_users_table(self):
@@ -372,6 +389,44 @@ class TestPostgres(TestCase):
         # Second case: user address in table
         address_list = self.hdd_db_handler.get_user_address(user_id=test_data.USER_ID)
         self.assertEqual(address_list, [test_data.USER_ADDRESS])
+
+    @skipIf(CONDITION, REASON)
+    def test_get_user_messages(self):
+        self.create_user_table_and_user(user_number=2)
+        self.hdd_db_handler.create_messages_table()
+
+        # First case: no message in table
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertEqual(messages, [])
+
+        # Create message
+        test_message = 'test_message'
+        self.create_messages_table_and_message(test_message)
+
+        # Second case: message in table and wrong user_id
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID)
+        self.assertEqual(messages, [])
+
+        # Third case: message in table and correct user_id
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.check_message(messages[0], test_message)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_all_messages(self):
+        self.create_user_table_and_user(user_number=2)
+        self.hdd_db_handler.create_messages_table()
+
+        # First case: no message in table
+        messages = self.hdd_db_handler.get_all_messages()
+        self.assertEqual(messages, [])
+
+        # Create message
+        test_message = 'test_message'
+        self.create_messages_table_and_message(test_message)
+
+        # Second case: message in table and correct user_id
+        messages = self.hdd_db_handler.get_all_messages()
+        self.check_message(messages[0], test_message)
 
     def tearDown(self):
         # Drop all tables in HDD database
