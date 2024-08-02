@@ -20,7 +20,7 @@ try:
     # Check Postgres container is running
     containers = docker.containers.list()
     containers = [container.name for container in containers]
-    if 'postgres' in containers or 'postgres-ci' in containers:
+    if 'postgres-ci' in containers:
         postgres_running = True
 
 except DockerException as e:
@@ -314,7 +314,35 @@ class TestPostgres(TestCase):
         # Check query result
         self.check_message(result, test_message)
 
+    @skipIf(CONDITION, REASON)
+    def test_get_user(self):
+        self.hdd_db_handler.create_users_table()
+
+        # First case: no user in table
+        user = self.hdd_db_handler.get_user(user_id=test_data.USER_ID)
+        self.assertTrue(user is None)
+
+        # Create user
+        self.create_user_table_and_user()
+
+        # Second case: user in table. Get by user_id
+        user = self.hdd_db_handler.get_user(user_id=test_data.USER_ID)
+        user_id, username = user
+        self.assertEqual(user_id, test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Third case: user in table. Get by username
+        user = self.hdd_db_handler.get_user(username=test_data.USERNAME)
+        user_id, username = user
+        self.assertEqual(user_id, test_data.USER_ID)
+        self.assertEqual(username, test_data.USERNAME)
+
+        # Forth case: pass no variables
+        user = self.hdd_db_handler.get_user()
+        self.assertTrue(user is None)
+
     def tearDown(self):
         # Drop all tables in HDD database
-        query = "select 'drop table if exists "' || tablename || '" cascade;' from pg_tables;"
+        postgres_test_logger.info('tearDown: delete all tables.')
+        query = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
         self.hdd_db_handler.cursor_with_commit(query, [])
