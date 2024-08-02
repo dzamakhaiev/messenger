@@ -1,7 +1,7 @@
-name: Upload coverage report workflow
+name: Unit tests workflow
 
 on:
-  push:
+  pull_request:
     branches:
       - master
 
@@ -33,33 +33,17 @@ jobs:
       - name: Run docker containers for unit tests
         run: |
           docker run --rm -p 5672:5672 --name rabbitmq-ci -d rabbitmq:alpine
+          docker run --rm -p 5432:5432 --name postgres-ci -d -e POSTGRES_PASSWORD=postgres postgres:alpine
 
       - name: Wait until all containers are started
         run: |
-          python scripts/wait_for_all_services.py rabbitmq-ci
+          python scripts/wait_for_all_services.py rabbitmq-ci postgres-ci
 
       - name: Run unit tests
         run: |
           python -m unittest discover -s tests -vv
 
-      - name: Generate coverage report
-        run: |
-          coverage run --source=server_side -m unittest discover -s tests
-          coverage report --skip-empty
-          python generate_xml_report.py
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage.xml
-          flags: unittests
-
-      - name: Remove coverage report
-        run: |
-          rm coverage.xml && rm .coverage
-
       - name: Stop created containers
         if: always()
         run: |
-          docker stop rabbitmq-ci
+          docker stop rabbitmq-ci postgres-ci

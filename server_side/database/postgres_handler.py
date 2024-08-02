@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extensions import cursor
 from server_side.database import settings
 from logger.logger import Logger
 
@@ -7,19 +8,20 @@ database_logger = Logger('postgres_database')
 
 class PostgresHandler:
 
-    def __init__(self):
+    def __init__(self, host=settings.DB_HOST):
         try:
             database_logger.info('Connecting to PostgreSQL.')
             self.connection = psycopg2.connect(database=settings.DB_NAME, user=settings.DB_USER,
-                                               port=settings.DB_PORT,
-                                               password=settings.DB_PASSWORD, host=settings.DB_HOST)
+                                               port=settings.DB_PORT, host=host,
+                                               password=settings.DB_PASSWORD)
+
             self.cursor = self.connection.cursor()
             database_logger.info('PostgreSQL connection established.')
         except (psycopg2.DatabaseError, Exception) as e:
             database_logger.error(e)
             quit()
 
-    def cursor_execute(self, query, args=None):
+    def cursor_execute(self, query, args=None) -> cursor:
         if args is None:
             args = []
 
@@ -65,7 +67,9 @@ class PostgresHandler:
             user_receiver_id INTEGER NOT NULL,
             sender_username TEXT NOT NULL,
             message TEXT NOT NULL,
-            receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            receive_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_sender_id) REFERENCES users (id),
+            FOREIGN KEY (user_receiver_id) REFERENCES users (id))
             ''')
 
     def create_address_table(self):
@@ -111,7 +115,7 @@ class PostgresHandler:
         self.create_public_keys_table()
         self.create_user_address_table()
 
-    def get_user(self, user_id=None, username=None):
+    def get_user(self, user_id: int = None, username=None):
         if user_id:
             result = self.cursor_execute(
                 'SELECT id, username FROM users WHERE id = %s', (user_id,))
@@ -125,14 +129,14 @@ class PostgresHandler:
         if result:
             return result
 
-    def get_user_address(self, user_id):
+    def get_user_address(self, user_id: int):
         result = self.cursor_execute('SELECT user_address FROM user_address WHERE user_id = %s',
                                      (user_id,))
         if self.cursor.rowcount != 0:
             return [item[0] for item in result.fetchall()]  # convert tuple to string
         return []
 
-    def get_user_messages(self, receiver_id):
+    def get_user_messages(self, receiver_id: int):
         result = self.cursor_execute('SELECT * FROM messages WHERE user_receiver_id = %s',
                                      (receiver_id,))
         if self.cursor.rowcount != 0:
@@ -146,7 +150,7 @@ class PostgresHandler:
         if result:
             return result[0]
 
-    def get_username(self, user_id):
+    def get_username(self, user_id: int):
         result = self.cursor_execute('SELECT username FROM users WHERE id = %s',
                                      (user_id,))
         result = result.fetchone()
@@ -161,14 +165,14 @@ class PostgresHandler:
         if result:
             return result[0]
 
-    def get_user_token(self, user_id):
+    def get_user_token(self, user_id: int):
         result = self.cursor_execute('SELECT token FROM tokens WHERE user_id = %s',
                                      (user_id,))
         result = result.fetchone()
         if result:
             return result[0]
 
-    def get_user_public_key(self, user_id):
+    def get_user_public_key(self, user_id: int):
         result = self.cursor_execute('SELECT public_key FROM public_keys WHERE user_id = %s',
                                      (user_id,))
         result = result.fetchone()
@@ -176,14 +180,14 @@ class PostgresHandler:
             return result[0]
 
     def get_all_messages(self):
-        result = self.cursor_execute('SELECT user_sender_id, user_receiver_id, '
+        result = self.cursor_execute('SELECT id, user_sender_id, user_receiver_id, '
                                      'sender_username, message, receive_date '
                                      'FROM messages;', ())
         if self.cursor.rowcount != 0:
             return result.fetchall()
         return []
 
-    def check_user_address(self, user_id, user_address):
+    def check_user_address(self, user_id: int, user_address):
         result = self.cursor_execute(
             'SELECT user_id FROM user_address WHERE user_id=%s AND user_address=%s',
             (user_id, user_address))
@@ -201,25 +205,25 @@ class PostgresHandler:
         self.cursor_with_commit('INSERT INTO address ("user_address") VALUES (%s)',
                                 (user_address,))
 
-    def insert_user_address(self, user_id, user_address):
+    def insert_user_address(self, user_id: int, user_address):
         if not self.check_user_address(user_id, user_address):
             self.cursor_with_commit(
                 'INSERT INTO user_address ("user_id", "user_address") VALUES (%s, %s)',
                 (user_id, user_address))
 
-    def insert_user_token(self, user_id, token):
+    def insert_user_token(self, user_id: int, token):
         if self.get_user_token(user_id) is None:
             self.cursor_with_commit(
                 'INSERT INTO tokens ("user_id", "token") VALUES (%s, %s)',
                 (user_id, token))
 
-    def insert_user_public_key(self, user_id, public_key):
+    def insert_user_public_key(self, user_id: int, public_key):
         if self.get_user_public_key(user_id) is None:
             self.cursor_with_commit(
                 'INSERT INTO public_keys ("user_id", "public_key") VALUES (%s, %s)',
                 (user_id, public_key))
 
-    def insert_message(self, sender_id, receiver_id, sender_username, message):
+    def insert_message(self, sender_id: int, receiver_id: int, sender_username, message):
         self.cursor_with_commit(
             'INSERT INTO messages '
             '("user_sender_id", "user_receiver_id", "sender_username", "message") '
@@ -235,26 +239,26 @@ class PostgresHandler:
     def delete_all_messages(self):
         self.cursor_with_commit('DELETE FROM messages')
 
-    def delete_messages(self, message_ids):
+    def delete_messages(self, message_ids: str):
         self.cursor_with_commit('DELETE FROM messages WHERE id IN (%s)', (message_ids,))
 
-    def delete_user_messages(self, receiver_id):
+    def delete_user_messages(self, receiver_id: int):
         self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = %s',
                                 (receiver_id,))
 
-    def delete_user(self, user_id=None, username=None):
+    def delete_user(self, user_id: int = None, username=None):
         if user_id:
             self.cursor_with_commit('DELETE FROM users WHERE id = %s', (user_id,))
         elif username:
             self.cursor_with_commit('DELETE FROM users WHERE username = %s', (username,))
 
-    def delete_user_token(self, user_id):
+    def delete_user_token(self, user_id: int):
         self.cursor_with_commit('DELETE FROM tokens WHERE user_id = %s', (user_id,))
 
-    def delete_user_public_key(self, user_id):
+    def delete_user_public_key(self, user_id: int):
         self.cursor_with_commit('DELETE FROM public_keys WHERE user_id = %s', (user_id,))
 
-    def delete_user_address(self, user_id):
+    def delete_user_address(self, user_id: int):
         self.cursor_with_commit('DELETE FROM user_address WHERE user_id = %s', (user_id,))
 
     def __del__(self):
