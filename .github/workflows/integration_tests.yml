@@ -13,8 +13,6 @@ jobs:
       matrix:
         python-version: [ "3.12" ]
 
-    needs: unit
-
     env:
       CI_RUN: 1
       BRANCH_NAME: ${{ github.head_ref }}
