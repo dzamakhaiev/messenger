@@ -239,14 +239,14 @@ class PostgresHandler:
     def delete_all_messages(self):
         self.cursor_with_commit('DELETE FROM messages')
 
-    def delete_messages(self, message_ids):
+    def delete_messages(self, message_ids: str):
         self.cursor_with_commit('DELETE FROM messages WHERE id IN (%s)', (message_ids,))
 
     def delete_user_messages(self, receiver_id: int):
         self.cursor_with_commit('DELETE FROM messages WHERE user_receiver_id = %s',
                                 (receiver_id,))
 
-    def delete_user(self, user_id=None, username=None):
+    def delete_user(self, user_id: int = None, username=None):
         if user_id:
             self.cursor_with_commit('DELETE FROM users WHERE id = %s', (user_id,))
         elif username:

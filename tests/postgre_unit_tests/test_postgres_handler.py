@@ -86,6 +86,7 @@ class TestPostgres(TestCase):
         # user, address items, and connection between them
         self.create_user_table_and_user()
         self.create_address_table_and_address()
+        self.hdd_db_handler.create_user_address_table()
         self.hdd_db_handler.insert_user_address(user_id=test_data.USER_ID,
                                                 user_address=test_data.USER_ADDRESS)
 
@@ -501,7 +502,7 @@ class TestPostgres(TestCase):
         # Create token for user
         self.create_user_token_table_and_connection()
 
-        # Second case: user in table
+        # Second case: token in table
         token = self.hdd_db_handler.get_user_token(user_id=test_data.USER_ID)
         self.assertEqual(token, test_data.USER_TOKEN)
 
@@ -539,6 +540,115 @@ class TestPostgres(TestCase):
         result = self.hdd_db_handler.check_user_address(user_id=test_data.USER_ID,
                                                         user_address=test_data.USER_ADDRESS)
         self.assertTrue(result)
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_all_messages(self):
+        # Create table and message
+        self.create_messages_table_and_message()
+
+        # Check that message exists
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertTrue(messages)
+
+        # Delete all messages from table
+        self.hdd_db_handler.delete_all_messages()
+
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertEqual(messages, [])
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_messages(self):
+        # Create table and message
+        self.create_messages_table_and_message()
+
+        # Check that message exists
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertTrue(messages)
+
+        # Delete messages with ids from table
+        self.hdd_db_handler.delete_messages(str(test_data.MESSAGE_ID))
+
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertEqual(messages, [])
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_user_messages(self):
+        # Create table and message
+        self.create_messages_table_and_message()
+
+        # Check that message exists
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertTrue(messages)
+
+        # Delete all messages with receiver_id from table
+        self.hdd_db_handler.delete_user_messages(receiver_id=test_data.USER_ID_2)
+
+        messages = self.hdd_db_handler.get_user_messages(receiver_id=test_data.USER_ID_2)
+        self.assertEqual(messages, [])
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_user(self):
+        self.create_user_table_and_user()
+
+        # First case: delete by user_id
+        self.hdd_db_handler.delete_user(user_id=test_data.USER_ID)
+        user = self.hdd_db_handler.get_user(user_id=test_data.USER_ID)
+        self.assertTrue(user is None)
+
+        self.create_user_table_and_user()
+
+        # Second case: delete by username
+        self.hdd_db_handler.delete_user(username=test_data.USERNAME)
+        user = self.hdd_db_handler.get_user(username=test_data.USERNAME)
+        self.assertTrue(user is None)
+
+        self.create_user_table_and_user()
+
+        # Third case: call without variables. User will not be deleted
+        self.hdd_db_handler.delete_user()
+        user = self.hdd_db_handler.get_user(username=test_data.USERNAME)
+        self.assertTrue(user)
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_user_token(self):
+        self.create_user_token_table_and_connection()
+
+        # Check that token created
+        token = self.hdd_db_handler.get_user_token(user_id=test_data.USER_ID)
+        self.assertTrue(token)
+
+        # Delete token
+        self.hdd_db_handler.delete_user_token(user_id=test_data.USER_ID)
+        token = self.hdd_db_handler.get_user_token(user_id=test_data.USER_ID)
+        self.assertTrue(token is None)
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_user_public_key(self):
+        self.create_user_public_keys_table_and_connection()
+
+        # Check that public key created
+        public_key = self.hdd_db_handler.get_user_public_key(user_id=test_data.USER_ID)
+        self.assertTrue(public_key)
+
+        # Delete public key
+        self.hdd_db_handler.delete_user_public_key(user_id=test_data.USER_ID)
+        public_key = self.hdd_db_handler.get_user_public_key(user_id=test_data.USER_ID)
+        self.assertTrue(public_key is None)
+
+    @skipIf(CONDITION, REASON)
+    def test_delete_user_address(self):
+        self.create_user_address_table_and_connection()
+
+        # Check that user address in table
+        result = self.hdd_db_handler.check_user_address(user_id=test_data.USER_ID,
+                                                        user_address=test_data.USER_ADDRESS)
+        self.assertTrue(result)
+
+        # Delete user address
+        self.hdd_db_handler.delete_user_address(user_id=test_data.USER_ID)
+        result = self.hdd_db_handler.check_user_address(user_id=test_data.USER_ID,
+                                                        user_address=test_data.USER_ADDRESS)
+        self.assertFalse(result)
 
     def tearDown(self):
         # Drop all tables in HDD database
