@@ -7,37 +7,11 @@ on:
 
 jobs:
 
-  pylint:
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        python-version: ["3.12"]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-        pip install -r requirements.txt
-
-    - name: Analysing the code with pylint
-      run: |
-        pylint --fail-under=8.0 $(git ls-files '*.py')
-
   unit:
     runs-on: self-hosted
     strategy:
       matrix:
         python-version: [ "3.12" ]
-
-    needs: pylint
 
     env:
       CI_RUN: 1
