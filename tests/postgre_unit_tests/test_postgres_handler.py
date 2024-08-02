@@ -308,6 +308,44 @@ class TestPostgres(TestCase):
         else:
             self.fail('Message data not found.')
 
+    @skipIf(CONDITION, REASON)
+    def test_insert_messages(self):
+        # Create user, messages tables
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_messages_table()
+
+        # Create users
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME,
+                                        phone_number=test_data.PHONE_NUMBER,
+                                        password=test_data.PASSWORD)
+        self.hdd_db_handler.insert_user(username=test_data.USERNAME_2,
+                                        phone_number=test_data.PHONE_NUMBER_2,
+                                        password=test_data.PASSWORD)
+
+        # Create message list for users
+        test_message = [test_data.USER_ID, test_data.USER_ID_2, test_data.USERNAME,
+                        'test message', datetime.now()]
+        test_messages = [test_message]
+        self.hdd_db_handler.insert_messages(messages=test_messages)
+
+        # Get message data
+        query = 'SELECT * FROM messages;'
+        result = self.hdd_db_handler.cursor_execute(query, ())
+
+        # Check query result
+        if result := result.fetchall():
+            (message_id, user_sender_id, user_receiver_id, sender_username, message,
+             receive_date) = result[0]
+
+            self.assertEqual(user_sender_id, test_data.USER_ID)
+            self.assertEqual(user_receiver_id, test_data.USER_ID_2)
+            self.assertEqual(sender_username, test_data.USERNAME)
+            self.assertEqual(message, test_message[3])
+            self.assertTrue(isinstance(receive_date, datetime))
+
+        else:
+            self.fail('Message data not found.')
+
     def tearDown(self):
         # Drop all tables in HDD database
         query = "select 'drop table if exists "' || tablename || '" cascade;' from pg_tables;"
