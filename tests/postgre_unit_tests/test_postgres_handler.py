@@ -62,6 +62,8 @@ class TestPostgres(TestCase):
 
     def setUp(self):
         self.hdd_db_handler = PostgresHandler(host=self.postgres_host)
+        query = 'GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;'
+        self.hdd_db_handler.cursor_with_commit(query, ())
 
     def create_user_table_and_user(self, user_number=1):
         # Create table and user
@@ -78,6 +80,14 @@ class TestPostgres(TestCase):
         # Create address table and user address
         self.hdd_db_handler.create_address_table()
         self.hdd_db_handler.insert_address(user_address=test_data.USER_ADDRESS)
+
+    def create_user_address_table_and_connection(self):
+        # Create user, address, user_address tables and
+        # user, address items, and connection between them
+        self.create_user_table_and_user()
+        self.create_address_table_and_address()
+        self.hdd_db_handler.insert_user_address(user_id=test_data.USER_ID,
+                                                user_address=test_data.USER_ADDRESS)
 
     def check_message(self, result, test_message):
         if result := result.fetchone():
@@ -101,6 +111,7 @@ class TestPostgres(TestCase):
 
     @skipIf(CONDITION, REASON)
     def test_create_messages_table(self):
+        self.hdd_db_handler.create_users_table()  # related to "users" tables
         self.hdd_db_handler.create_messages_table()
 
         query = 'SELECT EXISTS(SELECT relname FROM pg_class WHERE relname = %s)'
@@ -119,6 +130,8 @@ class TestPostgres(TestCase):
 
     @skipIf(CONDITION, REASON)
     def test_create_user_address_table(self):
+        self.hdd_db_handler.create_users_table()  # related to "users" tables
+        self.hdd_db_handler.create_address_table()  # related to "address" tables
         self.hdd_db_handler.create_user_address_table()
 
         query = 'SELECT EXISTS(SELECT relname FROM pg_class WHERE relname = %s)'
@@ -128,6 +141,7 @@ class TestPostgres(TestCase):
 
     @skipIf(CONDITION, REASON)
     def test_create_tokens_table(self):
+        self.hdd_db_handler.create_users_table()  # related to "users" tables
         self.hdd_db_handler.create_tokens_table()
 
         query = 'SELECT EXISTS(SELECT relname FROM pg_class WHERE relname = %s)'
@@ -137,6 +151,7 @@ class TestPostgres(TestCase):
 
     @skipIf(CONDITION, REASON)
     def test_create_public_keys_table(self):
+        self.hdd_db_handler.create_users_table()  # related to "users" tables
         self.hdd_db_handler.create_public_keys_table()
 
         query = 'SELECT EXISTS(SELECT relname FROM pg_class WHERE relname = %s)'
@@ -340,6 +355,23 @@ class TestPostgres(TestCase):
         # Forth case: pass no variables
         user = self.hdd_db_handler.get_user()
         self.assertTrue(user is None)
+
+    @skipIf(CONDITION, REASON)
+    def test_get_user_address(self):
+        self.hdd_db_handler.create_users_table()
+        self.hdd_db_handler.create_address_table()
+        self.hdd_db_handler.create_user_address_table()
+
+        # First case: no user address in table
+        address_list = self.hdd_db_handler.get_user_address(user_id=test_data.USER_ID)
+        self.assertEqual(address_list, [])
+
+        # Create user, address and connect them
+        self.create_user_address_table_and_connection()
+
+        # Second case: user address in table
+        address_list = self.hdd_db_handler.get_user_address(user_id=test_data.USER_ID)
+        self.assertEqual(address_list, [test_data.USER_ADDRESS])
 
     def tearDown(self):
         # Drop all tables in HDD database
