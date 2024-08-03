@@ -8,7 +8,7 @@ services:
     ports:
       - "5672:5672"
     networks:
-      - backend
+      - backend-prod
     volumes:
       - rabbitmq-prod:/var/lib/rabbitmq
 
@@ -19,7 +19,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - backend
+      - backend-prod
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
@@ -33,7 +33,7 @@ services:
       - rabbitmq
       - postgres
     networks:
-      - backend
+      - backend-prod
     environment:
       SERVICE_NAME: listener-1
     volumes:
@@ -48,7 +48,7 @@ services:
       - rabbitmq
       - postgres
     networks:
-      - backend
+      - backend-prod
     environment:
       SERVICE_NAME: listener-2
     volumes:
@@ -63,7 +63,7 @@ services:
       - rabbitmq
       - postgres
     networks:
-      - backend
+      - backend-prod
     environment:
       SERVICE_NAME: sender-1
     volumes:
@@ -78,7 +78,7 @@ services:
       - rabbitmq
       - postgres
     networks:
-      - backend
+      - backend-prod
     environment:
       SERVICE_NAME: sender-2
     volumes:
@@ -95,11 +95,11 @@ services:
     ports:
       - "5000:5000"
     networks:
-      - backend
+      - backend-prod
     command: sh -c "sleep 15 && nginx -g 'daemon off;'"
 
 networks:
-  backend:
+  backend-prod:
     driver: bridge
 
 volumes:

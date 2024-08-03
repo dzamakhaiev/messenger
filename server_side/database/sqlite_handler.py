@@ -1,7 +1,6 @@
 import sqlite3
 from threading import Lock
 from logger.logger import Logger
-
 database_logger = Logger('sqlite')
 global_lock = Lock()
 
@@ -183,7 +182,7 @@ class RAMDatabaseHandler:
         if self.conn and self.cursor:
             self.cursor.close()
             self.conn.close()
-        database_logger.info(' SQLite Connection closed.')
+        database_logger.info('SQLite Connection closed.')
 
 
 if __name__ == '__main__':

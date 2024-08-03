@@ -3,38 +3,21 @@ import json
 from time import sleep
 from threading import Thread
 from unittest import TestCase, skipIf
-from docker import from_env
-from docker.errors import DockerException
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
+from scripts.get_container_info import docker_is_running, container_is_running
 from server_side.broker.mq_handler import RabbitMQHandler
 from logger.logger import Logger
 
 
 rabbitmq_test_logger = Logger('rabbitmq_test_logger')
-
-
-try:
-    # Check docker is running
-    docker = from_env()
-    docker_running = True
-    rabbitmq_running = False
-
-    # Check RabbitMQ container is running
-    containers = docker.containers.list()
-    containers = [container.name for container in containers]
-    if 'rabbitmq-ci' in containers:
-        rabbitmq_running = True
-
-except DockerException as e:
-    docker_running = False
-    rabbitmq_running = False
-
-
 RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
 CI_RUN = int(os.environ.get('CI_RUN', 0))
-CONDITION = not (docker_running and rabbitmq_running)
-REASON = 'Docker/rabbitmq container is not running'
+CONTAINER_NAME = 'rabbitmq-ci' if CI_RUN else 'rabbitmq'
+DOCKER_RUNNING = docker_is_running()
+CONTAINER_RUNNING = container_is_running(CONTAINER_NAME)
+CONDITION = not (DOCKER_RUNNING and CONTAINER_RUNNING)
+REASON = f'Docker/{CONTAINER_NAME} container is not running'
 WAIT_MESSAGE_TIME = 0.3
 
 rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'
@@ -45,27 +28,8 @@ rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'
 
 class TestRabbitMQ(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-
-        if RUN_INSIDE_DOCKER and CI_RUN:
-            client = docker.from_env()
-            container = client.containers.get('rabbitmq-ci')
-            container_info = container.attrs
-
-            networks = container_info.get('NetworkSettings').get('Networks')
-            bridge_network = networks.get('bridge')
-            ip_address = bridge_network.get('IPAddress')
-            cls.rabbitmq_host = ip_address
-
-        else:
-            cls.rabbitmq_host = 'localhost'
-
-        rabbitmq_test_logger.info(f'Container RabbitMQ runs on IP {cls.rabbitmq_host}')
-
     def setUp(self):
-        connect_uri = f'amqp://guest:guest@{self.rabbitmq_host}:{5672}/%2F'
-        self.mq_handler = RabbitMQHandler(connect_uri=connect_uri)
+        self.mq_handler = RabbitMQHandler()
         self.exchange_name = 'TestExchange'
         self.queue_name = 'TestQueue'
 
