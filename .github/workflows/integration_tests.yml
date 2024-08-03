@@ -74,7 +74,7 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
+          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci --rmi local
 
       - name: Remove docker network
         if: always()
