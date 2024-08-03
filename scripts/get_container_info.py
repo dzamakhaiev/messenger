@@ -1,6 +1,6 @@
 import os
 from docker import from_env
-from docker.errors import NotFound
+from docker.errors import NotFound, DockerException
 from logger.logger import Logger
 
 
@@ -15,8 +15,12 @@ def get_container_host(container_name: str):
     ci_run = int(os.environ.get('CI_RUN', 0))
     docker_logger.info(f'Run inside docker: {run_inside_docker}\n'
                        f'Continuous Integration: {ci_run}\n')
+    try:
+        docker = from_env()
+    except DockerException as e:
+        docker_logger.error(f'Cannot connect with Docker: {e}')
+        return
 
-    docker = from_env()
     if docker.ping():
         docker_logger.info('Docker is running.')
     else:

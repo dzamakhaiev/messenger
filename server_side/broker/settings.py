@@ -8,6 +8,8 @@ CONTAINER_NAME = 'rabbitmq'
 CONTAINER_NAME = CONTAINER_NAME + '-ci' if CI_RUN else CONTAINER_NAME
 
 MQ_HOST = get_container_host(CONTAINER_NAME)
+if MQ_HOST is None:
+    MQ_HOST = CONTAINER_NAME
 MQ_PORT = 5672
 CONNECT_URI = f'amqp://guest:guest@{MQ_HOST}:{MQ_PORT}/%2F'
 MQ_DELIVERY_MODE = 2  # Persistent mode saves messages on HDD in case of crash

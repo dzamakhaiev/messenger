@@ -8,6 +8,8 @@ CONTAINER_NAME = 'postgres'
 CONTAINER_NAME = CONTAINER_NAME + '-ci' if CI_RUN else CONTAINER_NAME
 
 DB_HOST = get_container_host(CONTAINER_NAME)
+if DB_HOST is None:
+    DB_HOST = CONTAINER_NAME
 DB_PORT = 5432
 DB_NAME = 'postgres'
 DB_USER = 'postgres'
