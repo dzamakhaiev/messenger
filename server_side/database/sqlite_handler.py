@@ -1,7 +1,6 @@
 import sqlite3
 from threading import Lock
 from logger.logger import Logger
-from scripts.get_container_host import get_container_host
 database_logger = Logger('sqlite')
 global_lock = Lock()
 
