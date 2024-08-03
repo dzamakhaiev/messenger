@@ -26,9 +26,8 @@ def get_container_host(container_name: str):
     # Check that container is running
     # Get container network settings
     try:
-
-        docker_logger.info(f'Container "{container_name}" is running.')
         container = docker.containers.get(container_name)
+        docker_logger.info(f'Container "{container_name}" is running.')
         container_info = container.attrs
         networks = container_info.get('NetworkSettings').get('Networks')
         docker_logger.debug(f'Networks found:\n"{networks}"')
@@ -57,6 +56,26 @@ def get_container_host(container_name: str):
     else:
         docker_logger.info(f'Container "{container_name}" is running locally.')
         return 'localhost'
+
+
+def docker_is_running():
+    docker = from_env()
+    return docker.ping()
+
+
+def container_is_running(container_name: str):
+    docker = from_env()
+    if docker.ping():
+        try:
+            docker_logger.info(f'Container "{container_name}" is running.')
+            docker.containers.get(container_name)
+            return True
+
+        except NotFound:
+            docker_logger.info(f'Container "{container_name}" is not running.')
+            return False
+
+    return False
 
 
 if __name__ == '__main__':

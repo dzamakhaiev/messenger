@@ -1,16 +1,29 @@
+import os
 import json
-from unittest import TestCase, mock
+from unittest import TestCase, mock, skipIf
 from pika.channel import Channel
 from pika.spec import Basic, BasicProperties
-from server_side.app.sender import process_message, process_login
+from scripts.get_container_info import docker_is_running, container_is_running
 from server_side.app import settings
 from tests import test_data
 
 
-class TestSender(TestCase):
+RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
+CI_RUN = int(os.environ.get('CI_RUN', 0))
+CONTAINER_NAME = 'rabbitmq-ci' if CI_RUN else 'rabbitmq'
+DOCKER_RUNNING = docker_is_running()
+CONTAINER_RUNNING = container_is_running(CONTAINER_NAME)
+CONDITION = not (DOCKER_RUNNING and CONTAINER_RUNNING)
+REASON = f'Docker/{CONTAINER_NAME} container is not running'
 
-    def setUp(self):
-        self.mock_response = mock.Mock()
+CONTAINER_NAME2 = 'postgres-ci' if CI_RUN else 'postgres'
+DOCKER_RUNNING2 = docker_is_running()
+CONTAINER_RUNNING2 = container_is_running(CONTAINER_NAME2)
+CONDITION2 = not (DOCKER_RUNNING2 and CONTAINER_RUNNING2)
+REASON2 = f'Docker/{CONTAINER_NAME2} container is not running'
+
+
+class TestSender(TestCase):
 
     @staticmethod
     def create_message_json():
@@ -29,7 +42,10 @@ class TestSender(TestCase):
                 test_data.USER_MESSAGE_JSON.get('message'),
                 test_data.USER_MESSAGE_JSON.get('send_date'))
 
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
     def test_process_message(self):
+        from server_side.app.sender import process_message
 
         # Mock RabbitMQ objects
         channel = mock.Mock(spec=Channel)
@@ -65,8 +81,11 @@ class TestSender(TestCase):
         except ValueError as e:
             self.assertTrue(isinstance(e, (BaseException,)))
 
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
     @mock.patch('server_side.app.service.Service.get_messages')
     def test_process_login(self, mock_get_messages):
+        from server_side.app.sender import process_login
 
         # Mock RabbitMQ objects
         channel = mock.Mock(spec=Channel)

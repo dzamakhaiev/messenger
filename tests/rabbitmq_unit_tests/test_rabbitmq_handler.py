@@ -3,10 +3,9 @@ import json
 from time import sleep
 from threading import Thread
 from unittest import TestCase, skipIf
-from docker import from_env
-from docker.errors import DockerException
 from pika import BlockingConnection
 from pika.adapters.blocking_connection import BlockingChannel
+from scripts.get_container_info import docker_is_running, container_is_running
 from server_side.broker.mq_handler import RabbitMQHandler
 from logger.logger import Logger
 
@@ -14,28 +13,11 @@ from logger.logger import Logger
 rabbitmq_test_logger = Logger('rabbitmq_test_logger')
 RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
 CI_RUN = int(os.environ.get('CI_RUN', 0))
-
-
-try:
-    # Check docker is running
-    docker = from_env()
-    docker_running = True
-    rabbitmq_running = False
-
-    # Check RabbitMQ container is running
-    containers = docker.containers.list()
-    containers = [container.name for container in containers]
-    container_name = 'rabbitmq-ci' if CI_RUN else 'rabbitmq'
-    if container_name in containers:
-        rabbitmq_running = True
-
-except DockerException as e:
-    docker_running = False
-    rabbitmq_running = False
-
-
-CONDITION = not (docker_running and rabbitmq_running)
-REASON = 'Docker/rabbitmq container is not running'
+CONTAINER_NAME = 'rabbitmq-ci' if CI_RUN else 'rabbitmq'
+DOCKER_RUNNING = docker_is_running()
+CONTAINER_RUNNING = container_is_running(CONTAINER_NAME)
+CONDITION = not (DOCKER_RUNNING and CONTAINER_RUNNING)
+REASON = f'Docker/{CONTAINER_NAME} container is not running'
 WAIT_MESSAGE_TIME = 0.3
 
 rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'

@@ -1,39 +1,24 @@
 import os
 from datetime import datetime
 from unittest import TestCase, skipIf
-from docker import from_env
-from docker.errors import DockerException
 from server_side.database.postgres_handler import PostgresHandler
+from scripts.get_container_info import docker_is_running, container_is_running
 from logger.logger import Logger
 from tests import test_data
 
 
 postgres_test_logger = Logger('postgres_test_logger')
+
+
 RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
 CI_RUN = int(os.environ.get('CI_RUN', 0))
-
-
-try:
-    # Check docker is running
-    docker = from_env()
-    docker_running = True
-    postgres_running = False
-
-    # Check Postgres container is running
-    containers = docker.containers.list()
-    containers = [container.name for container in containers]
-    container_name = 'postgres-ci' if CI_RUN else 'postgres'
-    if container_name in containers:
-        postgres_running = True
-
-except DockerException as e:
-    docker_running = False
-    postgres_running = False
-
-
-CONDITION = not (docker_running and postgres_running)
-REASON = 'Docker/postgres container is not running'
+CONTAINER_NAME = 'postgres-ci' if CI_RUN else 'postgres'
+DOCKER_RUNNING = docker_is_running()
+CONTAINER_RUNNING = container_is_running(CONTAINER_NAME)
+CONDITION = not (DOCKER_RUNNING and CONTAINER_RUNNING)
+REASON = f'Docker/{CONTAINER_NAME} container is not running'
 WAIT_MESSAGE_TIME = 0.3
+
 
 postgres_test_logger.info(f'Postgres unit tests.\n'
                           f'Run inside docker: {RUN_INSIDE_DOCKER}\n'
