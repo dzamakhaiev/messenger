@@ -183,7 +183,7 @@ class RAMDatabaseHandler:
         if self.conn and self.cursor:
             self.cursor.close()
             self.conn.close()
-        database_logger.info(' SQLite Connection closed.')
+        database_logger.info('SQLite Connection closed.')
 
 
 if __name__ == '__main__':
