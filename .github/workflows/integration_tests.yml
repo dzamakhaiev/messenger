@@ -42,6 +42,9 @@ jobs:
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
 
+      - name: Build Docker images
+        run: docker compose -f ./messenger-ci.yaml build --no-cache
+
       - name: Run messenger application
         run: |
           docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
