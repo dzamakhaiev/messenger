@@ -9,6 +9,7 @@ RUN mkdir /messenger
 WORKDIR /messenger
 COPY ./server_side/app/ /messenger/server_side/app/
 COPY ./scripts/ /messenger/scripts/
+COPY ./logger/ /messenger/logger/
 COPY ./requirements.txt /messenger/requirements.txt
 RUN pip3 install -r requirements.txt --break-system-packages
 WORKDIR /messenger/server_side/app/
