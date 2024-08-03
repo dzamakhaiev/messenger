@@ -48,8 +48,10 @@ def get_container_host(container_name: str):
         return container_name + '-ci'
 
     # Define container hostname for default bridge network
-    elif network := networks.get('bridge') and run_inside_docker and ci_run:
+    elif networks.get('bridge') and run_inside_docker and ci_run:
         docker_logger.info(f'Container "{container_name}" is outside prod and ci networks.')
+        network = networks.get('bridge')
+        docker_logger.debug(f'Network: "{network}"')
         return network.get('IPAddress')
 
     else:
