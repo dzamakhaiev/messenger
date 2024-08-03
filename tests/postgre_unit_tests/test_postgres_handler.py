@@ -9,6 +9,8 @@ from tests import test_data
 
 
 postgres_test_logger = Logger('postgres_test_logger')
+RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
+CI_RUN = int(os.environ.get('CI_RUN', 0))
 
 
 try:
@@ -20,7 +22,8 @@ try:
     # Check Postgres container is running
     containers = docker.containers.list()
     containers = [container.name for container in containers]
-    if 'postgres-ci' in containers:
+    container_name = 'postgres-ci' if CI_RUN else 'postgres'
+    if container_name in containers:
         postgres_running = True
 
 except DockerException as e:
@@ -28,8 +31,6 @@ except DockerException as e:
     postgres_running = False
 
 
-RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
-CI_RUN = int(os.environ.get('CI_RUN', 0))
 CONDITION = not (docker_running and postgres_running)
 REASON = 'Docker/postgres container is not running'
 WAIT_MESSAGE_TIME = 0.3
@@ -42,26 +43,8 @@ postgres_test_logger.info(f'Postgres unit tests.\n'
 
 class TestPostgres(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-
-        if RUN_INSIDE_DOCKER and CI_RUN:
-            client = docker.from_env()
-            container = client.containers.get('postgres-ci')
-            container_info = container.attrs
-
-            networks = container_info.get('NetworkSettings').get('Networks')
-            bridge_network = networks.get('bridge')
-            ip_address = bridge_network.get('IPAddress')
-            cls.postgres_host = ip_address
-
-        else:
-            cls.postgres_host = 'localhost'
-
-        postgres_test_logger.info(f'Container Postgres runs on IP {cls.postgres_host}')
-
     def setUp(self):
-        self.hdd_db_handler = PostgresHandler(host=self.postgres_host)
+        self.hdd_db_handler = PostgresHandler()
         query = 'GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;'
         self.hdd_db_handler.cursor_with_commit(query, ())
 

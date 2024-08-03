@@ -12,6 +12,8 @@ from logger.logger import Logger
 
 
 rabbitmq_test_logger = Logger('rabbitmq_test_logger')
+RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
+CI_RUN = int(os.environ.get('CI_RUN', 0))
 
 
 try:
@@ -23,7 +25,8 @@ try:
     # Check RabbitMQ container is running
     containers = docker.containers.list()
     containers = [container.name for container in containers]
-    if 'rabbitmq-ci' in containers:
+    container_name = 'rabbitmq-ci' if CI_RUN else 'rabbitmq'
+    if container_name in containers:
         rabbitmq_running = True
 
 except DockerException as e:
@@ -31,8 +34,6 @@ except DockerException as e:
     rabbitmq_running = False
 
 
-RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
-CI_RUN = int(os.environ.get('CI_RUN', 0))
 CONDITION = not (docker_running and rabbitmq_running)
 REASON = 'Docker/rabbitmq container is not running'
 WAIT_MESSAGE_TIME = 0.3
@@ -45,27 +46,8 @@ rabbitmq_test_logger.info(f'RabbitMQ unit tests.\n'
 
 class TestRabbitMQ(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-
-        if RUN_INSIDE_DOCKER and CI_RUN:
-            client = docker.from_env()
-            container = client.containers.get('rabbitmq-ci')
-            container_info = container.attrs
-
-            networks = container_info.get('NetworkSettings').get('Networks')
-            bridge_network = networks.get('bridge')
-            ip_address = bridge_network.get('IPAddress')
-            cls.rabbitmq_host = ip_address
-
-        else:
-            cls.rabbitmq_host = 'localhost'
-
-        rabbitmq_test_logger.info(f'Container RabbitMQ runs on IP {cls.rabbitmq_host}')
-
     def setUp(self):
-        connect_uri = f'amqp://guest:guest@{self.rabbitmq_host}:{5672}/%2F'
-        self.mq_handler = RabbitMQHandler(connect_uri=connect_uri)
+        self.mq_handler = RabbitMQHandler()
         self.exchange_name = 'TestExchange'
         self.queue_name = 'TestQueue'
 
