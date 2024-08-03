@@ -41,7 +41,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m unittest discover -s tests -p test_postgres_handler.py -vv
+          python -m unittest discover -s tests -vv
 
       - name: Stop created containers
         if: always()
