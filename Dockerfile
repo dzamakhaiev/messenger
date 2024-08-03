@@ -5,10 +5,10 @@ ENV RUN_INSIDE_DOCKER 1
 ENV PATH=$PATH:/messenger
 RUN apk update
 RUN apk upgrade
-RUN apk add git
-RUN git clone https://github.com/dzamakhaiev/messenger.git
+RUN mkdir /messenger
 WORKDIR /messenger
+COPY ./server_side/app/ /messenger/server_side/app/
+COPY ./scripts/ /messenger/scripts/
+COPY ./requirements.txt /messenger/requirements.txt
 RUN pip3 install -r requirements.txt --break-system-packages
 WORKDIR /messenger/server_side/app/
-#CMD python sender.py
-#CMD gunicorn -w 4 -b 0.0.0.0:5000 'listener:app'

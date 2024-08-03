@@ -34,7 +34,7 @@ services:
 
   listener-ci:
     container_name: listener-ci
-    image: "dzamakhaiev/messenger"
+    build: .
     restart: on-failure
     deploy:
       restart_policy:
@@ -57,7 +57,7 @@ services:
 
   sender-ci:
     container_name: sender-ci
-    image: "dzamakhaiev/messenger"
+    build: .
     restart: on-failure
     deploy:
       restart_policy:
