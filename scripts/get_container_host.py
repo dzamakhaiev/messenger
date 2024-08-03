@@ -26,10 +26,12 @@ def get_container_host(container_name: str):
     # Check that container is running
     # Get container network settings
     try:
+
         docker_logger.info(f'Container "{container_name}" is running.')
         container = docker.containers.get(container_name)
         container_info = container.attrs
         networks = container_info.get('NetworkSettings').get('Networks')
+        docker_logger.debug(f'Networks found:\n"{networks}"')
 
     except NotFound:
         docker_logger.info(f'Container "{container_name}" is not running.')
