@@ -63,6 +63,7 @@ jobs:
       - name: Run unit tests
         shell: bash
         run: |
+          cd messenger-tests
           echo "$PWD"
           python -m unittest discover -s integration -vv
 
@@ -80,7 +81,7 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci --rmi local
+          docker compose -f ./messenger-ci.yaml down --rmi local
 
       - name: Remove docker network
         if: always()
