@@ -102,6 +102,10 @@ services:
       - bridge
     command: sh -c "sleep 20 && nginx -g 'daemon off;'"
 
+networks:
+  bridge:
+    external: true
+
 volumes:
   logs-ci:
   postgres-ci:
