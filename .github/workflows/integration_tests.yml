@@ -6,6 +6,9 @@ on:
       - master
       - develop
 
+  workflow_call:
+    inputs: {}
+
 jobs:
 
   integration:
