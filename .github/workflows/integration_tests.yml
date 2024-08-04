@@ -73,3 +73,7 @@ jobs:
       - name: Remove docker network
         if: always()
         run: docker network rm backend-ci
+
+      - name: Remove docker dangling images
+        if: always()
+        run: docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
