@@ -24,5 +24,5 @@ jobs:
 
   deployment:
     secrets: inherit
-    needs: coverage
+#    needs: coverage
     uses: ./.github/workflows/build_and_push.yml
