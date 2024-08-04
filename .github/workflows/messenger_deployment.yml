@@ -9,7 +9,7 @@ on:
 jobs:
 
   pylint:
-    uses: ./.github/workflows/pylint.yml
+    uses: ./.github/workflows/pylint_report.yml
 
   unit:
     needs: pylint
@@ -21,7 +21,7 @@ jobs:
 
   coverage:
     needs: integration
-    uses: ./.github/workflows/codecov_badge.yml
+    uses: ./.github/workflows/coverage_report.yml
 
   deployment:
     needs: coverage
