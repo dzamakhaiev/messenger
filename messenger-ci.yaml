@@ -34,7 +34,10 @@ services:
 
   listener-ci:
     container_name: listener-ci
-    image: "dzamakhaiev/messenger"
+    build:
+      context: .
+      no_cache: true
+      dockerfile: Dockerfile
     restart: on-failure
     deploy:
       restart_policy:
@@ -53,11 +56,14 @@ services:
       SERVICE_NAME: listener-ci
     volumes:
       - logs-ci:/messenger/logs
-    command: sh -c "git fetch && git pull && git checkout $BRANCH_NAME && sleep 10 && python listener.py"
+    command: sh -c "sleep 10 && python listener.py"
 
   sender-ci:
     container_name: sender-ci
-    image: "dzamakhaiev/messenger"
+    build:
+      context: .
+      no_cache: true
+      dockerfile: Dockerfile
     restart: on-failure
     deploy:
       restart_policy:
@@ -76,7 +82,7 @@ services:
       BRANCH_NAME: $BRANCH_NAME
     volumes:
       - logs-ci:/messenger/logs
-    command: sh -c "git fetch && git pull && git checkout $BRANCH_NAME && sleep 10 && python sender.py"
+    command: sh -c "sleep 10 && python sender.py"
 
   nginx-ci:
     container_name: nginx-ci

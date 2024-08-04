@@ -3,7 +3,10 @@ name: Integration tests workflow
 on:
   pull_request:
     branches:
-      - master
+      - develop
+
+  workflow_call:
+    inputs: {}
 
 jobs:
 
@@ -15,6 +18,7 @@ jobs:
 
     env:
       CI_RUN: 1
+      RUN_INSIDE_DOCKER: 1
       BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
@@ -25,34 +29,28 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Show branch name
-        run: |
-          echo $BRANCH_NAME
+        run: echo $BRANCH_NAME
 
       - name: Create docker network
-        run: |
-          docker network create --subnet=172.29.152.0/24 backend-ci
-      
+        run: docker network create --subnet=172.29.152.0/24 backend-ci
+
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
+
+      - name: Build Docker images
+        run: docker compose -f ./messenger-ci.yaml build --no-cache
 
       - name: Run messenger application
         run: |
           docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
 
       - name: Wait until all services are started
-        run: |
-          python scripts/wait_for_all_services.py
+        run: python scripts/wait_for_all_services.py
 
       - name: Run integration tests
         shell: bash
         run: |
-          echo $BRANCH_NAME
           docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
           sh scripts/check_exit_code.sh
 
@@ -69,10 +67,16 @@ jobs:
 
       - name: Close messenger application
         if: always()
-        run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
+        run: docker compose -f ./messenger-ci.yaml down --rmi local
 
       - name: Remove docker network
         if: always()
+        run: docker network rm backend-ci
+
+      - name: Remove docker dangling images
+        shell: bash
+        if: always()
         run: |
-          docker network rm backend-ci
+          if $(docker images --filter "dangling=true" -q --no-trunc | grep -q .); then
+                docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+          fi

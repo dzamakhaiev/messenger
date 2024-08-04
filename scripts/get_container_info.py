@@ -48,7 +48,7 @@ def get_container_host(container_name: str):
     # Define container hostname for ci network
     elif networks.get('backend-ci') and run_inside_docker and ci_run:
         docker_logger.info(f'Container "{container_name}" is in ci network.')
-        return container_name + '-ci'
+        return container_name
 
     # Define container hostname for default bridge network
     elif networks.get('bridge') and run_inside_docker and ci_run:
