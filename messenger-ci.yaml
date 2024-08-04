@@ -10,6 +10,8 @@ services:
         delay: 5s
         max_attempts: 3
         window: 60s
+    ports:
+      - "5672:5672"
     network_mode: bridge
     volumes:
       - rabbitmq-ci:/var/lib/rabbitmq
@@ -24,6 +26,8 @@ services:
         delay: 5s
         max_attempts: 3
         window: 60s
+    ports:
+      - "5432:5432"
     network_mode: bridge
     environment:
       POSTGRES_PASSWORD: postgres
