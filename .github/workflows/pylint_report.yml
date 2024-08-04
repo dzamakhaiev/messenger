@@ -3,7 +3,6 @@ name: Pylint workflow
 on:
   pull_request:
     branches:
-      - master
       - develop
 
   workflow_call:
