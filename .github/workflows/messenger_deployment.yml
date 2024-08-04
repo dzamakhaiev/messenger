@@ -7,22 +7,22 @@ on:
 
 jobs:
 
-#  pylint:
-#    uses: ./.github/workflows/pylint_report.yml
-#
-#  unit:
-#    needs: pylint
-#    uses: ./.github/workflows/unit_tests.yml
-#
-#  integration:
-#    needs: unit
-#    uses: ./.github/workflows/integration_tests.yml
-#
-#  coverage:
-#    needs: integration
-#    uses: ./.github/workflows/coverage_report.yml
+  pylint:
+    uses: ./.github/workflows/pylint_report.yml
+
+  unit:
+    needs: pylint
+    uses: ./.github/workflows/unit_tests.yml
+
+  integration:
+    needs: unit
+    uses: ./.github/workflows/integration_tests.yml
+
+  coverage:
+    needs: integration
+    uses: ./.github/workflows/coverage_report.yml
 
   deployment:
     secrets: inherit
-#    needs: coverage
+    needs: coverage
     uses: ./.github/workflows/build_and_push.yml
