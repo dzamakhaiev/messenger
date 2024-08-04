@@ -22,3 +22,7 @@ jobs:
   coverage:
     needs: integration
     uses: ./.github/workflows/codecov_badge.yml
+
+  deployment:
+    needs: coverage
+    uses: ./.github/workflows/build_and_push.yml
