@@ -6,9 +6,13 @@ on:
       - master
 
   workflow_call:
-   secrets:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    secrets:
+      username:
+        description: 'Docker hub username.'
+        required: true
+      password:
+        description: 'Docker hub token.'
+        required: true
 
 jobs:
 
