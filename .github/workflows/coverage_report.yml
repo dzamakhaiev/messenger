@@ -1,4 +1,4 @@
-name: Coverage report for master branch
+name: Coverage report
 
 on:
   push:

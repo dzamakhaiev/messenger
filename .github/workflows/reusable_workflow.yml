@@ -1,4 +1,4 @@
-name: Reusable tests workflow
+name: Main deployment workflow
 
 on:
   pull_request:
@@ -16,70 +16,9 @@ jobs:
     uses: ./.github/workflows/unit_tests.yml
 
   integration:
-    runs-on: self-hosted
     needs: unit
-    strategy:
-      matrix:
-        python-version: [ "3.12" ]
+    uses: ./.github/workflows/integration_tests.yml
 
-    env:
-      CI_RUN: 1
-      RUN_INSIDE_DOCKER: 1
-      BRANCH_NAME: ${{ github.head_ref }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Show branch name
-        run: |
-          echo $BRANCH_NAME
-
-      - name: Create docker network
-        run: |
-          docker network create --subnet=172.29.152.0/24 backend-ci
-
-      - name: Force pull Docker images
-        run: docker compose -f ./messenger-ci.yaml pull
-
-      - name: Build Docker images
-        run: docker compose -f ./messenger-ci.yaml build --no-cache
-
-      - name: Run messenger application
-        run: |
-          docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
-
-      - name: Wait until all services are started
-        run: |
-          python scripts/wait_for_all_services.py
-
-      - name: Run integration tests
-        shell: bash
-        run: |
-          docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
-          sh scripts/check_exit_code.sh
-
-      - name: Collect docker containers logs
-        run: |
-          docker cp listener-ci:/messenger/logs ./logs
-          docker cp sender-ci:/messenger/logs ./logs
-
-      - name: Upload logs as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: messenger-logs-ci
-          path: ./logs
-
-      - name: Close messenger application
-        if: always()
-        run: |
-          docker compose -f ./messenger-ci.yaml down --rmi local
-
-      - name: Remove docker network
-        if: always()
-        run: |
-          docker network rm backend-ci
+  coverage:
+    needs: integration
+    uses: ./.github/workflows/codecov_badge.yml
