@@ -10,7 +10,7 @@ on:
 
 jobs:
 
-  unit:
+  coverage:
     runs-on: self-hosted
     strategy:
       matrix:
