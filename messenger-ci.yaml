@@ -74,6 +74,8 @@ services:
     depends_on:
       - rabbitmq-ci
       - postgres-ci
+    ports:
+      - "5000:5000"
     networks:
       - backend-ci
     environment:

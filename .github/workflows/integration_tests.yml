@@ -61,7 +61,7 @@ jobs:
           cd messenger-tests
           pip install -r requirements.txt
 
-      - name: Run unit tests
+      - name: Run integration tests
         shell: bash
         run: |
           cd messenger-tests
