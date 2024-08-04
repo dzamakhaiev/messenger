@@ -10,8 +10,7 @@ services:
         delay: 5s
         max_attempts: 3
         window: 60s
-    networks:
-      - bridge
+    network_mode: bridge
     volumes:
       - rabbitmq-ci:/var/lib/rabbitmq
 
@@ -25,8 +24,7 @@ services:
         delay: 5s
         max_attempts: 3
         window: 60s
-    networks:
-      - bridge
+    network_mode: bridge
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
@@ -48,8 +46,7 @@ services:
     depends_on:
       - rabbitmq-ci
       - postgres-ci
-    networks:
-      - bridge
+    network_mode: bridge
     environment:
       CI_RUN: 1
       BRANCH_NAME: $BRANCH_NAME
@@ -74,8 +71,7 @@ services:
     depends_on:
       - rabbitmq-ci
       - postgres-ci
-    networks:
-      - bridge
+    network_mode: bridge
     environment:
       CI_RUN: 1
       SERVICE_NAME: sender-ci
@@ -98,13 +94,8 @@ services:
       - listener-ci
     ports:
       - "5000:5000"
-    networks:
-      - bridge
+    network_mode: bridge
     command: sh -c "sleep 20 && nginx -g 'daemon off;'"
-
-networks:
-  bridge:
-    external: true
 
 volumes:
   logs-ci:
