@@ -36,6 +36,10 @@ jobs:
         run: |
           echo $BRANCH_NAME
 
+      - name: Create docker network
+        run: |
+          docker network create --subnet=172.29.152.0/24 backend-ci
+
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
 
@@ -44,26 +48,18 @@ jobs:
 
       - name: Run messenger application
         run: |
-          docker compose -f ./messenger-ci.yaml up -d
+          docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
 
       - name: Wait until all services are started
         run: |
           python scripts/wait_for_all_services.py
 
-      - name: Clone integration tests from another repository
-        shell: bash
-        run: |
-          git clone --depth 1 https://github.com/dzamakhaiev/messenger-tests.git
-          cd messenger-tests
-          pip install -r requirements.txt
-
       - name: Run integration tests
         shell: bash
-        timeout-minutes: 1
         run: |
-          cd messenger-tests
-          echo "$PWD"
-          sleep 10
+          echo $BRANCH_NAME
+          docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
+          sh scripts/check_exit_code.sh
 
       - name: Collect docker containers logs
         run: |
@@ -79,4 +75,9 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down --rmi local
+          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
+
+      - name: Remove docker network
+        if: always()
+        run: |
+          docker network rm backend-ci
