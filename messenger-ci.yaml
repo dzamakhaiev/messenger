@@ -94,7 +94,8 @@ services:
       - listener-ci
     ports:
       - "5000:5000"
-    network_mode: bridge    command: sh -c "sleep 20 && nginx -g 'daemon off;'"
+    network_mode: bridge
+    command: sh -c "sleep 20 && nginx -g 'daemon off;'"
 
 volumes:
   logs-ci:
