@@ -53,7 +53,7 @@ jobs:
         run: |
           python scripts/wait_for_all_services.py
 
-      - name: Run integration tests
+      - name: Run integration tests in container
         shell: bash
         run: |
           echo $BRANCH_NAME
