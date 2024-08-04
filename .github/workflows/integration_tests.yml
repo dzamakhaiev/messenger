@@ -57,7 +57,6 @@ jobs:
       - name: Run integration tests
         shell: bash
         run: |
-          echo $BRANCH_NAME
           docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
           sh scripts/check_exit_code.sh
 
@@ -75,7 +74,7 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
+          docker compose -f ./messenger-ci.yaml down --rmi local
 
       - name: Remove docker network
         if: always()
