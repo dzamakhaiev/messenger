@@ -11,12 +11,10 @@ on:
       username:
         required: true
         type: string
-        default: ${{ secrets.DOCKERHUB_USERNAME }}
 
       password:
         required: true
         type: string
-        default: ${{ secrets.DOCKERHUB_TOKEN }}
 
 jobs:
 
