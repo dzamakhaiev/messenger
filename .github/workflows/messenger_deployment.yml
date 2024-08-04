@@ -25,3 +25,6 @@ jobs:
   deployment:
     needs: coverage
     uses: ./.github/workflows/build_and_push.yml
+    with:
+      username: ${{ secrets.DOCKERHUB_USERNAME }}
+      password: ${{ secrets.DOCKERHUB_TOKEN }}
