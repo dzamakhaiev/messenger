@@ -74,5 +74,9 @@ jobs:
         run: docker network rm backend-ci
 
       - name: Remove docker dangling images
+        shell: bash
         if: always()
-        run: docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+        run: |
+          if $(docker images --filter "dangling=true" -q --no-trunc | grep -q .); then
+                docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+          fi
