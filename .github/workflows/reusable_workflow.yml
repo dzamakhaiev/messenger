@@ -1,4 +1,4 @@
-name: Integration tests workflow
+name: Reusable tests workflow
 
 on:
   pull_request:

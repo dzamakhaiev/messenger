@@ -28,12 +28,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Show branch name
-        run: |
-          echo $BRANCH_NAME
+        run: echo $BRANCH_NAME
 
       - name: Create docker network
-        run: |
-          docker network create --subnet=172.29.152.0/24 backend-ci
+        run: docker network create --subnet=172.29.152.0/24 backend-ci
 
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
@@ -46,8 +44,7 @@ jobs:
           docker compose -f ./messenger-ci.yaml up nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci -d
 
       - name: Wait until all services are started
-        run: |
-          python scripts/wait_for_all_services.py
+        run: python scripts/wait_for_all_services.py
 
       - name: Run integration tests
         shell: bash
@@ -68,10 +65,8 @@ jobs:
 
       - name: Close messenger application
         if: always()
-        run: |
-          docker compose -f ./messenger-ci.yaml down --rmi local
+        run: docker compose -f ./messenger-ci.yaml down --rmi local
 
       - name: Remove docker network
         if: always()
-        run: |
-          docker network rm backend-ci
+        run: docker network rm backend-ci
