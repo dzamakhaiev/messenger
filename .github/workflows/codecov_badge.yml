@@ -26,9 +26,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r tests/requirements.txt
 
       - name: Run docker containers for unit tests
         run: |
@@ -40,8 +38,7 @@ jobs:
           python scripts/wait_for_all_services.py rabbitmq-ci postgres-ci
 
       - name: Run unit tests
-        run: |
-          python -m unittest discover -s tests -vv
+        run: python -m unittest discover -s tests -vv
 
       - name: Generate coverage report
         run: |
@@ -57,10 +54,8 @@ jobs:
           flags: unittests
 
       - name: Remove coverage report
-        run: |
-          rm coverage.xml && rm .coverage
+        run: rm coverage.xml && rm .coverage
 
       - name: Stop created containers
         if: always()
-        run: |
-          docker stop rabbitmq-ci postgres-ci
+        run: docker stop rabbitmq-ci postgres-ci
