@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - develop
 
 jobs:
 
@@ -15,6 +16,7 @@ jobs:
 
     env:
       CI_RUN: 1
+      RUN_INSIDE_DOCKER: 1
       BRANCH_NAME: ${{ github.head_ref }}
 
     steps:
@@ -25,11 +27,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Show branch name
         run: |
           echo $BRANCH_NAME
@@ -37,9 +34,12 @@ jobs:
       - name: Create docker network
         run: |
           docker network create --subnet=172.29.152.0/24 backend-ci
-      
+
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
+
+      - name: Build Docker images
+        run: docker compose -f ./messenger-ci.yaml build --no-cache
 
       - name: Run messenger application
         run: |
@@ -52,7 +52,6 @@ jobs:
       - name: Run integration tests
         shell: bash
         run: |
-          echo $BRANCH_NAME
           docker compose -f ./messenger-ci.yaml up integration-ci --exit-code-from integration-ci          
           sh scripts/check_exit_code.sh
 
@@ -70,7 +69,7 @@ jobs:
       - name: Close messenger application
         if: always()
         run: |
-          docker compose -f ./messenger-ci.yaml down nginx-ci listener-ci sender-ci rabbitmq-ci postgres-ci integration-ci
+          docker compose -f ./messenger-ci.yaml down --rmi local
 
       - name: Remove docker network
         if: always()
