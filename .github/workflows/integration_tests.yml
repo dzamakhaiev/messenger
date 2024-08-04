@@ -63,6 +63,7 @@ jobs:
 
       - name: Run integration tests
         shell: bash
+        timeout-minutes: 1
         run: |
           cd messenger-tests
           echo "$PWD"

@@ -74,8 +74,6 @@ services:
     depends_on:
       - rabbitmq-ci
       - postgres-ci
-    ports:
-      - "5000:5000"
     networks:
       - backend-ci
     environment:
@@ -98,6 +96,8 @@ services:
         window: 60s
     depends_on:
       - listener-ci
+    ports:
+      - "5000:5000"
     networks:
       backend-ci:
         ipv4_address: 172.29.152.100
