@@ -11,7 +11,7 @@ services:
         max_attempts: 3
         window: 60s
     networks:
-      - backend-ci
+      - bridge
     volumes:
       - rabbitmq-ci:/var/lib/rabbitmq
 
@@ -26,7 +26,7 @@ services:
         max_attempts: 3
         window: 60s
     networks:
-      - backend-ci
+      - bridge
     environment:
       POSTGRES_PASSWORD: postgres
     volumes:
@@ -49,7 +49,7 @@ services:
       - rabbitmq-ci
       - postgres-ci
     networks:
-      - backend-ci
+      - bridge
     environment:
       CI_RUN: 1
       BRANCH_NAME: $BRANCH_NAME
@@ -75,7 +75,7 @@ services:
       - rabbitmq-ci
       - postgres-ci
     networks:
-      - backend-ci
+      - bridge
     environment:
       CI_RUN: 1
       SERVICE_NAME: sender-ci
@@ -99,13 +99,8 @@ services:
     ports:
       - "5000:5000"
     networks:
-      backend-ci:
-        ipv4_address: 172.29.152.100
+      - bridge
     command: sh -c "sleep 20 && nginx -g 'daemon off;'"
-
-networks:
-  backend-ci:
-    external: true
 
 volumes:
   logs-ci:
