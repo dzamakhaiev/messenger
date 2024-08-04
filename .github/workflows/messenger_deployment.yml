@@ -23,6 +23,7 @@ jobs:
     uses: ./.github/workflows/coverage_report.yml
 
   deployment:
+    secrets: inherit
     needs: coverage
     uses: ./.github/workflows/build_and_push.yml
     with:
