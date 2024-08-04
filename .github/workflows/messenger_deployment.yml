@@ -26,6 +26,4 @@ jobs:
     needs: coverage
     uses: ./.github/workflows/build_and_push.yml
     with:
-      secrets:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      secrets: inherit
