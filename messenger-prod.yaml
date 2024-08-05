@@ -38,7 +38,7 @@ services:
       SERVICE_NAME: listener-1
     volumes:
       - logs-prod:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
+    command: sh -c "sleep 10 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   listener-2:
     container_name: listener-2
@@ -53,7 +53,7 @@ services:
       SERVICE_NAME: listener-2
     volumes:
       - logs-prod:/messenger/server_side/logs
-    command: sh -c "sleep 10 && git pull && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
+    command: sh -c "sleep 10 && gunicorn -w 2 -k gevent -b 0.0.0.0:5000 'listener:app'"
 
   sender-1:
     container_name: sender-1
@@ -68,7 +68,7 @@ services:
       SERVICE_NAME: sender-1
     volumes:
       - logs-prod:/messenger/logs
-    command: sh -c "sleep 10 && git pull && python sender.py"
+    command: sh -c "sleep 10 && python sender.py"
 
   sender-2:
     container_name: sender-2
@@ -83,7 +83,7 @@ services:
       SERVICE_NAME: sender-2
     volumes:
       - logs-prod:/messenger/logs
-    command: sh -c "sleep 10 && git pull && python sender.py"
+    command: sh -c "sleep 10 && python sender.py"
 
   nginx:
     container_name: nginx
