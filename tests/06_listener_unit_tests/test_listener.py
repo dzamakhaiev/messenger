@@ -33,6 +33,9 @@ class TestListener(TestCase):
         cls.users = {}
         cls.user = None
 
+        cls.service.ram_db_handler.create_all_tables()
+        cls.service.hdd_db_handler.create_all_tables()
+
     def create_user(self):
         user = listener.User(**test_data.USER_CREATE_JSON)
         user_id = self.service.create_user(user)
