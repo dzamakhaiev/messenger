@@ -1,14 +1,13 @@
 import os
-import json
-from unittest import TestCase, mock, skipIf
+from unittest import TestCase, skipIf, mock
 from scripts.get_container_info import docker_is_running, container_is_running
-from server_side.database.sqlite_handler import RAMDatabaseHandler
-from server_side.database.postgres_handler import PostgresHandler
-from server_side.broker.mq_handler import RabbitMQHandler
-from server_side.app.service import Service
-from server_side.app.models import User
+from server_side.app import listener
 from server_side.app import settings
 from tests import test_data
+from flask import Flask
+
+
+app = Flask(__name__)
 
 
 RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
@@ -30,22 +29,12 @@ class TestListener(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        hdd_db_handler = PostgresHandler()
-        ram_db_handler = RAMDatabaseHandler()
-        mq_handler = RabbitMQHandler()
-
-        hdd_db_handler.create_all_tables()
-        ram_db_handler.create_all_tables()
-        mq_handler.create_exchange(settings.MQ_EXCHANGE_NAME)
-        mq_handler.create_and_bind_queue(settings.MQ_MSG_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-        mq_handler.create_and_bind_queue(settings.MQ_LOGIN_QUEUE_NAME, settings.MQ_EXCHANGE_NAME)
-
-        cls.service = Service(hdd_db_handler, ram_db_handler, mq_handler)
+        cls.service = listener.service
         cls.users = {}
         cls.user = None
 
     def create_user(self):
-        user = User(**test_data.USER_CREATE_JSON)
+        user = listener.User(**test_data.USER_CREATE_JSON)
         user_id = self.service.create_user(user)
         self.users[user_id] = user
         self.user = user
@@ -72,13 +61,62 @@ class TestListener(TestCase):
     @skipIf(CONDITION2, REASON2)
     def test_create_token(self):
         # Preconditions and test data
-        from server_side.app.listener import create_token
         user_id = self.create_user()
 
         # Create token for created user
-        token = create_token(user_id=user_id, username=self.user.username)
+        token = listener.create_token(user_id=user_id, username=self.user.username)
+        self.assertTrue(token)
+        self.assertTrue(isinstance(token, str))
+
+        # Check that token exists in databases
+        token_db = self.service.get_user_token(user_id=user_id)
+        self.assertEqual(token, token_db)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
+    def test_check_token(self):
+
+        # Preconditions and test data
+        user_id = self.create_user()
+        token = listener.create_token(user_id=user_id, username=self.user.username)
+
+        # Case 1: check_token returns None, None for valid token
+        with app.test_request_context(headers={'Authorization': f'Bearer {token}'}):
+            result_tuple = listener.check_token()
+            self.assertEqual(result_tuple, (None, None))
+
+        # Case 2: check no token
+        with app.test_request_context(headers={'Authorization': ''}):
+            error_tuple = listener.check_token()
+            self.assertEqual(error_tuple, (settings.NOT_AUTHORIZED, 401))
+
+        # Case 3: compare two different, but valid tokes
+        with app.test_request_context(headers={'Authorization': f'Bearer {token}'}):
+            with mock.patch('server_side.app.listener.settings.TOKEN_EXP_MINUTES', 666):
+                self.service.delete_user_token(user_id=user_id)
+                another_token = listener.create_token(user_id=user_id, username=self.user.username)
+            error_tuple = listener.check_token()
+            self.assertEqual(error_tuple, (settings.NOT_AUTHORIZED, 401))
+
+        # Case 4: check expired token
+        with mock.patch('server_side.app.listener.settings.TOKEN_EXP_MINUTES', -60*24):
+            token = listener.create_token(user_id=user_id, username=self.user.username)
+        with app.test_request_context(headers={'Authorization': f'Bearer {token}'}):
+            error_tuple = listener.check_token()
+            self.assertEqual(error_tuple, (settings.INVALID_TOKEN, 401))
+
+        # Case 5: check invalid token
+        with app.test_request_context(headers={'Authorization': 'Bearer invalid_token'}):
+            error_tuple = listener.check_token()
+            self.assertEqual(error_tuple, (settings.INVALID_TOKEN, 401))
 
     def tearDown(self):
         if self.users:
             for user_id in self.users:
                 self.service.delete_user(user_id=user_id)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Drop all tables in HDD database
+        query = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+        # cls.service.hdd_db_handler.cursor_with_commit(query, [])
