@@ -1,5 +1,4 @@
-name: Build and push Messenger
-
+name: Build and push MessCreate
 on:
   pull_request:
     branches:
@@ -36,7 +35,10 @@ jobs:
         shell: bash
         run: docker rm -f listener-1, listener-2, sender-1, sender-2
 
-      - name: Star Messenger application with updated containers
+      - name: Stop Messenger application to update containers
+        run: docker compose -f messenger-prod.yaml start
+
+      - name: Create and start Messenger application with updated containers
         run: docker compose -f messenger-prod.yaml up listener-1, listener-2, sender-1, sender-2 -d
 
       - name: Remove docker dangling images
