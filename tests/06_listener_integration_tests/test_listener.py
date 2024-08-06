@@ -157,6 +157,35 @@ class TestListener(TestCase):
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
+    def test_get_user(self):
+
+        # Case 1: valid user json
+        with self.flask_client as client:
+            response = client.post(routes.USERS,
+                                   data=json.dumps(self.create_user_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 201)
+            self.users[response.json.get('user_id')] = copy(self.create_user_json)
+
+        # Case 2: invalid user json
+        with self.flask_client as client:
+            user_json = copy(self.create_user_json)
+            user_json.pop('password')
+
+            response = client.post(routes.USERS,
+                                   data=json.dumps(user_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+
+        # Case 3: user already exists
+        with self.flask_client as client:
+            response = client.post(routes.USERS,
+                                   data=json.dumps(user_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
     def test_health_check(self):
 
         with self.flask_client as client:
