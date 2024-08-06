@@ -8,9 +8,7 @@ from server_side.app import settings
 from server_side.app import routes
 from tests import test_data
 
-
 app = listener.app
-
 
 RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
 CI_RUN = int(os.environ.get('CI_RUN', 0))
@@ -124,7 +122,7 @@ class TestListener(TestCase):
             self.assertEqual(error_tuple, (settings.NOT_AUTHORIZED, 401))
 
         # Case 4: check expired token
-        with mock.patch('server_side.app.listener.settings.TOKEN_EXP_MINUTES', -60*24):
+        with mock.patch('server_side.app.listener.settings.TOKEN_EXP_MINUTES', -60 * 24):
             token = listener.create_token(user_id=user_id, username=self.user.username)
         with app.test_request_context(headers={'Authorization': f'Bearer {token}'}):
             error_tuple = listener.check_token()
@@ -224,6 +222,50 @@ class TestListener(TestCase):
                                      data=json.dumps({'user_id': user_id}),
                                      content_type='application/json')
             self.assertEqual(response.status_code, 200)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
+    def test_login(self):
+        # Test data
+        self.create_user()
+
+        # Case 1: valid user login json
+        with self.flask_client as client:
+            response = client.post(routes.LOGIN,
+                                   data=json.dumps({'username': self.user.username,
+                                                    'password': self.user.password,
+                                                    'user_address': test_data.USER_ADDRESS,
+                                                    'public_key': test_data.USER_PUBLIC_KEY}),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+
+        # Case 2: invalid user login json
+        with self.flask_client as client:
+            response = client.post(routes.LOGIN,
+                                   data=json.dumps({'username': self.user.username,
+                                                    'password': self.user.password}),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+
+        # Case 3: incorrect password
+        with self.flask_client as client:
+            response = client.post(routes.LOGIN,
+                                   data=json.dumps({'username': self.user.username,
+                                                    'password': 'some password',
+                                                    'user_address': test_data.USER_ADDRESS,
+                                                    'public_key': test_data.USER_PUBLIC_KEY}),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 401)
+
+        # Case 4: incorrect username
+        with self.flask_client as client:
+            response = client.post(routes.LOGIN,
+                                   data=json.dumps({'username': test_data.USERNAME_2,
+                                                    'password': self.user.password,
+                                                    'user_address': test_data.USER_ADDRESS,
+                                                    'public_key': test_data.USER_PUBLIC_KEY}),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 401)
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
