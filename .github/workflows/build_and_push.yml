@@ -1,4 +1,4 @@
-name: Build and push MessCreate
+name: Build and push
 on:
   pull_request:
     branches:
