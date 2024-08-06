@@ -1,6 +1,7 @@
 import os
 import json
 from copy import copy
+from datetime import datetime
 from unittest import TestCase, skipIf, mock
 from scripts.get_container_info import docker_is_running, container_is_running
 from server_side.app import listener
@@ -46,6 +47,9 @@ class TestListener(TestCase):
         self.create_user_json = {'username': test_data.USERNAME,
                                  'phone_number': test_data.PHONE_NUMBER,
                                  'password': test_data.PASSWORD}
+        self.msg_json = {'message': 'test', 'sender_id': None,
+                         'sender_username': None, 'receiver_id': None,
+                         'send_date': datetime.now().strftime(settings.DATETIME_FORMAT)}
 
     def create_user(self):
         user = listener.User(**test_data.USER_CREATE_JSON)
@@ -62,23 +66,6 @@ class TestListener(TestCase):
         elif json_dict and len(json_dict) == 1:
             args += '{}={}'.format(list(json_dict.keys())[0], list(json_dict.values())[0])
         return args
-
-    @staticmethod
-    def create_message_json():
-        return {'sender_id': test_data.USER_MESSAGE_JSON.get('sender_id'),
-                'receiver_id': test_data.USER_MESSAGE_JSON.get('receiver_id'),
-                'sender_username': test_data.USER_MESSAGE_JSON.get('sender_username'),
-                'message': test_data.USER_MESSAGE_JSON.get('message'),
-                'send_date': test_data.USER_MESSAGE_JSON.get('send_date')}
-
-    @staticmethod
-    def create_message_from_db_like():
-        return (test_data.MESSAGE_ID,
-                test_data.USER_MESSAGE_JSON.get('sender_id'),
-                test_data.USER_MESSAGE_JSON.get('receiver_id'),
-                test_data.USER_MESSAGE_JSON.get('sender_username'),
-                test_data.USER_MESSAGE_JSON.get('message'),
-                test_data.USER_MESSAGE_JSON.get('send_date'))
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
@@ -304,6 +291,73 @@ class TestListener(TestCase):
                                    content_type='application/json',
                                    headers={'Authorization': f'Bearer {token}'})
             self.assertEqual(response.status_code, 200)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
+    def test_process_messages(self):
+        # Test data
+        sender_user_id = self.create_user()
+        receiver_user_id = self.create_user()
+
+        self.msg_json['sender_id'] = sender_user_id
+        self.msg_json['receiver_id'] = receiver_user_id
+        self.msg_json['sender_username'] = self.users[sender_user_id].username
+
+        # Case 1: valid msg json without token
+        with self.flask_client as client:
+            response = client.post(routes.MESSAGES,
+                                   data=json.dumps(self.msg_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 401)
+
+        # Case 2: valid msg json with token
+        token = listener.create_token(user_id=sender_user_id, username=self.user.username)
+
+        with self.flask_client as client:
+            response = client.post(routes.MESSAGES,
+                                   data=json.dumps(self.msg_json),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 200)
+
+        # Case 3: invalid msg json with token
+        token = listener.create_token(user_id=sender_user_id, username=self.user.username)
+
+        with self.flask_client as client:
+            msg_json = copy(self.msg_json)
+            msg_json.popitem()
+
+            response = client.post(routes.MESSAGES,
+                                   data=json.dumps(msg_json),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 400)
+
+        # Case 4: invalid receiver_id json with token
+        token = listener.create_token(user_id=sender_user_id, username=self.user.username)
+
+        with self.flask_client as client:
+            msg_json = copy(self.msg_json)
+            msg_json['receiver_id'] = -1
+
+            response = client.post(routes.MESSAGES,
+                                   data=json.dumps(msg_json),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 400)
+
+        # Case 5: sender user_id does not match sender username
+        token = listener.create_token(user_id=sender_user_id, username=self.user.username)
+
+        with self.flask_client as client:
+            msg_json = copy(self.msg_json)
+            msg_json['sender_username'] = test_data.USERNAME_2
+
+            response = client.post(routes.MESSAGES,
+                                   data=json.dumps(msg_json),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 401)
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
