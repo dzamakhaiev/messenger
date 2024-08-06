@@ -276,6 +276,37 @@ class TestListener(TestCase):
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
+    def test_logout(self):
+        # Test data
+        user_id = self.create_user()
+
+        # Case 1: valid user json without token
+        with self.flask_client as client:
+            response = client.post(routes.LOGOUT,
+                                   data=json.dumps({'username': self.user.username}),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 401)
+
+        # Case 2: invalid user json without token
+        token = listener.create_token(user_id=user_id, username=self.user.username)
+
+        with self.flask_client as client:
+            response = client.post(routes.LOGOUT,
+                                   data=json.dumps({}),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 400)
+
+        # Case 3: valid user json with token
+        with self.flask_client as client:
+            response = client.post(routes.LOGOUT,
+                                   data=json.dumps({'username': self.user.username}),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 200)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
     def test_health_check(self):
 
         with self.flask_client as client:
