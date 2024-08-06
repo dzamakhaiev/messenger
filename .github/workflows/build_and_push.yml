@@ -37,7 +37,7 @@ jobs:
         run: docker rm -f listener-1, listener-2, sender-1, sender-2
 
       - name: Star Messenger application with updated containers
-        run: docker compose -f messenger-prod.yaml up -d
+        run: docker compose -f messenger-prod.yaml up listener-1, listener-2, sender-1, sender-2 -d
 
       - name: Remove docker dangling images
         shell: bash
