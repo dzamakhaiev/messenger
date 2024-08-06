@@ -3,11 +3,12 @@ from unittest import TestCase, skipIf, mock
 from scripts.get_container_info import docker_is_running, container_is_running
 from server_side.app import listener
 from server_side.app import settings
+from server_side.app import routes
 from tests import test_data
 from flask import Flask
 
 
-app = Flask(__name__)
+app = listener.app
 
 
 RUN_INSIDE_DOCKER = int(os.environ.get('RUN_INSIDE_DOCKER', 0))
@@ -35,6 +36,13 @@ class TestListener(TestCase):
 
         cls.service.ram_db_handler.create_all_tables()
         cls.service.hdd_db_handler.create_all_tables()
+
+    def setUp(self):
+        app.config.update({'TESTING': True})
+        self.flask_client = app.test_client()
+        self.create_user_json = {'username': test_data.USERNAME,
+                                 'phone_number': test_data.PHONE_NUMBER,
+                                 'password': test_data.PASSWORD}
 
     def create_user(self):
         user = listener.User(**test_data.USER_CREATE_JSON)
@@ -112,6 +120,14 @@ class TestListener(TestCase):
         with app.test_request_context(headers={'Authorization': 'Bearer invalid_token'}):
             error_tuple = listener.check_token()
             self.assertEqual(error_tuple, (settings.INVALID_TOKEN, 401))
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
+    def test_health_check(self):
+
+        with self.flask_client as client:
+            response = client.head(routes.HEALTH)
+            self.assertEqual(response.status_code, 200)
 
     def tearDown(self):
         if self.users:
