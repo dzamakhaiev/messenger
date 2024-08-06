@@ -158,7 +158,7 @@ class TestListener(TestCase):
         # Case 3: user already exists
         with self.flask_client as client:
             response = client.post(routes.USERS,
-                                   data=json.dumps(user_json),
+                                   data=json.dumps(self.create_user_json),
                                    content_type='application/json')
             self.assertEqual(response.status_code, 400)
 
@@ -194,6 +194,13 @@ class TestListener(TestCase):
                                   headers={'Authorization': f'Bearer {token}'})
 
             self.assertEqual(response.status_code, 404)
+
+        # Case 4: invalid user json with token
+        token = listener.create_token(user_id=user_id, username=self.user.username)
+        with self.flask_client as client:
+            response = client.get(routes.USERS, content_type='application/json',
+                                  headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 400)
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
