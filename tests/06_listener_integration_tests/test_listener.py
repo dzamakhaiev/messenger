@@ -57,6 +57,15 @@ class TestListener(TestCase):
         return user_id
 
     @staticmethod
+    def convert_json_to_get_args(json_dict: dict):
+        args = '?'
+        if json_dict and len(json_dict) > 1:
+            args += '&'.join([f'{key}={value}' for key, value in json_dict.items()])
+        elif json_dict and len(json_dict) == 1:
+            args += '{}={}'.format(list(json_dict.keys())[0], list(json_dict.values())[0])
+        return args
+
+    @staticmethod
     def create_message_json():
         return {'sender_id': test_data.USER_MESSAGE_JSON.get('sender_id'),
                 'receiver_id': test_data.USER_MESSAGE_JSON.get('receiver_id'),
@@ -158,31 +167,35 @@ class TestListener(TestCase):
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
     def test_get_user(self):
+        # Test data
+        user_id = self.create_user()
 
-        # Case 1: valid user json
+        # Case 2: valid user json without token
         with self.flask_client as client:
-            response = client.post(routes.USERS,
-                                   data=json.dumps(self.create_user_json),
-                                   content_type='application/json')
-            self.assertEqual(response.status_code, 201)
-            self.users[response.json.get('user_id')] = copy(self.create_user_json)
+            endpoint = routes.USERS + self.convert_json_to_get_args(
+                {'username': self.user.username})
+            response = client.get(endpoint, content_type='application/json')
+            self.assertEqual(response.status_code, 401)
 
-        # Case 2: invalid user json
+        # Case 2: valid user json with token
+        token = listener.create_token(user_id=user_id, username=self.user.username)
+
         with self.flask_client as client:
-            user_json = copy(self.create_user_json)
-            user_json.pop('password')
+            endpoint = routes.USERS + self.convert_json_to_get_args(
+                {'username': self.user.username})
+            response = client.get(endpoint, content_type='application/json',
+                                  headers={'Authorization': f'Bearer {token}'})
 
-            response = client.post(routes.USERS,
-                                   data=json.dumps(user_json),
-                                   content_type='application/json')
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, 200)
 
-        # Case 3: user already exists
+        # Case 3: non-exists user
         with self.flask_client as client:
-            response = client.post(routes.USERS,
-                                   data=json.dumps(user_json),
-                                   content_type='application/json')
-            self.assertEqual(response.status_code, 400)
+            endpoint = routes.USERS + self.convert_json_to_get_args(
+                {'username': test_data.USERNAME_2})
+            response = client.get(endpoint, content_type='application/json',
+                                  headers={'Authorization': f'Bearer {token}'})
+
+            self.assertEqual(response.status_code, 404)
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
