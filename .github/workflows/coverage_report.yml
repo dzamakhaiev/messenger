@@ -42,7 +42,7 @@ jobs:
       - name: Run unit tests with coverage report
         run: |
           coverage run --source=server_side -m unittest discover -s tests
-          coverage report --skip-empty
+          coverage report --skip-empty --show-missing
           python scripts/generate_xml_report.py
 
       - name: Upload coverage reports to Codecov
