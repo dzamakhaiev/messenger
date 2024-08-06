@@ -284,7 +284,15 @@ class TestListener(TestCase):
                                    headers={'Authorization': f'Bearer {token}'})
             self.assertEqual(response.status_code, 400)
 
-        # Case 3: valid user json with token
+        # Case 3: invalid username with valid token
+        with self.flask_client as client:
+            response = client.post(routes.LOGOUT,
+                                   data=json.dumps({'username': test_data.USERNAME_2}),
+                                   content_type='application/json',
+                                   headers={'Authorization': f'Bearer {token}'})
+            self.assertEqual(response.status_code, 400)
+
+        # Case 4: valid user json with token
         with self.flask_client as client:
             response = client.post(routes.LOGOUT,
                                    data=json.dumps({'username': self.user.username}),

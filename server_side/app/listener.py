@@ -232,7 +232,12 @@ def logout():
 
     if username := request.json.get('username'):
         listener_logger.info(f'Delete token for "{username}".')
+
         user_id = service.get_user_id_by_username(username)
+        if not user_id:
+            listener_logger.error(f'User "{username}" not found.')
+            return settings.VALIDATION_ERROR, 400  # Hide real reason for other side
+
         service.delete_user_token(user_id)
         listener_logger.debug('Token deleted. User logged out.')
         return jsonify({'msg': 'Logout successful.', 'username': username})
