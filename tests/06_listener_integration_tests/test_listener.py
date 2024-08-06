@@ -1,11 +1,12 @@
 import os
+import json
+from copy import copy
 from unittest import TestCase, skipIf, mock
 from scripts.get_container_info import docker_is_running, container_is_running
 from server_side.app import listener
 from server_side.app import settings
 from server_side.app import routes
 from tests import test_data
-from flask import Flask
 
 
 app = listener.app
@@ -33,6 +34,10 @@ class TestListener(TestCase):
         cls.service = listener.service
         cls.users = {}
         cls.user = None
+
+        #  tables in HDD database
+        query = 'GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;'
+        cls.service.hdd_db_handler.cursor_with_commit(query, [])
 
         cls.service.ram_db_handler.create_all_tables()
         cls.service.hdd_db_handler.create_all_tables()
@@ -123,6 +128,35 @@ class TestListener(TestCase):
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
+    def test_create_user(self):
+
+        # Case 1: valid user json
+        with self.flask_client as client:
+            response = client.post(routes.USERS,
+                                   data=json.dumps(self.create_user_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 201)
+            self.users[response.json.get('user_id')] = copy(self.create_user_json)
+
+        # Case 2: invalid user json
+        with self.flask_client as client:
+            user_json = copy(self.create_user_json)
+            user_json.pop('password')
+
+            response = client.post(routes.USERS,
+                                   data=json.dumps(user_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+
+        # Case 3: user already exists
+        with self.flask_client as client:
+            response = client.post(routes.USERS,
+                                   data=json.dumps(user_json),
+                                   content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
     def test_health_check(self):
 
         with self.flask_client as client:
@@ -138,4 +172,4 @@ class TestListener(TestCase):
     def tearDownClass(cls):
         # Drop all tables in HDD database
         query = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-        # cls.service.hdd_db_handler.cursor_with_commit(query, [])
+        cls.service.hdd_db_handler.cursor_with_commit(query, [])

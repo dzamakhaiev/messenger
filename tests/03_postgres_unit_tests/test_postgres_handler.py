@@ -37,7 +37,7 @@ class TestPostgres(TestCase):
     def drop_all_tables(self):
         # Drop all tables in HDD database
         postgres_test_logger.info('tearDown: delete all tables.')
-        query = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+        query = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
         self.hdd_db_handler.cursor_with_commit(query, [])
 
     def create_user_table_and_user(self, user_number=1):
