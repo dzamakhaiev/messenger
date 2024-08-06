@@ -148,6 +148,10 @@ class TestUser(TestCase):
         result = self.ram_db_handler.get_user(user_id=-1)
         self.assertTrue(result is None)
 
+        # Fifth case: pass no vars
+        result = self.ram_db_handler.get_user()
+        self.assertTrue(result is None)
+
     def test_get_username(self):
         self.ram_db_handler.create_usernames_table()
         self.ram_db_handler.insert_username(user_id=test_data.USER_ID,

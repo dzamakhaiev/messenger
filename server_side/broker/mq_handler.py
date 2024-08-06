@@ -96,13 +96,3 @@ class RabbitMQHandler:
 
         connection = pika.SelectConnection(self.parameters, on_open_callback=on_open)
         return connection
-
-
-if __name__ == '__main__':
-    handler = RabbitMQHandler()
-    handler.create_exchange()
-    handler.create_and_bind_queue()
-    handler.send_message(queue_name='TestQueue', exchange_name='TestExchange', body={'Test': 'test'})
-    print(handler.get_queue_len('TestQueue'))
-    handler.receive_message('TestQueue')
-    handler.receive_message('TestQueue')

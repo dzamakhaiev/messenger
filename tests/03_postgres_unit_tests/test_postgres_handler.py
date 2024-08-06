@@ -30,8 +30,15 @@ class TestPostgres(TestCase):
 
     def setUp(self):
         self.hdd_db_handler = PostgresHandler()
+        self.drop_all_tables()
         query = 'GRANT ALL ON SCHEMA public TO postgres; GRANT ALL ON SCHEMA public TO public;'
         self.hdd_db_handler.cursor_with_commit(query, ())
+
+    def drop_all_tables(self):
+        # Drop all tables in HDD database
+        postgres_test_logger.info('tearDown: delete all tables.')
+        query = 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+        self.hdd_db_handler.cursor_with_commit(query, [])
 
     def create_user_table_and_user(self, user_number=1):
         # Create table and user
@@ -619,7 +626,4 @@ class TestPostgres(TestCase):
         self.assertFalse(result)
 
     def tearDown(self):
-        # Drop all tables in HDD database
-        postgres_test_logger.info('tearDown: delete all tables.')
-        query = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
-        self.hdd_db_handler.cursor_with_commit(query, [])
+        self.drop_all_tables()
