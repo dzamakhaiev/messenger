@@ -266,9 +266,3 @@ class PostgresHandler:
             self.cursor.close()
             self.connection.close()
         database_logger.info('Connection closed.')
-
-
-if __name__ == '__main__':
-    handler = PostgresHandler()
-    handler.create_all_tables()
-    handler.get_all_messages()

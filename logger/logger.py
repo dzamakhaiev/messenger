@@ -29,18 +29,22 @@ class Logger:
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
 
-        stdout_handler = logging.StreamHandler()
-        stdout_handler.setFormatter(formatter)
-        self.logger.addHandler(stdout_handler)
+        stderr_handler = logging.StreamHandler()
+        stderr_handler.setFormatter(formatter)
+        self.logger.addHandler(stderr_handler)
+        self.stderr_handler = stderr_handler
 
     def error(self, msg):
-        self.logger.error(msg, extra={'unit': self.logger_name})
+        if not self.stderr_handler.stream.closed:
+            self.logger.error(msg, extra={'unit': self.logger_name})
 
     def info(self, msg):
-        self.logger.info(msg, extra={'unit': self.logger_name})
+        if not self.stderr_handler.stream.closed:
+            self.logger.info(msg, extra={'unit': self.logger_name})
 
     def debug(self, msg):
-        self.logger.debug(msg, extra={'unit': self.logger_name})
+        if not self.stderr_handler.stream.closed:
+            self.logger.debug(msg, extra={'unit': self.logger_name})
 
 
 if __name__ == '__main__':

@@ -183,11 +183,3 @@ class RAMDatabaseHandler:
             self.cursor.close()
             self.conn.close()
         database_logger.info('SQLite Connection closed.')
-
-
-if __name__ == '__main__':
-    ram_handler = RAMDatabaseHandler()
-    ram_handler.create_user_address_table()
-
-    ram_handler.insert_user_address(1, 'http://127.0.0.1:6666')
-    ram_handler.insert_user_address(2, 'http://127.0.0.1:7777')
