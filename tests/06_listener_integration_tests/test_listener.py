@@ -170,7 +170,7 @@ class TestListener(TestCase):
         # Test data
         user_id = self.create_user()
 
-        # Case 2: valid user json without token
+        # Case 1: valid user json without token
         with self.flask_client as client:
             endpoint = routes.USERS + self.convert_json_to_get_args(
                 {'username': self.user.username})
@@ -196,6 +196,34 @@ class TestListener(TestCase):
                                   headers={'Authorization': f'Bearer {token}'})
 
             self.assertEqual(response.status_code, 404)
+
+    @skipIf(CONDITION, REASON)
+    @skipIf(CONDITION2, REASON2)
+    def test_delete_user(self):
+        # Test data
+        user_id = self.create_user()
+
+        # Case 1: valid json
+        with self.flask_client as client:
+            response = client.delete(routes.USERS,
+                                     data=json.dumps({'user_id': user_id}),
+                                     content_type='application/json')
+            self.assertEqual(response.status_code, 200)
+
+        # Case 2: invalid json
+        with self.flask_client as client:
+            response = client.delete(routes.USERS,
+                                     data=json.dumps({}),
+                                     content_type='application/json')
+            self.assertEqual(response.status_code, 400)
+
+        # Case 3: non-exists user
+        with self.flask_client as client:
+            self.service.delete_user_token(user_id=user_id)
+            response = client.delete(routes.USERS,
+                                     data=json.dumps({'user_id': user_id}),
+                                     content_type='application/json')
+            self.assertEqual(response.status_code, 200)
 
     @skipIf(CONDITION, REASON)
     @skipIf(CONDITION2, REASON2)
