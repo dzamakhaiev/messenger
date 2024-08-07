@@ -52,6 +52,13 @@ jobs:
           files: coverage.xml
           flags: unittests
 
+      - name: Upload test results to Codecov
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          flags: unittests
+
       - name: Remove coverage report
         run: rm coverage.xml && rm .coverage
 
