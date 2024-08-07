@@ -19,6 +19,7 @@ jobs:
     uses: ./.github/workflows/integration_tests.yml
 
   coverage:
+    secrets: inherit
     needs: integration
     uses: ./.github/workflows/coverage_report.yml
 
