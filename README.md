@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/dzamakhaiev/messenger/graph/badge.svg?token=68IHU32JAX)](https://codecov.io/gh/dzamakhaiev/messenger)  
+[![codecov](https://codecov.io/github/dzamakhaiev/messenger/branch/master/graph/badge.svg?token=68IHU32JAX)](https://codecov.io/github/dzamakhaiev/messenger)  
 This is a simple REST API messenger application.
 
 
