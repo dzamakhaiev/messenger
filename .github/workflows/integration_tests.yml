@@ -32,9 +32,6 @@ jobs:
       - name: Show branch name
         run: echo $BRANCH_NAME
 
-      - name: Create docker network
-        run: docker network create --subnet=172.29.152.0/24 backend-ci
-
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
 
@@ -68,7 +65,3 @@ jobs:
       - name: Close messenger application
         if: always()
         run: docker compose -f ./messenger-ci.yaml down --rmi local
-
-      - name: Remove docker network
-        if: always()
-        run: docker network rm backend-ci
