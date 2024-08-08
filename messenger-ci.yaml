@@ -86,7 +86,10 @@ services:
 
   nginx-ci:
     container_name: nginx-ci
-    image: "dzamakhaiev/messenger-nginx-ci"
+    build:
+      context: .
+      no_cache: true
+      dockerfile: nginx/Dockerfile-ci
     restart: on-failure
     deploy:
       restart_policy:
