@@ -1,5 +1,6 @@
 FROM nginx:stable-alpine
-EXPOSE 5000
+EXPOSE 5001
+EXPOSE 5002
 COPY cert-ci/certificate.pem /etc/nginx/ssl/certificate.pem
 COPY cert-ci/private_key.pem /etc/nginx/ssl/private_key.pem
 COPY nginx/nginx-ci.conf /etc/nginx/nginx.conf
