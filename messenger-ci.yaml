@@ -86,7 +86,10 @@ services:
 
   nginx-ci:
     container_name: nginx-ci
-    image: "dzamakhaiev/messenger-nginx-ci"
+    build:
+      context: .
+      no_cache: true
+      dockerfile: nginx/Dockerfile-ci
     restart: on-failure
     deploy:
       restart_policy:
@@ -96,6 +99,9 @@ services:
         window: 60s
     depends_on:
       - listener-ci
+    ports:
+      - "5001:5001"
+      - "5002:5002"
     networks:
       backend-ci:
         ipv4_address: 172.29.152.100
@@ -114,7 +120,10 @@ services:
 
 networks:
   backend-ci:
-    external: true
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.152.0/24
 
 volumes:
   logs-ci:
