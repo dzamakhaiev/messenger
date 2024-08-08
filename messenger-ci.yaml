@@ -96,6 +96,9 @@ services:
         window: 60s
     depends_on:
       - listener-ci
+    ports:
+      - "5001:5001"
+      - "5002:5002"
     networks:
       backend-ci:
         ipv4_address: 172.29.152.100
