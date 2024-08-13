@@ -14,7 +14,7 @@ This is a simple REST API messenger application.
 
 ### How to run
 Execute the following command:
-- docker-compose -f .\messenger-prod.yaml up
+- docker-compose up
 
 ### Containers structure
 - **nginx**: The entry point for the entire application. Also serves as a balancer, redirecting HTTPS requests 
@@ -36,8 +36,8 @@ Main Nginx config items:
 - `worker_processes N`: Adjust based on your CPU core count.
 - `upstream listener`: List of "listener" containers for redirected requests. 
 The number of listeners can be changed.
-- `zone=limit:100m rate=100r/s`: A 100 MB buffer to handle client requests that exceed 
-the maximum request rate (default is 100 requests per second).
+- `zone=limit:100m rate=1000r/s`: A 100 MB buffer to handle client requests that exceed 
+the maximum request rate (default is 1000 requests per second).
 - `zone=limit burst=1000`: The length of the queue for extra requests that exceed 
 the current maximum rate.
 
