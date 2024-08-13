@@ -1,0 +1,103 @@
+services:
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: "rabbitmq:alpine"
+    restart: on-failure
+    networks:
+      - backend-prod
+    volumes:
+      - rabbitmq-prod:/var/lib/rabbitmq
+
+  postgres:
+    container_name: postgres
+    image: "postgres:alpine"
+    restart: on-failure
+    networks:
+      - backend-prod
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-prod:/var/lib/postgresql/data
+
+  listener-1:
+    container_name: listener-1
+    image: "dzamakhaiev/messenger"
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - backend-prod
+    environment:
+      SERVICE_NAME: listener-1
+    volumes:
+      - logs-prod:/messenger/server_side/logs
+    command: sh -c "sleep 10 && gunicorn -w 4 -k gevent -b 0.0.0.0:5000 'listener:app'"
+
+  listener-2:
+    container_name: listener-2
+    image: "dzamakhaiev/messenger"
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - backend-prod
+    environment:
+      SERVICE_NAME: listener-2
+    volumes:
+      - logs-prod:/messenger/server_side/logs
+    command: sh -c "sleep 10 && gunicorn -w 4 -k gevent -b 0.0.0.0:5000 'listener:app'"
+
+  sender-1:
+    container_name: sender-1
+    image: "dzamakhaiev/messenger"
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - backend-prod
+    environment:
+      SERVICE_NAME: sender-1
+    volumes:
+      - logs-prod:/messenger/logs
+    command: sh -c "sleep 10 && python sender.py"
+
+  sender-2:
+    container_name: sender-2
+    image: "dzamakhaiev/messenger"
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - backend-prod
+    environment:
+      SERVICE_NAME: sender-2
+    volumes:
+      - logs-prod:/messenger/logs
+    command: sh -c "sleep 10 && python sender.py"
+
+  nginx:
+    container_name: nginx
+    image: "dzamakhaiev/messenger-nginx"
+    restart: on-failure
+    depends_on:
+      - listener-1
+      - listener-2
+    ports:
+      - "5000:5000"
+    networks:
+      - backend-prod
+    command: sh -c "sleep 15 && nginx -g 'daemon off;'"
+
+networks:
+  backend-prod:
+    driver: bridge
+
+volumes:
+  logs-prod:
+  postgres-prod:
+  rabbitmq-prod:
