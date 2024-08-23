@@ -181,7 +181,7 @@ class PostgresHandler:
 
     def get_all_messages(self):
         result = self.cursor_execute('SELECT id, user_sender_id, user_receiver_id, '
-                                     'sender_username, message, receive_date '
+                                     'sender_username, message, send_date '
                                      'FROM messages;', ())
         if self.cursor.rowcount != 0:
             return result.fetchall()
@@ -233,7 +233,7 @@ class PostgresHandler:
     def insert_messages(self, messages):
         self.cursor_with_commit(
             'INSERT INTO messages ('
-            '"user_sender_id", "user_receiver_id", "sender_username", "message", "receive_date") '
+            '"user_sender_id", "user_receiver_id", "sender_username", "message", "send_date") '
             'VALUES (%s, %s, %s, %s, %s)', messages, many=True)
 
     def delete_all_messages(self):
