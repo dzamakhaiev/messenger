@@ -74,9 +74,6 @@ class Service:
 
         for message in messages:
             msg_id, sender_id, receiver_id, sender_username, msg, send_date = message
-            if isinstance(send_date, datetime):
-                send_date = send_date.strftime(settings.DATETIME_FORMAT)
-
             msg_json = {'message': msg, 'sender_id': sender_id, 'sender_username': sender_username,
                         'receiver_id': receiver_id, 'send_date': send_date}
             msg_received = self.send_message_by_list(address_list, msg_json)
