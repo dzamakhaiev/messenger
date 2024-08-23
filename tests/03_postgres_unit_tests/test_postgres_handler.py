@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from unittest import TestCase, skipIf
+from server_side.app.settings import DATETIME_FORMAT
 from server_side.database.postgres_handler import PostgresHandler
 from scripts.get_container_info import docker_is_running, container_is_running
 from logger.logger import Logger
@@ -89,16 +90,17 @@ class TestPostgres(TestCase):
         self.hdd_db_handler.insert_message(sender_id=test_data.USER_ID,
                                            receiver_id=test_data.USER_ID_2,
                                            sender_username=test_data.USERNAME,
-                                           message=test_message)
+                                           message=test_message,
+                                           send_date=datetime.now().strftime(DATETIME_FORMAT))
 
     def check_message(self, result, test_message):
         if result and isinstance(result, tuple):
             (message_id, user_sender_id, user_receiver_id, sender_username, message,
-             receive_date) = result
+             send_date) = result
 
         elif result := result.fetchone():
             (message_id, user_sender_id, user_receiver_id, sender_username, message,
-             receive_date) = result
+             send_date) = result
 
         else:
             self.fail(f'Incorrect message data: {result}')
@@ -107,7 +109,7 @@ class TestPostgres(TestCase):
         self.assertEqual(user_receiver_id, test_data.USER_ID_2)
         self.assertEqual(sender_username, test_data.USERNAME)
         self.assertEqual(message, test_message)
-        self.assertTrue(isinstance(receive_date, datetime))
+        self.assertTrue(send_date)
 
     @skipIf(CONDITION, REASON)
     def test_create_users_table(self):
@@ -309,7 +311,8 @@ class TestPostgres(TestCase):
         self.hdd_db_handler.insert_message(sender_id=test_data.USER_ID,
                                            receiver_id=test_data.USER_ID_2,
                                            sender_username=test_data.USERNAME,
-                                           message=test_message)
+                                           message=test_message,
+                                           send_date=datetime.now().strftime(DATETIME_FORMAT))
 
         # Get message data
         query = 'SELECT * FROM messages;'
@@ -327,7 +330,7 @@ class TestPostgres(TestCase):
         # Create message list for users
         test_message = 'test message'
         message_item = [test_data.USER_ID, test_data.USER_ID_2, test_data.USERNAME,
-                        test_message, datetime.now()]
+                        test_message, datetime.now().strftime(DATETIME_FORMAT)]
         test_messages = [message_item]
         self.hdd_db_handler.insert_messages(messages=test_messages)
 

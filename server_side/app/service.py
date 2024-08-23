@@ -5,6 +5,7 @@ between listener, sender services and databases, broker handlers.
 import socket
 import hashlib
 import requests
+from datetime import datetime
 from urllib.parse import urlparse
 
 from server_side.app import settings
@@ -72,9 +73,9 @@ class Service:
         messages_to_delete = []
 
         for message in messages:
-            msg_id, sender_id, receiver_id, sender_username, msg, msg_date = message
+            msg_id, sender_id, receiver_id, sender_username, msg, send_date = message
             msg_json = {'message': msg, 'sender_id': sender_id, 'sender_username': sender_username,
-                        'receiver_id': receiver_id, 'send_date': msg_date.strftime(settings.DATETIME_FORMAT)}
+                        'receiver_id': receiver_id, 'send_date': send_date}
             msg_received = self.send_message_by_list(address_list, msg_json)
 
             if msg_received:
@@ -100,7 +101,8 @@ class Service:
         self.hdd_db_handler.insert_message(msg_json.get('sender_id'),
                                            msg_json.get('receiver_id'),
                                            msg_json.get('sender_username'),
-                                           msg_json.get('message'))
+                                           msg_json.get('message'),
+                                           msg_json.get('send_date'))
 
     def store_user_address(self, user_id, user_address):
         service_logger.info('Store user user addresses in HDD and RAM DBs.')
