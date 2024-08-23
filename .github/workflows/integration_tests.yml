@@ -32,6 +32,9 @@ jobs:
       - name: Show branch name
         run: echo $BRANCH_NAME
 
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
       - name: Force pull Docker images
         run: docker compose -f ./messenger-ci.yaml pull
 

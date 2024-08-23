@@ -83,7 +83,8 @@ class TestMessages(TestCase):
             test_data.USER_MESSAGE_JSON.get('sender_id'),
             test_data.USER_MESSAGE_JSON.get('receiver_id'),
             test_data.USER_MESSAGE_JSON.get('sender_username'),
-            test_data.USER_MESSAGE_JSON.get('message'))
+            test_data.USER_MESSAGE_JSON.get('message'),
+            test_data.USER_MESSAGE_JSON.get('send_date'))
 
     @mock.patch('server_side.app.service.requests.post')
     def test_send_messages_by_list(self, mock_post):
@@ -108,7 +109,8 @@ class TestMessages(TestCase):
             test_data.USER_MESSAGE_JSON.get('sender_id'),
             test_data.USER_MESSAGE_JSON.get('receiver_id'),
             test_data.USER_MESSAGE_JSON.get('sender_username'),
-            test_data.USER_MESSAGE_JSON.get('message'))
+            test_data.USER_MESSAGE_JSON.get('message'),
+            test_data.USER_MESSAGE_JSON.get('send_date'))
 
     def test_get_messages(self):
         # First case: database has messages

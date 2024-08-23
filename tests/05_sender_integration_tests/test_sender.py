@@ -55,7 +55,6 @@ class TestSender(TestCase):
 
         # Prepare queue message
         message_dict = self.create_message_json()
-        message_dict['send_date'] = message_dict['send_date'].strftime(settings.DATETIME_FORMAT)
         queue_dict = {'address_list': [test_data.USER_ADDRESS], 'msg_json': message_dict}
         queue_json = json.dumps(queue_dict)
         body = queue_json.encode()
